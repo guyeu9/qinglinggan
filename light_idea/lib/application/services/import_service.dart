@@ -103,13 +103,9 @@ class ImportService {
       final excel = Excel.decodeBytes(bytes);
       final sheet = excel.tables.values.first;
 
-      if (sheet == null) {
-        return Result.error('Excel 文件中没有找到工作表');
-      }
-
       // 解析表头
       final headers = <String, int>{};
-      final maxCols = sheet.maxCols;
+      final maxCols = sheet.columns.length;
       for (var col = 0; col < maxCols; col++) {
         final cell = sheet.cell(CellIndex.indexByString('${_colIndexToLetter(col)}1'));
         if (cell.value != null) {
@@ -284,7 +280,7 @@ class ImportService {
               final mergedIdea = await _mergeIdea(existingIdea, data);
               await _ideaRepository.update(mergedIdea);
               successCount++;
-              _logger.info('第 $rowNm 行: ID ${existingId} 已合并');
+              _logger.info('第 $rowNum 行: ID ${existingId} 已合并');
               if (triggerAIAnalysis) {
                 _aiTaskQueue.enqueue(mergedIdea.id);
               }

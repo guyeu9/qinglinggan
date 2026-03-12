@@ -77,17 +77,16 @@ class ExportService {
         // 设置表头样式
         cell.cellStyle = CellStyle(
           bold: true,
-          horizontalAlign: HorizontalAlign.center,
         );
       }
 
-      // 设置列宽
-      sheet.setColumnWidth('A', 8); // ID
-      sheet.setColumnWidth('B', 50); // 内容
-      sheet.setColumnWidth('C', 15); // 分类
-      sheet.setColumnWidth('D', 30); // 标签
-      sheet.setColumnWidth('E', 20); // 创建时间
-      sheet.setColumnWidth('F', 20); // 更新时间
+      // 设置列宽（使用列索引）
+      sheet.setColumnWidth(0, 8); // ID
+      sheet.setColumnWidth(1, 50); // 内容
+      sheet.setColumnWidth(2, 15); // 分类
+      sheet.setColumnWidth(3, 30); // 标签
+      sheet.setColumnWidth(4, 20); // 创建时间
+      sheet.setColumnWidth(5, 20); // 更新时间
 
       // 填充数据
       final dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss');

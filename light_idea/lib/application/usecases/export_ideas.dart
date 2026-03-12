@@ -41,9 +41,9 @@ class ExportIdeasUseCase {
       };
 
       if (result.isSuccess) {
-        _logger.info('导出用例执行成功: ${result.data}');
+        _logger.info('导出用例执行成功: ${result.dataOrNull}');
       } else {
-        _logger.warning('导出用例执行失败: ${result.error}');
+        _logger.warning('导出用例执行失败: ${result.errorOrNull}');
       }
 
       return result;

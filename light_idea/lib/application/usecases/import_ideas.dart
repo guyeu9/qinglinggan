@@ -88,9 +88,9 @@ class ImportIdeasUseCase {
       }
 
       if (result.isSuccess) {
-        _logger.info('导入完成: ${result.data}');
+        _logger.info('导入完成: ${result.dataOrNull}');
       } else {
-        _logger.warning('导入失败: ${result.error}');
+        _logger.warning('导入失败: ${result.errorOrNull}');
       }
 
       return result;
