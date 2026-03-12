@@ -5,12 +5,15 @@ import 'data/database/seed_data.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'application/providers/app_providers.dart';
+import 'config/ai_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final isar = await IsarDatabase.initialize();
   await SeedData.initialize(isar);
+  
+  await AIConfig.initialize();
 
   runApp(
     ProviderScope(

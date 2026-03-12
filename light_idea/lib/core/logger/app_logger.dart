@@ -1,4 +1,5 @@
 import 'package:logger/logger.dart';
+import '../utils/sensitive_data_masker.dart';
 
 class AppLogger {
   AppLogger._();
@@ -21,26 +22,50 @@ class AppLogger {
   late final Logger _logger;
 
   void verbose(String message, [Object? error, StackTrace? stackTrace]) {
-    _logger.t(message, error: error, stackTrace: stackTrace);
+    _logger.t(
+      SensitiveDataMasker.mask(message),
+      error: error != null ? SensitiveDataMasker.mask(error.toString()) : null,
+      stackTrace: stackTrace,
+    );
   }
 
   void debug(String message, [Object? error, StackTrace? stackTrace]) {
-    _logger.d(message, error: error, stackTrace: stackTrace);
+    _logger.d(
+      SensitiveDataMasker.mask(message),
+      error: error != null ? SensitiveDataMasker.mask(error.toString()) : null,
+      stackTrace: stackTrace,
+    );
   }
 
   void info(String message, [Object? error, StackTrace? stackTrace]) {
-    _logger.i(message, error: error, stackTrace: stackTrace);
+    _logger.i(
+      SensitiveDataMasker.mask(message),
+      error: error != null ? SensitiveDataMasker.mask(error.toString()) : null,
+      stackTrace: stackTrace,
+    );
   }
 
   void warning(String message, [Object? error, StackTrace? stackTrace]) {
-    _logger.w(message, error: error, stackTrace: stackTrace);
+    _logger.w(
+      SensitiveDataMasker.mask(message),
+      error: error != null ? SensitiveDataMasker.mask(error.toString()) : null,
+      stackTrace: stackTrace,
+    );
   }
 
   void error(String message, [Object? error, StackTrace? stackTrace]) {
-    _logger.e(message, error: error, stackTrace: stackTrace);
+    _logger.e(
+      SensitiveDataMasker.mask(message),
+      error: error != null ? SensitiveDataMasker.mask(error.toString()) : null,
+      stackTrace: stackTrace,
+    );
   }
 
   void fatal(String message, [Object? error, StackTrace? stackTrace]) {
-    _logger.f(message, error: error, stackTrace: stackTrace);
+    _logger.f(
+      SensitiveDataMasker.mask(message),
+      error: error != null ? SensitiveDataMasker.mask(error.toString()) : null,
+      stackTrace: stackTrace,
+    );
   }
 }

@@ -70,32 +70,35 @@ class AIEmbeddingService {
     try {
       _logger.info('开始搜索相似灵感: topN=$topN, threshold=$threshold');
 
-      final allIdeas = await _ideaRepository.getAll(includeDeleted: false);
-
-      final candidates = allIdeas.where((idea) {
-        if (idea.embedding == null || idea.embedding!.isEmpty) {
-          return false;
-        }
-        if (excludeId != null && idea.id == excludeId) {
-          return false;
-        }
-        return true;
-      }).toList();
-
-      if (candidates.isEmpty) {
-        _logger.info('没有可搜索的灵感');
-        return Result.success([]);
-      }
-
       final results = <SimilarIdea>[];
-      for (final idea in candidates) {
-        final similarity = VectorMath.cosineSimilarity(
-          queryEmbedding,
-          idea.embedding!,
+      const pageSize = 100;
+      var offset = 0;
+      const maxPages = 10;
+
+      for (var page = 0; page < maxPages; page++) {
+        final candidates = await _ideaRepository.getIdeasWithEmbedding(
+          limit: pageSize,
+          offset: offset,
         );
-        if (similarity >= threshold) {
-          results.add(SimilarIdea(idea: idea, similarity: similarity));
+
+        if (candidates.isEmpty) break;
+
+        for (final idea in candidates) {
+          if (excludeId != null && idea.id == excludeId) continue;
+          if (idea.embedding == null || idea.embedding!.isEmpty) continue;
+
+          final similarity = VectorMath.cosineSimilarity(
+            queryEmbedding,
+            idea.embedding!,
+          );
+          if (similarity >= threshold) {
+            results.add(SimilarIdea(idea: idea, similarity: similarity));
+          }
         }
+
+        if (results.length >= topN * 3) break;
+
+        offset += pageSize;
       }
 
       results.sort((a, b) => b.similarity.compareTo(a.similarity));

@@ -109,12 +109,23 @@ class AITaskQueue {
       await _taskRepository.updateStatus(task.id, TaskStatus.processing);
       await _ideaRepository.updateAIStatus(task.ideaId, AIStatus.processing);
 
-      await _runBasicAnalysis(task.ideaId);
+      await _runBasicAnalysis(task.ideaId).timeout(
+        Duration(seconds: AppConstants.taskTimeoutSeconds),
+        onTimeout: () {
+          throw TimeoutException(
+            '任务执行超时',
+            const Duration(seconds: AppConstants.taskTimeoutSeconds),
+          );
+        },
+      );
 
       await _taskRepository.updateStatus(task.id, TaskStatus.completed);
       await _ideaRepository.updateAIStatus(task.ideaId, AIStatus.completed);
 
       _logger.info('AI任务完成: taskId=${task.id}, ideaId=${task.ideaId}');
+    } on TimeoutException catch (e, st) {
+      _logger.error('AI任务超时: taskId=${task.id}, 超时时间=${e.duration}');
+      await _handleFailure(task, '任务执行超时: ${e.duration?.inSeconds ?? AppConstants.taskTimeoutSeconds}秒');
     } on AIException catch (e, st) {
       _logger.error('AI任务失败(AI异常): taskId=${task.id}', e, st);
       await _handleFailure(task, 'AI错误: ${e.message}');

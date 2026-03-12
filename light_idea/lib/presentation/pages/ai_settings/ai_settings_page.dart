@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../config/ai_config.dart';
+import '../../../../core/utils/sensitive_data_masker.dart';
 
-/// AI 设置详情页
-///
-/// 根据原型图 8侧边栏-ai管理详情页 实现
-/// 包含：分析API设置、向量API设置、状态提示、保存功能
 class AiSettingsPage extends StatefulWidget {
   const AiSettingsPage({super.key});
 
@@ -15,16 +13,14 @@ class AiSettingsPage extends StatefulWidget {
 }
 
 class _AiSettingsPageState extends State<AiSettingsPage> {
-  // 分析API设置
   bool _analysisEnabled = true;
   final TextEditingController _apiUrlController = TextEditingController(
     text: 'https://api.openai.com/v1',
   );
   final TextEditingController _apiKeyController = TextEditingController();
   bool _apiKeyVisible = false;
-  String _selectedModel = 'GPT-4o';
+  String _selectedModel = 'GPT-4o-mini';
 
-  // 向量API设置
   final TextEditingController _embeddingUrlController = TextEditingController(
     text: 'https://api.openai.com/v1/embeddings',
   );
@@ -33,9 +29,12 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
   final TextEditingController _vectorDimensionController =
       TextEditingController(text: '1536');
 
-  // 连接状态
   bool _isTestingConnection = false;
+  bool _isLoading = true;
+  bool _isSaving = false;
   String? _connectionStatus;
+
+  String? _maskedApiKey;
 
   final List<String> _models = [
     'GPT-4o',
@@ -48,6 +47,12 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  @override
   void dispose() {
     _apiUrlController.dispose();
     _apiKeyController.dispose();
@@ -55,6 +60,123 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
     _vectorApiKeyController.dispose();
     _vectorDimensionController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadSettings() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final hasKey = await AIConfig.hasApiKey();
+      if (hasKey) {
+        final key = await AIConfig.getApiKey();
+        _maskedApiKey = SensitiveDataMasker.maskApiKey(key);
+      }
+    } catch (_) {
+    }
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _testConnection() async {
+    if (_apiKeyController.text.isEmpty) {
+      setState(() {
+        _connectionStatus = '请先输入API密钥';
+      });
+      return;
+    }
+
+    setState(() {
+      _isTestingConnection = true;
+      _connectionStatus = null;
+    });
+
+    try {
+      await AIConfig.setApiKey(_apiKeyController.text);
+      final hasKey = await AIConfig.hasApiKey();
+      
+      setState(() {
+        _isTestingConnection = false;
+        _connectionStatus = hasKey ? '连接成功' : '密钥保存失败';
+        if (hasKey) {
+          _maskedApiKey = SensitiveDataMasker.maskApiKey(_apiKeyController.text);
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _isTestingConnection = false;
+        _connectionStatus = '连接失败: $e';
+      });
+    }
+  }
+
+  Future<void> _saveSettings() async {
+    if (_apiKeyController.text.isEmpty && _maskedApiKey == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('请输入API密钥')),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
+      if (_apiKeyController.text.isNotEmpty) {
+        await AIConfig.setApiKey(_apiKeyController.text);
+        _maskedApiKey = SensitiveDataMasker.maskApiKey(_apiKeyController.text);
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('设置已保存')),
+        );
+        context.pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('保存失败: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  Future<void> _clearApiKey() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('清除密钥'),
+        content: const Text('确定要清除已保存的API密钥吗？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('确定', style: TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await AIConfig.clearApiKey();
+      setState(() {
+        _maskedApiKey = null;
+        _apiKeyController.clear();
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('API密钥已清除')),
+        );
+      }
+    }
   }
 
   @override
@@ -79,188 +201,311 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
         centerTitle: true,
         elevation: 0,
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppTheme.spacingMd),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 分析API设置区
-                    _buildSectionTitle('分析API设置', textSecondary),
-                    _buildSettingsCard(
-                      isDark: isDark,
-                      cardColor: cardColor,
-                      children: [
-                        // 启用开关
-                        _buildSwitchTile(
-                          title: '启用AI分析',
-                          subtitle: '开启后将对灵感内容进行智能分析',
-                          value: _analysisEnabled,
-                          onChanged: (value) {
-                            setState(() {
-                              _analysisEnabled = value;
-                            });
-                          },
-                          textPrimary: textPrimary,
-                          textSecondary: textSecondary,
-                        ),
-                        _buildDivider(isDark),
-                        // API地址
-                        _buildTextFieldTile(
-                          label: 'API地址',
-                          hint: '请输入API地址',
-                          controller: _apiUrlController,
-                          icon: Icons.link,
-                          textPrimary: textPrimary,
-                          textSecondary: textSecondary,
-                          enabled: _analysisEnabled,
-                        ),
-                        _buildDivider(isDark),
-                        // API密钥
-                        _buildPasswordFieldTile(
-                          label: 'API密钥',
-                          hint: '请输入API密钥',
-                          controller: _apiKeyController,
-                          visible: _apiKeyVisible,
-                          onVisibilityChanged: (visible) {
-                            setState(() {
-                              _apiKeyVisible = visible;
-                            });
-                          },
-                          textPrimary: textPrimary,
-                          textSecondary: textSecondary,
-                          enabled: _analysisEnabled,
-                        ),
-                        _buildDivider(isDark),
-                        // 模型选择
-                        _buildDropdownTile(
-                          label: '模型选择',
-                          value: _selectedModel,
-                          items: _models,
-                          onChanged: _analysisEnabled
-                              ? (value) {
-                                  setState(() {
-                                    _selectedModel = value!;
-                                  });
-                                }
-                              : null,
-                          textPrimary: textPrimary,
-                          textSecondary: textSecondary,
-                          enabled: _analysisEnabled,
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: AppTheme.spacingLg),
-
-                    // 向量API设置区
-                    _buildSectionTitle('向量API设置', textSecondary),
-                    _buildSettingsCard(
-                      isDark: isDark,
-                      cardColor: cardColor,
-                      children: [
-                        // 测试连接按钮
-                        Padding(
-                          padding: const EdgeInsets.all(AppTheme.spacingMd),
-                          child: Row(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SafeArea(
+              child: Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(AppTheme.spacingMd),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSectionTitle('分析API设置', textSecondary),
+                          _buildSettingsCard(
+                            isDark: isDark,
+                            cardColor: cardColor,
                             children: [
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: _isTestingConnection
-                                      ? null
-                                      : _testConnection,
-                                  icon: _isTestingConnection
-                                      ? const SizedBox(
-                                          width: 16,
-                                          height: 16,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            valueColor:
-                                                AlwaysStoppedAnimation<Color>(
-                                              AppColors.primary,
-                                            ),
-                                          ),
-                                        )
-                                      : const Icon(Icons.network_check),
-                                  label: Text(
-                                    _isTestingConnection ? '测试中...' : '测试连接',
-                                  ),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: AppColors.primary,
-                                    side: const BorderSide(
-                                      color: AppColors.primary,
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: AppTheme.spacingSm,
-                                    ),
-                                  ),
-                                ),
+                              _buildSwitchTile(
+                                title: '启用AI分析',
+                                subtitle: '开启后将对灵感内容进行智能分析',
+                                value: _analysisEnabled,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _analysisEnabled = value;
+                                  });
+                                },
+                                textPrimary: textPrimary,
+                                textSecondary: textSecondary,
+                              ),
+                              _buildDivider(isDark),
+                              _buildTextFieldTile(
+                                label: 'API地址',
+                                hint: '请输入API地址',
+                                controller: _apiUrlController,
+                                icon: Icons.link,
+                                textPrimary: textPrimary,
+                                textSecondary: textSecondary,
+                                enabled: _analysisEnabled,
+                              ),
+                              _buildDivider(isDark),
+                              _buildApiKeyField(
+                                textPrimary: textPrimary,
+                                textSecondary: textSecondary,
+                                isDark: isDark,
+                              ),
+                              _buildDivider(isDark),
+                              _buildDropdownTile(
+                                label: '模型选择',
+                                value: _selectedModel,
+                                items: _models,
+                                onChanged: _analysisEnabled
+                                    ? (value) {
+                                        setState(() {
+                                          _selectedModel = value!;
+                                        });
+                                      }
+                                    : null,
+                                textPrimary: textPrimary,
+                                textSecondary: textSecondary,
+                                enabled: _analysisEnabled,
                               ),
                             ],
                           ),
-                        ),
-                        _buildDivider(isDark),
-                        // 嵌入接口地址
-                        _buildTextFieldTile(
-                          label: '嵌入接口地址',
-                          hint: '请输入嵌入接口地址',
-                          controller: _embeddingUrlController,
-                          icon: Icons.integration_instructions,
-                          textPrimary: textPrimary,
-                          textSecondary: textSecondary,
-                        ),
-                        _buildDivider(isDark),
-                        // 向量API密钥
-                        _buildPasswordFieldTile(
-                          label: '向量API密钥',
-                          hint: '请输入向量API密钥',
-                          controller: _vectorApiKeyController,
-                          visible: _vectorApiKeyVisible,
-                          onVisibilityChanged: (visible) {
-                            setState(() {
-                              _vectorApiKeyVisible = visible;
-                            });
-                          },
-                          textPrimary: textPrimary,
-                          textSecondary: textSecondary,
-                        ),
-                        _buildDivider(isDark),
-                        // 向量维度
-                        _buildTextFieldTile(
-                          label: '向量维度',
-                          hint: '请输入向量维度',
-                          controller: _vectorDimensionController,
-                          icon: Icons.straighten,
-                          keyboardType: TextInputType.number,
-                          textPrimary: textPrimary,
-                          textSecondary: textSecondary,
-                        ),
-                      ],
+
+                          const SizedBox(height: AppTheme.spacingLg),
+
+                          _buildSectionTitle('向量API设置', textSecondary),
+                          _buildSettingsCard(
+                            isDark: isDark,
+                            cardColor: cardColor,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(AppTheme.spacingMd),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: OutlinedButton.icon(
+                                        onPressed: _isTestingConnection
+                                            ? null
+                                            : _testConnection,
+                                        icon: _isTestingConnection
+                                            ? const SizedBox(
+                                                width: 16,
+                                                height: 16,
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  valueColor:
+                                                      AlwaysStoppedAnimation<Color>(
+                                                    AppColors.primary,
+                                                  ),
+                                                ),
+                                              )
+                                            : const Icon(Icons.network_check),
+                                        label: Text(
+                                          _isTestingConnection ? '测试中...' : '测试连接',
+                                        ),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: AppColors.primary,
+                                          side: const BorderSide(
+                                            color: AppColors.primary,
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: AppTheme.spacingSm,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              _buildDivider(isDark),
+                              _buildTextFieldTile(
+                                label: '嵌入接口地址',
+                                hint: '请输入嵌入接口地址',
+                                controller: _embeddingUrlController,
+                                icon: Icons.integration_instructions,
+                                textPrimary: textPrimary,
+                                textSecondary: textSecondary,
+                              ),
+                              _buildDivider(isDark),
+                              _buildPasswordFieldTile(
+                                label: '向量API密钥',
+                                hint: '请输入向量API密钥',
+                                controller: _vectorApiKeyController,
+                                visible: _vectorApiKeyVisible,
+                                onVisibilityChanged: (visible) {
+                                  setState(() {
+                                    _vectorApiKeyVisible = visible;
+                                  });
+                                },
+                                textPrimary: textPrimary,
+                                textSecondary: textSecondary,
+                              ),
+                              _buildDivider(isDark),
+                              _buildTextFieldTile(
+                                label: '向量维度',
+                                hint: '请输入向量维度',
+                                controller: _vectorDimensionController,
+                                icon: Icons.straighten,
+                                keyboardType: TextInputType.number,
+                                textPrimary: textPrimary,
+                                textSecondary: textSecondary,
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: AppTheme.spacingLg),
+
+                          if (_connectionStatus != null)
+                            _buildStatusCard(isDark: isDark),
+
+                          const SizedBox(height: AppTheme.spacingXl),
+                        ],
+                      ),
                     ),
+                  ),
+                  _buildSaveButton(isDark: isDark),
+                ],
+              ),
+            ),
+    );
+  }
 
-                    const SizedBox(height: AppTheme.spacingLg),
-
-                    // 状态提示卡片
-                    if (_connectionStatus != null)
-                      _buildStatusCard(isDark: isDark),
-
-                    const SizedBox(height: AppTheme.spacingXl),
-                  ],
+  Widget _buildApiKeyField({
+    required Color textPrimary,
+    required Color textSecondary,
+    required bool isDark,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.all(AppTheme.spacingMd),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'API密钥',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: _analysisEnabled ? textPrimary : textSecondary,
+                ),
+              ),
+              if (_maskedApiKey != null)
+                TextButton.icon(
+                  onPressed: _clearApiKey,
+                  icon: const Icon(Icons.delete_outline, size: 16),
+                  label: const Text('清除', style: TextStyle(fontSize: 12)),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.error,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppTheme.spacingSm),
+          if (_maskedApiKey != null && _apiKeyController.text.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(AppTheme.spacingMd),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.backgroundDark
+                    : AppColors.backgroundLight,
+                borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                border: Border.all(
+                  color: textSecondary.withValues(alpha: 0.2),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.key, color: textSecondary, size: 20),
+                  const SizedBox(width: AppTheme.spacingSm),
+                  Expanded(
+                    child: Text(
+                      _maskedApiKey!,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: textSecondary,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _maskedApiKey = null;
+                      });
+                    },
+                    child: const Text('修改'),
+                  ),
+                ],
+              ),
+            )
+          else
+            TextField(
+              controller: _apiKeyController,
+              obscureText: !_apiKeyVisible,
+              enabled: _analysisEnabled,
+              style: TextStyle(
+                color: _analysisEnabled ? textPrimary : textSecondary,
+              ),
+              decoration: InputDecoration(
+                hintText: '请输入API密钥 (sk-...)',
+                hintStyle: TextStyle(
+                  color: textSecondary.withValues(alpha: 0.5),
+                ),
+                prefixIcon: Icon(
+                  Icons.key,
+                  color: _analysisEnabled
+                      ? textSecondary
+                      : textSecondary.withValues(alpha: 0.5),
+                  size: 20,
+                ),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _apiKeyVisible ? Icons.visibility_off : Icons.visibility,
+                    color: _analysisEnabled
+                        ? textSecondary
+                        : textSecondary.withValues(alpha: 0.5),
+                    size: 20,
+                  ),
+                  onPressed: _analysisEnabled
+                      ? () => setState(() => _apiKeyVisible = !_apiKeyVisible)
+                      : null,
+                ),
+                filled: true,
+                fillColor: _analysisEnabled
+                    ? null
+                    : textSecondary.withValues(alpha: 0.05),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AppTheme.spacingMd,
+                  vertical: AppTheme.spacingSm,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                  borderSide: BorderSide(
+                    color: textSecondary.withValues(alpha: 0.2),
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                  borderSide: BorderSide(
+                    color: textSecondary.withValues(alpha: 0.2),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                  borderSide: const BorderSide(
+                    color: AppColors.primary,
+                    width: 2,
+                  ),
+                ),
+                disabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                  borderSide: BorderSide(
+                    color: textSecondary.withValues(alpha: 0.1),
+                  ),
                 ),
               ),
             ),
-            // 底部保存按钮
-            _buildSaveButton(isDark: isDark),
-          ],
-        ),
+        ],
       ),
     );
   }
 
-  /// 构建设置区域标题
   Widget _buildSectionTitle(String title, Color textSecondary) {
     return Padding(
       padding: const EdgeInsets.only(
@@ -279,7 +524,6 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
     );
   }
 
-  /// 构建设置卡片容器
   Widget _buildSettingsCard({
     required bool isDark,
     required Color cardColor,
@@ -305,7 +549,6 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
     );
   }
 
-  /// 构建开关设置项
   Widget _buildSwitchTile({
     required String title,
     required String subtitle,
@@ -354,7 +597,6 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
     );
   }
 
-  /// 构建文本输入设置项
   Widget _buildTextFieldTile({
     required String label,
     required String hint,
@@ -436,7 +678,6 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
     );
   }
 
-  /// 构建密码输入设置项
   Widget _buildPasswordFieldTile({
     required String label,
     required String hint,
@@ -528,7 +769,6 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
     );
   }
 
-  /// 构建下拉选择设置项
   Widget _buildDropdownTile({
     required String label,
     required String value,
@@ -599,7 +839,6 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
     );
   }
 
-  /// 构建分割线
   Widget _buildDivider(bool isDark) {
     return Divider(
       height: 1,
@@ -609,7 +848,6 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
     );
   }
 
-  /// 构建状态提示卡片
   Widget _buildStatusCard({required bool isDark}) {
     final isSuccess = _connectionStatus == '连接成功';
     final statusColor = isSuccess ? AppColors.success : AppColors.error;
@@ -634,28 +872,12 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
           ),
           const SizedBox(width: AppTheme.spacingSm),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isSuccess ? '连接成功' : '连接失败',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: statusColor,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  _connectionStatus!,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondaryLight,
-                  ),
-                ),
-              ],
+            child: Text(
+              _connectionStatus!,
+              style: TextStyle(
+                fontSize: 14,
+                color: statusColor,
+              ),
             ),
           ),
         ],
@@ -663,7 +885,6 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
     );
   }
 
-  /// 构建底部保存按钮
   Widget _buildSaveButton({required bool isDark}) {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingMd),
@@ -681,11 +902,20 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
         child: SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
-            onPressed: _saveSettings,
-            icon: const Icon(Icons.save, color: Colors.white),
-            label: const Text(
-              '保存设置',
-              style: TextStyle(
+            onPressed: _isSaving ? null : _saveSettings,
+            icon: _isSaving
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Icon(Icons.save, color: Colors.white),
+            label: Text(
+              _isSaving ? '保存中...' : '保存设置',
+              style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
               ),
@@ -703,36 +933,6 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  /// 测试连接
-  Future<void> _testConnection() async {
-    setState(() {
-      _isTestingConnection = true;
-      _connectionStatus = null;
-    });
-
-    // 模拟连接测试
-    await Future<void>.delayed(const Duration(seconds: 2));
-
-    setState(() {
-      _isTestingConnection = false;
-      // 模拟随机结果
-      _connectionStatus = DateTime.now().millisecond % 2 == 0
-          ? '连接成功'
-          : '无法连接到服务器，请检查网络或API配置';
-    });
-  }
-
-  /// 保存设置
-  void _saveSettings() {
-    // TODO: 实现保存逻辑
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('设置已保存'),
-        duration: Duration(seconds: 2),
       ),
     );
   }

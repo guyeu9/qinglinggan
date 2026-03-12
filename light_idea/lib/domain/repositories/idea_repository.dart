@@ -30,4 +30,11 @@ abstract class IdeaRepository {
   Future<List<IdeaEntity>> getDeleted();
 
   Future<void> clearDeleted();
+
+  Future<List<IdeaEntity>> getIdeasWithEmbedding({
+    int limit = 100,
+    int offset = 0,
+  });
+
+  Future<int> countIdeasWithEmbedding();
 }

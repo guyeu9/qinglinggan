@@ -148,4 +148,29 @@ class IdeaRepositoryImpl implements IdeaRepository {
       await _isar.ideaModels.filter().isDeletedEqualTo(true).deleteAll();
     });
   }
+
+  @override
+  Future<List<IdeaEntity>> getIdeasWithEmbedding({
+    int limit = 100,
+    int offset = 0,
+  }) async {
+    final models = await _isar.ideaModels
+        .filter()
+        .isDeletedEqualTo(false)
+        .embeddingIsNotEmpty()
+        .sortByCreatedAtDesc()
+        .offset(offset)
+        .limit(limit)
+        .findAll();
+    return models.map((m) => m.toEntity()).toList();
+  }
+
+  @override
+  Future<int> countIdeasWithEmbedding() async {
+    return _isar.ideaModels
+        .filter()
+        .isDeletedEqualTo(false)
+        .embeddingIsNotEmpty()
+        .count();
+  }
 }

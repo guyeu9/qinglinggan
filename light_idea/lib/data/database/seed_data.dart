@@ -12,16 +12,16 @@ class SeedData {
 
     final categories = [
       CategoryModel()
-        ..name = '灵感想法'
-        ..icon = '💡'
+        ..name = '社交 / 旅行 / 惊喜类'
+        ..icon = '✈️'
         ..sortOrder = 0,
       CategoryModel()
-        ..name = '待办事项'
-        ..icon = '📋'
+        ..name = '工作 / 创意策划类'
+        ..icon = '💼'
         ..sortOrder = 1,
       CategoryModel()
-        ..name = '学习笔记'
-        ..icon = '📚'
+        ..name = '摄影爱好类'
+        ..icon = '📷'
         ..sortOrder = 2,
     ];
 

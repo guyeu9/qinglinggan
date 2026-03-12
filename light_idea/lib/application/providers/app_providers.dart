@@ -16,6 +16,8 @@ import '../../data/repositories/ai_analysis_repository_impl.dart';
 import '../ai/ai_understanding_service.dart';
 import '../ai/ai_embedding_service.dart';
 import '../task_queue/ai_task_queue.dart';
+import '../services/export_service.dart';
+import '../services/import_service.dart';
 
 final loggerProvider = Provider<AppLogger>((ref) {
   return AppLogger.instance;
@@ -97,4 +99,23 @@ class IsarNotifier extends StateNotifier<AsyncValue<Isar>> {
 
 final isarNotifierProvider = StateNotifierProvider<IsarNotifier, AsyncValue<Isar>>((ref) {
   return IsarNotifier();
+});
+
+final exportServiceProvider = Provider<ExportService>((ref) {
+  return ExportService(
+    ref.watch(ideaRepositoryProvider),
+    ref.watch(categoryRepositoryProvider),
+    ref.watch(tagRepositoryProvider),
+    ref.watch(loggerProvider),
+  );
+});
+
+final importServiceProvider = Provider<ImportService>((ref) {
+  return ImportService(
+    ideaRepository: ref.watch(ideaRepositoryProvider),
+    categoryRepository: ref.watch(categoryRepositoryProvider),
+    tagRepository: ref.watch(tagRepositoryProvider),
+    aiTaskQueue: ref.watch(aiTaskQueueProvider),
+    logger: ref.watch(loggerProvider),
+  );
 });

@@ -1,21 +1,48 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:file_picker/file_picker.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/result.dart';
+import '../../../../domain/entities/category.dart';
+import '../../../application/providers/app_providers.dart';
+import '../../../application/services/export_service.dart';
+import '../../../application/services/import_service.dart';
 
 /// 数据管理页面
 ///
 /// 根据原型图 5数据管理 实现
 /// 包含：数据导出区、数据导入区、数据安全提示栏
-class DataManagementPage extends StatefulWidget {
+class DataManagementPage extends ConsumerStatefulWidget {
   const DataManagementPage({super.key});
 
   @override
-  State<DataManagementPage> createState() => _DataManagementPageState();
+  ConsumerState<DataManagementPage> createState() => _DataManagementPageState();
 }
 
-class _DataManagementPageState extends State<DataManagementPage> {
+class _DataManagementPageState extends ConsumerState<DataManagementPage> {
   bool _isDragging = false;
+  bool _isExporting = false;
+  bool _isImporting = false;
+  List<CategoryEntity> _categories = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    final categoryRepo = ref.read(categoryRepositoryProvider);
+    final categories = await categoryRepo.getAll();
+    if (mounted) {
+      setState(() {
+        _categories = categories;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -116,7 +143,7 @@ class _DataManagementPageState extends State<DataManagementPage> {
             format: '.xlsx',
             textPrimary: textPrimary,
             textSecondary: textSecondary,
-            onTap: () => _exportToExcel(),
+            onTap: _isExporting ? null : () => _exportToExcel(),
           ),
           _buildDivider(isDark),
           // 导出至数据库
@@ -124,11 +151,11 @@ class _DataManagementPageState extends State<DataManagementPage> {
             icon: Icons.storage_outlined,
             iconColor: AppColors.info,
             title: '导出至数据库',
-            subtitle: '导出为 .db 备份文件',
-            format: '.db',
+            subtitle: '导出为 .json 备份文件',
+            format: '.json',
             textPrimary: textPrimary,
             textSecondary: textSecondary,
-            onTap: () => _exportToDatabase(),
+            onTap: _isExporting ? null : () => _exportToDatabase(),
           ),
         ],
       ),
@@ -144,7 +171,7 @@ class _DataManagementPageState extends State<DataManagementPage> {
     required String format,
     required Color textPrimary,
     required Color textSecondary,
-    required VoidCallback onTap,
+    VoidCallback? onTap,
   }) {
     return InkWell(
       onTap: onTap,
@@ -178,7 +205,7 @@ class _DataManagementPageState extends State<DataManagementPage> {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: textPrimary,
+                      color: onTap == null ? textSecondary : textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -255,7 +282,7 @@ class _DataManagementPageState extends State<DataManagementPage> {
               onEnter: (_) => setState(() => _isDragging = true),
               onExit: (_) => setState(() => _isDragging = false),
               child: GestureDetector(
-                onTap: () => _pickFile(),
+                onTap: _isImporting ? null : () => _pickFile(),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   width: double.infinity,
@@ -278,16 +305,19 @@ class _DataManagementPageState extends State<DataManagementPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.cloud_upload_outlined,
-                        size: 48,
-                        color: _isDragging
-                            ? AppColors.primary
-                            : (isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight),
-                      ),
+                      if (_isImporting)
+                        const CircularProgressIndicator()
+                      else
+                        Icon(
+                          Icons.cloud_upload_outlined,
+                          size: 48,
+                          color: _isDragging
+                              ? AppColors.primary
+                              : (isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight),
+                        ),
                       const SizedBox(height: AppTheme.spacingMd),
                       Text(
-                        '点击或拖拽文件至此处',
+                        _isImporting ? '正在导入...' : '点击或拖拽文件至此处',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
@@ -296,7 +326,7 @@ class _DataManagementPageState extends State<DataManagementPage> {
                       ),
                       const SizedBox(height: AppTheme.spacingSm),
                       Text(
-                        '支持 .xlsx, .db 备份文件',
+                        '支持 .xlsx, .json 备份文件',
                         style: TextStyle(
                           fontSize: 13,
                           color: textSecondary,
@@ -403,112 +433,594 @@ class _DataManagementPageState extends State<DataManagementPage> {
   }
 
   /// 导出至Excel
-  void _exportToExcel() {
-    _showExportDialog('Excel', '.xlsx');
+  Future<void> _exportToExcel() async {
+    final result = await _showExportOptionsDialog('Excel');
+    if (result == null || !mounted) return;
+
+    setState(() => _isExporting = true);
+
+    try {
+      final exportService = ref.read(exportServiceProvider);
+      final exportResult = await exportService.exportToExcel(
+        filter: result.filter,
+      );
+
+      if (!mounted) return;
+
+      if (exportResult.isSuccess) {
+        _showSuccessSnackBar('数据导出成功\n文件已保存到: ${exportResult.dataOrNull}');
+      } else {
+        _showErrorSnackBar(exportResult.errorOrNull ?? '导出失败');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isExporting = false);
+      }
+    }
   }
 
-  /// 导出至数据库
-  void _exportToDatabase() {
-    _showExportDialog('数据库', '.db');
+  /// 导出至数据库（JSON格式）
+  Future<void> _exportToDatabase() async {
+    final result = await _showExportOptionsDialog('数据库');
+    if (result == null || !mounted) return;
+
+    setState(() => _isExporting = true);
+
+    try {
+      final exportService = ref.read(exportServiceProvider);
+      final exportResult = await exportService.exportToJson(
+        filter: result.filter,
+      );
+
+      if (!mounted) return;
+
+      if (exportResult.isSuccess) {
+        _showSuccessSnackBar('数据导出成功\n文件已保存到: ${exportResult.dataOrNull}');
+      } else {
+        _showErrorSnackBar(exportResult.errorOrNull ?? '导出失败');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isExporting = false);
+      }
+    }
   }
 
-  /// 显示导出对话框
-  void _showExportDialog(String type, String format) {
-    showDialog<void>(
+  /// 显示导出选项对话框
+  Future<_ExportOptions?> _showExportOptionsDialog(String type) async {
+    int? selectedCategoryId;
+    DateTime? startDate;
+    DateTime? endDate;
+
+    return showDialog<_ExportOptions>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('导出至$type'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('确定要导出数据为 $format 格式吗？'),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(AppTheme.spacingSm),
-              decoration: BoxDecoration(
-                color: AppColors.info.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    size: 16,
-                    color: AppColors.info,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '导出文件将保存到下载目录',
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text('导出至$type'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 分类筛选
+                    Text(
+                      '分类筛选',
                       style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.info,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimaryLight,
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<int?>(
+                      value: selectedCategoryId,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                      items: [
+                        const DropdownMenuItem(
+                          value: null,
+                          child: Text('全部分类'),
+                        ),
+                        ..._categories.map((category) => DropdownMenuItem(
+                          value: category.id,
+                          child: Text(category.name),
+                        )),
+                      ],
+                      onChanged: (value) {
+                        setDialogState(() {
+                          selectedCategoryId = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // 时间范围
+                    Text(
+                      '时间范围',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimaryLight,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: () async {
+                              final date = await showDatePicker(
+                                context: context,
+                                initialDate: startDate ?? DateTime.now(),
+                                firstDate: DateTime(2000),
+                                lastDate: DateTime.now(),
+                              );
+                              if (date != null) {
+                                setDialogState(() {
+                                  startDate = date;
+                                });
+                              }
+                            },
+                            child: InputDecorator(
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                hintText: '开始日期',
+                              ),
+                              child: Text(
+                                startDate != null
+                                    ? '${startDate!.year}-${startDate!.month.toString().padLeft(2, '0')}-${startDate!.day.toString().padLeft(2, '0')}'
+                                    : '开始日期',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: startDate != null
+                                      ? AppColors.textPrimaryLight
+                                      : AppColors.textSecondaryLight,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () async {
+                              final date = await showDatePicker(
+                                context: context,
+                                initialDate: endDate ?? DateTime.now(),
+                                firstDate: DateTime(2000),
+                                lastDate: DateTime.now(),
+                              );
+                              if (date != null) {
+                                setDialogState(() {
+                                  endDate = date;
+                                });
+                              }
+                            },
+                            child: InputDecorator(
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                hintText: '结束日期',
+                              ),
+                              child: Text(
+                                endDate != null
+                                    ? '${endDate!.year}-${endDate!.month.toString().padLeft(2, '0')}-${endDate!.day.toString().padLeft(2, '0')}'
+                                    : '结束日期',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: endDate != null
+                                      ? AppColors.textPrimaryLight
+                                      : AppColors.textSecondaryLight,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(AppTheme.spacingSm),
+                      decoration: BoxDecoration(
+                        color: AppColors.info.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            size: 16,
+                            color: AppColors.info,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '导出文件将保存到应用文档目录',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.info,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('取消'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context, _ExportOptions(
+                      filter: ExportFilter(
+                        categoryId: selectedCategoryId,
+                        startDate: startDate,
+                        endDate: endDate,
+                      ),
+                    ));
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('导出'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// 选择文件并导入
+  Future<void> _pickFile() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['xlsx', 'json'],
+        withData: true,
+      );
+
+      if (result == null || result.files.isEmpty) return;
+
+      final file = result.files.first;
+      final extension = file.extension?.toLowerCase();
+
+      if (extension != 'xlsx' && extension != 'json') {
+        _showErrorSnackBar('不支持的文件格式，请选择 .xlsx 或 .json 文件');
+        return;
+      }
+
+      // 显示导入选项对话框
+      final importOptions = await _showImportOptionsDialog();
+      if (importOptions == null || !mounted) return;
+
+      setState(() => _isImporting = true);
+
+      try {
+        final importService = ref.read(importServiceProvider);
+        Result<ImportResult> importResult;
+
+        if (extension == 'xlsx') {
+          importResult = await importService.importFromExcel(
+            file.bytes!,
+            strategy: importOptions.strategy,
+            triggerAIAnalysis: importOptions.triggerAIAnalysis,
+          );
+        } else {
+          final jsonString = String.fromCharCodes(file.bytes!);
+          importResult = await importService.importFromJson(
+            jsonString,
+            strategy: importOptions.strategy,
+            triggerAIAnalysis: importOptions.triggerAIAnalysis,
+          );
+        }
+
+        if (!mounted) return;
+
+        if (importResult.isSuccess) {
+          final data = importResult.dataOrNull!;
+          _showImportResultDialog(data);
+        } else {
+          _showErrorSnackBar(importResult.errorOrNull ?? '导入失败');
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isImporting = false);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorSnackBar('文件选择失败: $e');
+      }
+    }
+  }
+
+  /// 显示导入选项对话框
+  Future<_ImportOptions?> _showImportOptionsDialog() async {
+    ConflictStrategy strategy = ConflictStrategy.skip;
+    bool triggerAIAnalysis = false;
+
+    return showDialog<_ImportOptions>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('导入选项'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 冲突处理策略
+                  Text(
+                    '冲突处理策略',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimaryLight,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...[
+                    (ConflictStrategy.skip, '跳过已存在的记录', '保留原有数据，跳过重复记录'),
+                    (ConflictStrategy.overwrite, '覆盖已存在的记录', '用新数据替换原有数据'),
+                    (ConflictStrategy.merge, '合并记录', '保留原有数据，补充新数据'),
+                  ].map((item) {
+                    final (value, title, subtitle) = item;
+                    return RadioListTile<ConflictStrategy>(
+                      title: Text(title),
+                      subtitle: Text(
+                        subtitle,
+                        style: TextStyle(fontSize: 12, color: AppColors.textSecondaryLight),
+                      ),
+                      value: value,
+                      groupValue: strategy,
+                      onChanged: (v) {
+                        setDialogState(() {
+                          strategy = v!;
+                        });
+                      },
+                      contentPadding: EdgeInsets.zero,
+                      visualDensity: VisualDensity.compact,
+                    );
+                  }),
+                  const SizedBox(height: 16),
+
+                  // AI分析选项
+                  CheckboxListTile(
+                    title: const Text('触发 AI 分析'),
+                    subtitle: Text(
+                      '导入后自动对灵感进行 AI 分析',
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondaryLight),
+                    ),
+                    value: triggerAIAnalysis,
+                    onChanged: (v) {
+                      setDialogState(() {
+                        triggerAIAnalysis = v ?? false;
+                      });
+                    },
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
                   ),
                 ],
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('取消'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('取消'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context, _ImportOptions(
+                      strategy: strategy,
+                      triggerAIAnalysis: triggerAIAnalysis,
+                    ));
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('导入'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// 显示导入结果对话框
+  void _showImportResultDialog(ImportResult result) {
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('导入完成'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildResultRow(Icons.check_circle, AppColors.success, '成功', result.successCount),
+              const SizedBox(height: 8),
+              _buildResultRow(Icons.skip_next, AppColors.warning, '跳过', result.skipCount),
+              const SizedBox(height: 8),
+              _buildResultRow(Icons.error, AppColors.error, '错误', result.errorCount),
+              if (result.errors.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(
+                  '错误详情:',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimaryLight,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  constraints: const BoxConstraints(maxHeight: 150),
+                  decoration: BoxDecoration(
+                    color: AppColors.backgroundLight,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                    border: Border.all(color: AppColors.borderLight),
+                  ),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.all(8),
+                    itemCount: result.errors.length > 10 ? 10 : result.errors.length,
+                    itemBuilder: (context, index) {
+                      return Padding(
+        padding: const EdgeInsets.only(bottom: 4),
+        child: Text(
+          result.errors[index],
+          style: TextStyle(
+            fontSize: 12,
+            color: AppColors.error,
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _showSuccessSnackBar('数据导出成功');
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: AppColors.primaryDark,
-            ),
-            child: const Text('导出'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 选择文件
-  void _pickFile() {
-    // TODO: 实现文件选择器
-    _showNotImplemented();
-  }
-
-  /// 显示成功提示
-  void _showSuccessSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(
-              Icons.check_circle_outline,
-              color: Colors.white,
-            ),
-            const SizedBox(width: 8),
-            Text(message),
-          ],
         ),
-        backgroundColor: AppColors.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-        ),
+      );
+    },
+  ),
+),
+if (result.errors.length > 10)
+  Padding(
+    padding: const EdgeInsets.only(top: 8),
+    child: Text(
+      '还有 ${result.errors.length - 10} 条错误未显示...',
+      style: TextStyle(
+        fontSize: 12,
+        color: AppColors.textSecondaryLight,
       ),
-    );
-  }
+    ),
+  ),
+],
+],
+),
+actions: [
+TextButton(
+onPressed: () => Navigator.pop(context),
+child: const Text('确定'),
+),
+],
+);
+},
+);
+}
 
-  /// 显示功能未实现提示
-  void _showNotImplemented() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('功能开发中...'),
-        duration: Duration(seconds: 1),
-      ),
-    );
-  }
+Widget _buildResultRow(IconData icon, Color color, String label, int count) {
+return Row(
+children: [
+Icon(icon, color: color, size: 20),
+const SizedBox(width: 8),
+Text(
+label,
+style: TextStyle(
+fontSize: 14,
+color: AppColors.textPrimaryLight,
+),
+),
+const Spacer(),
+Text(
+'$count 条',
+style: TextStyle(
+fontSize: 14,
+fontWeight: FontWeight.w600,
+color: color,
+),
+),
+],
+);
+}
+
+/// 显示成功提示
+void _showSuccessSnackBar(String message) {
+ScaffoldMessenger.of(context).showSnackBar(
+SnackBar(
+content: Row(
+children: [
+const Icon(
+Icons.check_circle_outline,
+color: Colors.white,
+),
+const SizedBox(width: 8),
+Expanded(child: Text(message)),
+],
+),
+backgroundColor: AppColors.success,
+behavior: SnackBarBehavior.floating,
+shape: RoundedRectangleBorder(
+borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+),
+duration: const Duration(seconds: 4),
+),
+);
+}
+
+/// 显示错误提示
+void _showErrorSnackBar(String message) {
+ScaffoldMessenger.of(context).showSnackBar(
+SnackBar(
+content: Row(
+children: [
+const Icon(
+Icons.error_outline,
+color: Colors.white,
+),
+const SizedBox(width: 8),
+Expanded(child: Text(message)),
+],
+),
+backgroundColor: AppColors.error,
+behavior: SnackBarBehavior.floating,
+shape: RoundedRectangleBorder(
+borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+),
+duration: const Duration(seconds: 4),
+),
+);
+}
+}
+
+/// 导出选项
+class _ExportOptions {
+final ExportFilter filter;
+
+const _ExportOptions({required this.filter});
+}
+
+/// 导入选项
+class _ImportOptions {
+final ConflictStrategy strategy;
+final bool triggerAIAnalysis;
+
+const _ImportOptions({
+required this.strategy,
+required this.triggerAIAnalysis,
+});
 }
