@@ -103,13 +103,17 @@ class ImportService {
       final excel = Excel.decodeBytes(bytes);
       final sheet = excel.tables.values.first;
 
-      // 解析表头
+      // 解析表头 - 从第一行获取列数
       final headers = <String, int>{};
-      final maxCols = sheet.columns.length;
-      for (var col = 0; col < maxCols; col++) {
-        final cell = sheet.cell(CellIndex.indexByString('${_colIndexToLetter(col)}1'));
-        if (cell.value != null) {
-          headers[cell.value.toString().trim().toLowerCase()] = col;
+      final firstRow = sheet.rows.firstOrNull;
+      if (firstRow == null) {
+        return Result.error('Excel 文件为空');
+      }
+      
+      for (var col = 0; col < firstRow.length; col++) {
+        final cell = firstRow[col];
+        if (cell?.value != null) {
+          headers[cell!.value.toString().trim().toLowerCase()] = col;
         }
       }
 
@@ -126,21 +130,23 @@ class ImportService {
 
       // 解析数据行
       final rows = <Map<String, dynamic>>[];
-      for (var row = 2; row <= sheet.maxRows; row++) {
+      final totalRows = sheet.rows.length;
+      for (var rowIdx = 1; rowIdx < totalRows; rowIdx++) {
         final rowData = <String, dynamic>{};
+        final currentRow = sheet.rows[rowIdx];
 
         // 获取内容
-        final contentCell = sheet.cell(CellIndex.indexByString('${_colIndexToLetter(contentColIndex)}$row'));
-        if (contentCell.value == null || contentCell.value.toString().trim().isEmpty) {
+        final contentCell = currentRow[contentColIndex];
+        if (contentCell?.value == null || contentCell!.value.toString().trim().isEmpty) {
           continue; // 跳过空内容行
         }
         rowData['content'] = contentCell.value.toString().trim();
 
         // 获取 ID
-        if (idColIndex != null) {
-          final idCell = sheet.cell(CellIndex.indexByString('${_colIndexToLetter(idColIndex)}$row'));
-          if (idCell.value != null) {
-            final idStr = idCell.value.toString().trim();
+        if (idColIndex != null && idColIndex < currentRow.length) {
+          final idCell = currentRow[idColIndex];
+          if (idCell?.value != null) {
+            final idStr = idCell!.value.toString().trim();
             final id = int.tryParse(idStr);
             if (id != null) {
               rowData['id'] = id;
@@ -149,26 +155,26 @@ class ImportService {
         }
 
         // 获取分类
-        if (categoryColIndex != null) {
-          final categoryCell = sheet.cell(CellIndex.indexByString('${_colIndexToLetter(categoryColIndex)}$row'));
-          if (categoryCell.value != null) {
-            rowData['category'] = categoryCell.value.toString().trim();
+        if (categoryColIndex != null && categoryColIndex < currentRow.length) {
+          final categoryCell = currentRow[categoryColIndex];
+          if (categoryCell?.value != null) {
+            rowData['category'] = categoryCell!.value.toString().trim();
           }
         }
 
         // 获取标签
-        if (tagsColIndex != null) {
-          final tagsCell = sheet.cell(CellIndex.indexByString('${_colIndexToLetter(tagsColIndex)}$row'));
-          if (tagsCell.value != null) {
-            rowData['tags'] = tagsCell.value.toString().trim();
+        if (tagsColIndex != null && tagsColIndex < currentRow.length) {
+          final tagsCell = currentRow[tagsColIndex];
+          if (tagsCell?.value != null) {
+            rowData['tags'] = tagsCell!.value.toString().trim();
           }
         }
 
         // 获取创建时间
-        if (createdAtColIndex != null) {
-          final createdAtCell = sheet.cell(CellIndex.indexByString('${_colIndexToLetter(createdAtColIndex)}$row'));
-          if (createdAtCell.value != null) {
-            final dateValue = createdAtCell.value;
+        if (createdAtColIndex != null && createdAtColIndex < currentRow.length) {
+          final createdAtCell = currentRow[createdAtColIndex];
+          if (createdAtCell?.value != null) {
+            final dateValue = createdAtCell!.value;
             if (dateValue is DateTime) {
               rowData['createdAt'] = dateValue;
             } else {

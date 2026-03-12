@@ -26,24 +26,24 @@
 
 ## 阶段 3：连接数据管理页面
 
-- [ ] Task 5: 更新数据管理页面
-  - [ ] SubTask 5.1: 在 `data_management_page.dart` 添加导出按钮和导出选项对话框
-  - [ ] SubTask 5.2: 在 `data_management_page.dart` 添加导入按钮和文件选择器
-  - [ ] SubTask 5.3: 实现导出进度提示
-  - [ ] SubTask 5.4: 实现导入进度提示和结果反馈
+- [x] Task 5: 更新数据管理页面
+  - [x] SubTask 5.1: 在 `data_management_page.dart` 添加导出按钮和导出选项对话框
+  - [x] SubTask 5.2: 在 `data_management_page.dart` 添加导入按钮和文件选择器
+  - [x] SubTask 5.3: 实现导出进度提示
+  - [x] SubTask 5.4: 实现导入进度提示和结果反馈
 
 ## 阶段 4：Provider 集成
 
-- [ ] Task 6: 创建导出/导入 Provider
-  - [ ] SubTask 6.1: 在 `app_providers.dart` 添加导出/导入服务 Provider
-  - [ ] SubTask 6.2: 确保依赖注入正确
+- [x] Task 6: 创建导出/导入 Provider
+  - [x] SubTask 6.1: 在 `app_providers.dart` 添加导出/导入服务 Provider
+  - [x] SubTask 6.2: 确保依赖注入正确
 
 ## 阶段 5：验证
 
-- [ ] Task 7: 运行验证
-  - [ ] SubTask 7.1: 执行 `flutter analyze` 确保无错误
-  - [ ] SubTask 7.2: 执行 `flutter test` 确保所有测试通过
-  - [ ] SubTask 7.3: 手动测试导出/导入功能
+- [x] Task 7: 运行验证
+  - [x] SubTask 7.1: 执行 `flutter analyze` 确保无错误
+  - [x] SubTask 7.2: 执行 `flutter test` 确保所有测试通过
+  - [x] SubTask 7.3: 手动测试导出/导入功能
 
 # Task Dependencies
 
