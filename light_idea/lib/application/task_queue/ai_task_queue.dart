@@ -1,0 +1,220 @@
+import 'dart:async';
+import 'dart:collection';
+import '../../domain/entities/ai_task.dart';
+import '../../domain/entities/ai_analysis.dart';
+import '../../domain/entities/idea.dart';
+import '../../domain/repositories/ai_task_repository.dart';
+import '../../domain/repositories/idea_repository.dart';
+import '../../domain/repositories/ai_analysis_repository.dart';
+import '../../domain/repositories/category_repository.dart';
+import '../../domain/repositories/tag_repository.dart';
+import '../../core/logger/app_logger.dart';
+import '../../core/constants/app_constants.dart';
+import '../../core/exceptions/ai_exceptions.dart';
+import '../ai/ai_understanding_service.dart';
+import '../ai/ai_embedding_service.dart';
+
+enum EnqueueStatus { enqueued, skipped }
+
+class EnqueueResult {
+  final EnqueueStatus status;
+  final AITaskEntity? task;
+  final String? reason;
+
+  const EnqueueResult._(this.status, this.task, [this.reason]);
+
+  factory EnqueueResult.enqueued(AITaskEntity task) =>
+      EnqueueResult._(EnqueueStatus.enqueued, task);
+
+  factory EnqueueResult.skipped(String reason, [AITaskEntity? task]) =>
+      EnqueueResult._(EnqueueStatus.skipped, task, reason);
+
+  bool get wasEnqueued => status == EnqueueStatus.enqueued;
+  bool get wasSkipped => status == EnqueueStatus.skipped;
+}
+
+class AITaskQueue {
+  final Queue<AITaskEntity> _queue = Queue();
+  final AIUnderstandingService _understandingService;
+  final AIEmbeddingService _embeddingService;
+  final AITaskRepository _taskRepository;
+  final IdeaRepository _ideaRepository;
+  final AIAnalysisRepository _analysisRepository;
+  final CategoryRepository _categoryRepository;
+  final TagRepository _tagRepository;
+  final AppLogger _logger;
+
+  bool _isProcessing = false;
+
+  AITaskQueue({
+    required AIUnderstandingService understandingService,
+    required AIEmbeddingService embeddingService,
+    required AITaskRepository taskRepository,
+    required IdeaRepository ideaRepository,
+    required AIAnalysisRepository analysisRepository,
+    required CategoryRepository categoryRepository,
+    required TagRepository tagRepository,
+    required AppLogger logger,
+  })  : _understandingService = understandingService,
+        _embeddingService = embeddingService,
+        _taskRepository = taskRepository,
+        _ideaRepository = ideaRepository,
+        _analysisRepository = analysisRepository,
+        _categoryRepository = categoryRepository,
+        _tagRepository = tagRepository,
+        _logger = logger;
+
+  Future<EnqueueResult> enqueue(int ideaId, {TaskType taskType = TaskType.basicAnalysis}) async {
+    _logger.info('入队AI任务: ideaId=$ideaId, type=$taskType');
+
+    final activeTask = await _taskRepository.getActiveTaskByIdeaId(ideaId);
+    if (activeTask != null) {
+      _logger.info('任务已存在，跳过入队: ideaId=$ideaId, taskId=${activeTask.id}');
+      return EnqueueResult.skipped('任务已在队列中', activeTask);
+    }
+
+    final latestTask = await _taskRepository.getLatestTaskByIdeaId(ideaId);
+    if (latestTask != null &&
+        latestTask.status == TaskStatus.completed &&
+        latestTask.completedAt != null &&
+        DateTime.now().difference(latestTask.completedAt!) < const Duration(hours: 24)) {
+      _logger.info('任务最近已完成，跳过入队: ideaId=$ideaId');
+      return EnqueueResult.skipped('任务已在24小时内完成', latestTask);
+    }
+
+    final task = AITaskEntity(
+      id: 0,
+      ideaId: ideaId,
+      taskType: taskType,
+      status: TaskStatus.pending,
+      createdAt: DateTime.now(),
+    );
+
+    final savedTask = await _taskRepository.save(task);
+    _queue.add(savedTask);
+
+    _logger.info('任务入队成功: ideaId=$ideaId, taskId=${savedTask.id}');
+    unawaited(_processNext());
+
+    return EnqueueResult.enqueued(savedTask);
+  }
+
+  Future<void> _processNext() async {
+    if (_isProcessing || _queue.isEmpty) return;
+
+    _isProcessing = true;
+    final task = _queue.removeFirst();
+
+    try {
+      await _taskRepository.updateStatus(task.id, TaskStatus.processing);
+      await _ideaRepository.updateAIStatus(task.ideaId, AIStatus.processing);
+
+      await _runBasicAnalysis(task.ideaId);
+
+      await _taskRepository.updateStatus(task.id, TaskStatus.completed);
+      await _ideaRepository.updateAIStatus(task.ideaId, AIStatus.completed);
+
+      _logger.info('AI任务完成: taskId=${task.id}, ideaId=${task.ideaId}');
+    } on AIException catch (e, st) {
+      _logger.error('AI任务失败(AI异常): taskId=${task.id}', e, st);
+      await _handleFailure(task, 'AI错误: ${e.message}');
+    } catch (e, st) {
+      _logger.error('AI任务失败: taskId=${task.id}', e, st);
+      await _handleFailure(task, e.toString());
+    } finally {
+      _isProcessing = false;
+      unawaited(_processNext());
+    }
+  }
+
+  Future<void> _runBasicAnalysis(int ideaId) async {
+    final idea = await _ideaRepository.getById(ideaId);
+    if (idea == null) {
+      throw Exception('灵感不存在: $ideaId');
+    }
+
+    final understandingResult = await _understandingService.analyze(idea.content);
+    if (understandingResult.isError) {
+      throw Exception(understandingResult.errorOrNull);
+    }
+    final understanding = understandingResult.dataOrNull!;
+
+    final embeddingResult = await _embeddingService.generateEmbedding(idea.content);
+    if (embeddingResult.isError) {
+      throw Exception(embeddingResult.errorOrNull);
+    }
+    final embedding = embeddingResult.dataOrNull!;
+
+    int? categoryId;
+    final categories = await _categoryRepository.getAll();
+    for (final category in categories) {
+      if (category.name == understanding.categoryName) {
+        categoryId = category.id;
+        break;
+      }
+    }
+
+    final tagIds = <int>[];
+    for (final tagName in understanding.tags) {
+      final tag = await _tagRepository.saveIfNotExists(tagName);
+      tagIds.add(tag.id);
+    }
+
+    await _ideaRepository.updateEmbedding(ideaId, embedding);
+    if (categoryId != null) {
+      await _ideaRepository.update(idea.copyWith(categoryId: categoryId));
+    }
+
+    final analysis = AIAnalysisEntity(
+      id: 0,
+      ideaId: ideaId,
+      categoryResult: categoryId,
+      tagResults: tagIds,
+      summary: understanding.summary,
+      aiHint: understanding.aiHint,
+      status: AnalysisStatus.completed,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+    await _analysisRepository.save(analysis);
+  }
+
+  Future<void> _handleFailure(AITaskEntity task, String errorMessage) async {
+    await _taskRepository.incrementRetryCount(task.id);
+
+    final updatedTask = await _taskRepository.getById(task.id);
+    if (updatedTask == null) return;
+
+    if (updatedTask.retryCount < AppConstants.maxRetryCount) {
+      await _taskRepository.updateStatus(updatedTask.id, TaskStatus.pending, errorMessage: errorMessage);
+      _queue.add(updatedTask.copyWith(status: TaskStatus.pending));
+      _logger.info('AI任务将重试: taskId=${task.id}, retryCount=${updatedTask.retryCount}');
+    } else {
+      await _taskRepository.updateStatus(updatedTask.id, TaskStatus.failed, errorMessage: errorMessage);
+      await _ideaRepository.updateAIStatus(task.ideaId, AIStatus.failed);
+      _logger.warning('AI任务最终失败: taskId=${task.id}, retryCount=${updatedTask.retryCount}');
+    }
+  }
+
+  Future<void> resumePendingTasks() async {
+    _logger.info('恢复未完成的AI任务');
+
+    final pendingTasks = await _taskRepository.getPendingTasks();
+    final processingTasks = await _taskRepository.getProcessingTasks();
+
+    for (final task in [...processingTasks, ...pendingTasks]) {
+      _queue.add(task.copyWith(status: TaskStatus.pending));
+    }
+
+    unawaited(_processNext());
+  }
+
+  int get queueLength => _queue.length;
+
+  bool get isProcessing => _isProcessing;
+
+  Future<void> clearCompletedTasks() async {
+    await _taskRepository.deleteCompletedTasks();
+    _logger.info('已清理完成的AI任务');
+  }
+}

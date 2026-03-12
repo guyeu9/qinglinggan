@@ -1,0 +1,60 @@
+name: light_idea
+description: "轻灵感 - AI驱动的个人灵感管理工具"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  
+  # 状态管理
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
+  
+  # 本地数据库
+  isar: ^3.1.0+1
+  isar_flutter_libs: ^3.1.0+1
+  
+  # 网络请求
+  dio: ^5.4.3+1
+  
+  # 路由
+  go_router: ^14.2.0
+  
+  # 工具
+  uuid: ^4.4.0
+  path_provider: ^2.1.3
+  intl: ^0.19.0
+  logger: ^2.3.0
+  
+  # 安全存储
+  flutter_secure_storage: ^9.2.2
+  
+  # 文件操作
+  file_picker: ^8.0.3
+  
+  # Excel 导入导出
+  excel: ^4.0.3
+  
+  # Google Fonts
+  google_fonts: ^6.2.1
+  
+  # Material Symbols 图标
+  material_symbols_icons: ^4.2805.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.2
+  build_runner: ^2.4.9
+  isar_generator: ^3.1.0+1
+  riverpod_generator: ^2.4.0
+  mockito: ^5.4.4
+
+flutter:
+  uses-material-design: true

@@ -1,0 +1,18 @@
+{
+    "editor.experimental.treeSitterTelemetry": true,
+    "redhat.telemetry.enabled": true,
+    "telemetry.editStats.details.enabled": true,
+    "telemetry.editStats.showDecorations": true,
+     // 你的自定义API Key
+     "cursor.apiKey": "sk-qt-cool-CYVvYSv8C7AiFN5VLNydSOCTAXrQLG2v",
+     // 你的自定义Base URL，必须以/v1结尾
+     "cursor.baseUrl": "https://gpt.qt.cool/v1/responses",
+     // 强制默认使用的模型名称
+     "cursor.defaultModel": "gpt-5.2-codex",
+     // 关闭官方模型自动切换，强制走自定义API
+     "cursor.autoModelSwitching": false,
+     // 禁用官方额度检测，强制使用自定义API
+     "cursor.useNativeModels": false,
+     // 代码补全也强制走自定义API
+     "cursor.tabCompletion.useCustomApi": true
+}

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {primary: "#39E079", "text-core": "#065F46", "background-light": "#f6f8f7", "background-dark": "#122017", "accent-sky": "#BAE6FD", warning: "#ef4444"}, fontFamily: {display: "Font Unspecified"}, borderRadius: {DEFAULT: "0px", lg: "0px", xl: "0px", full: "0px"}}}};</script>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-core dark:text-emerald-50">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<!-- Header -->
+<header class="sticky top-0 z-10 flex items-center bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md p-4 border-b border-primary/20 justify-between">
+<button class="flex size-10 items-center justify-center rounded-full hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-text-core dark:text-emerald-300">arrow_back</span>
+</button>
+<h2 class="text-lg font-bold leading-tight tracking-tight flex-1 text-center text-text-core dark:text-emerald-50">回收站</h2>
+<div class="flex w-10 items-center justify-end">
+<button class="text-warning text-sm font-bold hover:opacity-80 transition-opacity">清空</button>
+</div>
+</header>
+<!-- Notice Bar -->
+<div class="px-4 py-3">
+<div class="flex items-center gap-3 rounded-xl bg-primary/10 dark:bg-primary/20 p-4 border border-primary/20">
+<span class="material-symbols-outlined text-text-core dark:text-primary text-xl">info</span>
+<p class="text-sm font-medium text-text-core/80 dark:text-emerald-200">内容将在 30 天后自动彻底删除</p>
+</div>
+</div>
+<!-- List of Deleted Items -->
+<main class="flex-1 flex flex-col gap-4 p-4">
+<!-- Card 1 -->
+<div class="group flex flex-col gap-3 rounded-xl bg-white dark:bg-emerald-900/30 p-4 shadow-sm border border-emerald-100 dark:border-emerald-800/50">
+<div class="flex justify-between items-start">
+<span class="text-xs font-semibold text-text-core bg-accent-sky/40 dark:bg-accent-sky/20 px-2 py-1 rounded"># 设计灵感</span>
+<span class="text-xs text-emerald-600/60 dark:text-emerald-400/60">23天后删除</span>
+</div>
+<p class="text-base font-medium leading-relaxed text-text-core dark:text-emerald-50">
+                极简主义设计不仅是一种风格，更是一种生活态度。它要求我们剥离繁琐，直抵本质。
+            </p>
+<div class="h-[1px] w-full bg-emerald-50 dark:bg-emerald-800/50 my-1"></div>
+<div class="flex items-center justify-between">
+<p class="text-xs text-emerald-600/60 dark:text-emerald-400/60">删除于：2023-10-27 14:30</p>
+<div class="flex gap-2">
+<button class="flex h-8 items-center justify-center rounded-lg px-3 bg-emerald-50 dark:bg-emerald-800 text-warning text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-700 transition-colors">
+                        彻底删除
+                    </button>
+<button class="flex h-8 items-center justify-center rounded-lg px-4 bg-primary text-text-core text-xs font-bold hover:opacity-90 transition-opacity">
+                        恢复
+                    </button>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="group flex flex-col gap-3 rounded-xl bg-white dark:bg-emerald-900/30 p-4 shadow-sm border border-emerald-100 dark:border-emerald-800/50">
+<div class="flex justify-between items-start">
+<span class="text-xs font-semibold text-text-core bg-accent-sky/40 dark:bg-accent-sky/20 px-2 py-1 rounded"># 每日摘录</span>
+<span class="text-xs text-emerald-600/60 dark:text-emerald-400/60">12天后删除</span>
+</div>
+<p class="text-base font-medium leading-relaxed text-text-core dark:text-emerald-50">
+                “在这光怪陆离的人间，没有谁可以将日子过得行云流水。但我始终相信，走过平湖烟雨，岁月山河，那些历尽劫数、尝遍百味的人，会更加生动而干净。”
+            </p>
+<div class="h-[1px] w-full bg-emerald-50 dark:bg-emerald-800/50 my-1"></div>
+<div class="flex items-center justify-between">
+<p class="text-xs text-emerald-600/60 dark:text-emerald-400/60">删除于：2023-11-02 09:15</p>
+<div class="flex gap-2">
+<button class="flex h-8 items-center justify-center rounded-lg px-3 bg-emerald-50 dark:bg-emerald-800 text-warning text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-700 transition-colors">
+                        彻底删除
+                    </button>
+<button class="flex h-8 items-center justify-center rounded-lg px-4 bg-primary text-text-core text-xs font-bold hover:opacity-90 transition-opacity">
+                        恢复
+                    </button>
+</div>
+</div>
+</div>
+<!-- Card with Image -->
+<div class="group flex flex-col gap-3 rounded-xl bg-white dark:bg-emerald-900/30 p-4 shadow-sm border border-emerald-100 dark:border-emerald-800/50">
+<div class="flex justify-between items-start">
+<span class="text-xs font-semibold text-text-core bg-accent-sky/40 dark:bg-accent-sky/20 px-2 py-1 rounded"># 摄影</span>
+<span class="text-xs text-emerald-600/60 dark:text-emerald-400/60">29天后删除</span>
+</div>
+<div class="flex gap-3">
+<div class="size-20 shrink-0 overflow-hidden rounded-lg bg-emerald-100">
+<img alt="Nature landscape photography with mountains and lake" class="h-full w-full object-cover grayscale opacity-60" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAlcjQbDokoo-ghDkPFPjMF1OWleripQySBZDl0IDn9tgUbPUwMsddB5MQ0gAXKfU90GhfpSGJY1-Mw1ymYKmpRaq8shcWGKYaLoV_cMpgMF7Z2nHzDnLjgFDhKALFszFjW7uNl7gzr2_V81SWmc3W4crw28qTTa0ObwcBCwb4XzWibZLdMUqe-eIu1-r4W2WDenMd3GEJB0b6fb36gTqyiK3fwZwuUy2P32ho1pe49u5wpjAiQ_mHNbb0HbbyxY_b5aMETsUFYt8w"/>
+</div>
+<p class="text-sm font-medium leading-snug text-text-core/70 dark:text-emerald-200/70 line-clamp-3">
+                    周末在郊外拍的这组照片，感觉色调还是很满意的，虽然被删除了但还是想保留在这个列表里。
+                </p>
+</div>
+<div class="h-[1px] w-full bg-emerald-50 dark:bg-emerald-800/50 my-1"></div>
+<div class="flex items-center justify-between">
+<p class="text-xs text-emerald-600/60 dark:text-emerald-400/60">删除于：今天 10:45</p>
+<div class="flex gap-2">
+<button class="flex h-8 items-center justify-center rounded-lg px-3 bg-emerald-50 dark:bg-emerald-800 text-warning text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-700 transition-colors">
+                        彻底删除
+                    </button>
+<button class="flex h-8 items-center justify-center rounded-lg px-4 bg-primary text-text-core text-xs font-bold hover:opacity-90 transition-opacity">
+                        恢复
+                    </button>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

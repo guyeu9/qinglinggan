@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6EE7B7",
+                        "forest-core": "#065F46",
+                        "background-light": "#F0FDF4",
+                        "background-dark": "#064E3B",
+                        "secondary-accent": "#BAE6FD",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Public Sans', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+<div class="relative flex h-screen w-full overflow-hidden">
+<!-- Overlay -->
+<div class="absolute inset-0 z-40 bg-slate-900/40 backdrop-blur-sm"></div>
+<!-- Sidebar Drawer -->
+<div class="relative z-50 flex h-full w-10/12 max-w-[360px] flex-col bg-background-light dark:bg-background-dark shadow-2xl border-r border-forest-core/10">
+<!-- Header Section -->
+<div class="flex items-center gap-4 px-6 py-8">
+<div class="flex h-12 w-12 items-center justify-center rounded-xl bg-forest-core text-white shadow-lg">
+<span class="material-symbols-outlined text-3xl">lightbulb</span>
+</div>
+<div>
+<h1 class="text-xl font-bold text-forest-core dark:text-primary">轻灵感</h1>
+<p class="text-sm text-forest-core/70 dark:text-primary/70">激发你的每一丝创意</p>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto px-4 pb-8">
+<!-- Section: 笔记统计 -->
+<div class="mb-8">
+<h3 class="mb-4 px-2 text-xs font-bold uppercase tracking-wider text-forest-core/50 dark:text-primary/50">笔记统计</h3>
+<div class="grid grid-cols-1 gap-3">
+<div class="flex items-center justify-between rounded-xl bg-white dark:bg-slate-800/50 p-4 shadow-sm border border-forest-core/5">
+<span class="text-forest-core dark:text-primary font-medium">总计笔记</span>
+<span class="text-2xl font-bold text-forest-core">54</span>
+</div>
+<div class="space-y-2 rounded-xl bg-secondary-accent/30 p-4 dark:bg-secondary-accent/10">
+<div class="flex justify-between text-sm">
+<span class="text-forest-core/80 dark:text-primary/80">社交 / 旅行 / 惊喜</span>
+<span class="font-bold text-forest-core dark:text-primary">24</span>
+</div>
+<div class="flex justify-between text-sm">
+<span class="text-forest-core/80 dark:text-primary/80">工作 / 创意</span>
+<span class="font-bold text-forest-core dark:text-primary">18</span>
+</div>
+<div class="flex justify-between text-sm">
+<span class="text-forest-core/80 dark:text-primary/80">摄影爱好</span>
+<span class="font-bold text-forest-core dark:text-primary">12</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Section: AI 分析进度 -->
+<div class="mb-8 rounded-xl bg-white dark:bg-slate-800/50 p-4 shadow-sm border border-forest-core/5">
+<div class="mb-3 flex items-center justify-between">
+<h3 class="text-xs font-bold uppercase tracking-wider text-forest-core/50 dark:text-primary/50">AI 分析进度</h3>
+<span class="text-xs font-bold text-forest-core">已完成 85%</span>
+</div>
+<div class="mb-4 h-2 w-full overflow-hidden rounded-full bg-forest-core/10 dark:bg-slate-700">
+<div class="h-full bg-primary" style="width: 85%"></div>
+</div>
+<button class="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-sm font-bold text-forest-core shadow-lg shadow-primary/20 transition-transform active:scale-95">
+<span class="material-symbols-outlined text-lg">smart_toy</span>
+                        运行分析
+                    </button>
+</div>
+<!-- Menu List -->
+<div class="space-y-1">
+<h3 class="mb-3 px-2 text-xs font-bold uppercase tracking-wider text-forest-core/50 dark:text-primary/50">系统管理</h3>
+<a class="flex h-12 items-center gap-4 rounded-xl px-4 text-forest-core dark:text-primary/80 hover:bg-primary/20 transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-semibold">设置</span>
+</a>
+<a class="flex h-12 items-center gap-4 rounded-xl px-4 bg-primary/20 text-forest-core font-bold" href="#">
+<span class="material-symbols-outlined font-variation-fill">psychology</span>
+<span class="text-sm">AI 管理</span>
+</a>
+<a class="flex h-12 items-center gap-4 rounded-xl px-4 text-forest-core dark:text-primary/80 hover:bg-primary/20 transition-colors" href="#">
+<span class="material-symbols-outlined">cloud_download</span>
+<span class="text-sm font-semibold">备份导出</span>
+</a>
+<a class="flex h-12 items-center gap-4 rounded-xl px-4 text-forest-core dark:text-primary/80 hover:bg-primary/20 transition-colors" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+<span class="text-sm font-semibold">帮助与反馈</span>
+</a>
+</div>
+</div>
+<!-- User Footer -->
+<div class="border-t border-forest-core/10 dark:border-forest-core/20 p-4">
+<div class="flex items-center gap-3 rounded-xl p-2">
+<div class="h-10 w-10 rounded-full bg-forest-core/10 dark:bg-slate-700 overflow-hidden">
+<img class="h-full w-full object-cover" data-alt="User profile avatar of a smiling man" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDlGocU6GyL5rzOFhcjmyZ0flCXdzJ16w4mc6jWdoCAD_AkRzlJPTdcwBGTvecdTAn3QLQKHAJFwqemS-je1N9sQyHGu0TzVf4d0s4kRZ6va6JSiHkEa1iga3BAED8PGa9-IkuhXotbAthYMSaiuQ8kH1Zb5Vi9JISxtMZiEHX6zBoYjVnTEzA1Mgv77TK-1NjkNpLffwQoQZ4AeTtSYGdBGbLBgn-hWXL3QBgxq0ZhD_-ch-OEobXoarpwSQ9qgxbVM-Ue1pbFGIM"/>
+</div>
+<div class="flex-1 overflow-hidden">
+<p class="truncate text-sm font-bold text-forest-core dark:text-primary">灵感家 Alex</p>
+<p class="truncate text-xs text-forest-core/60 dark:text-primary/60">alex@inspiration.app</p>
+</div>
+<span class="material-symbols-outlined text-forest-core/40">logout</span>
+</div>
+</div>
+</div>
+</div>
+</body></html>

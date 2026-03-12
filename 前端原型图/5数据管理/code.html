@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6EE7B7",
+                        "primary-dark": "#065F46",
+                        "background-light": "#F0FDF4",
+                        "background-dark": "#064e3b",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Public Sans', 'Noto Sans SC', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen text-slate-900 dark:text-slate-100">
+<div class="max-w-md mx-auto min-h-screen flex flex-col shadow-sm">
+<!-- Header -->
+<header class="flex items-center justify-between p-4 bg-background-light dark:bg-background-dark sticky top-0 z-10 border-b border-primary/10">
+<button class="text-primary-dark dark:text-primary flex items-center justify-center p-2 rounded-full hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="text-primary-dark dark:text-white text-lg font-bold flex-1 text-center pr-10">数据管理</h1>
+</header>
+<main class="flex-1 overflow-y-auto">
+<!-- Section 1: Data Export -->
+<section class="p-5">
+<div class="mb-6">
+<h2 class="text-primary-dark dark:text-primary text-2xl font-bold mb-2">数据导出</h2>
+<p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+                        将所有灵感导出为 Excel 或数据库格式以进行备份，确保您的创意永不丢失。
+                    </p>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<!-- Export to Excel Card -->
+<button class="flex flex-col items-center justify-center p-6 bg-white dark:bg-slate-800 rounded-xl border border-primary/20 shadow-sm hover:shadow-md transition-all group">
+<div class="w-14 h-14 bg-primary/10 dark:bg-primary/20 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary-dark dark:text-primary text-3xl">table_view</span>
+</div>
+<span class="text-primary-dark dark:text-slate-100 font-semibold text-base mb-1">导出至 Excel</span>
+<span class="text-slate-400 text-xs">.xlsx 格式</span>
+</button>
+<!-- Export to DB Card -->
+<button class="flex flex-col items-center justify-center p-6 bg-white dark:bg-slate-800 rounded-xl border border-primary/20 shadow-sm hover:shadow-md transition-all group">
+<div class="w-14 h-14 bg-primary/10 dark:bg-primary/20 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary-dark dark:text-primary text-3xl">database</span>
+</div>
+<span class="text-primary-dark dark:text-slate-100 font-semibold text-base mb-1">导出至数据库</span>
+<span class="text-slate-400 text-xs">.db 格式</span>
+</button>
+</div>
+</section>
+<!-- Section 2: Data Import -->
+<section class="p-5 mt-4">
+<div class="mb-6">
+<h2 class="text-primary-dark dark:text-primary text-2xl font-bold mb-2">数据导入</h2>
+<p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+                        从以前备份的数据文件中恢复您的灵感，支持多种格式导入。
+                    </p>
+</div>
+<!-- Large Upload Area -->
+<div class="relative group">
+<input class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" type="file"/>
+<div class="flex flex-col items-center justify-center p-10 bg-white dark:bg-slate-800 border-2 border-dashed border-primary/30 rounded-xl group-hover:border-primary transition-colors">
+<div class="w-16 h-16 bg-primary/5 dark:bg-primary/10 rounded-full flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-primary text-4xl">cloud_upload</span>
+</div>
+<p class="text-primary-dark dark:text-slate-100 font-bold mb-1">点击或拖拽文件到此处</p>
+<p class="text-slate-400 text-sm">支持 .xlsx, .db 备份文件</p>
+</div>
+</div>
+</section>
+<!-- Bottom Security Note -->
+<section class="p-8 mt-4">
+<div class="flex items-start gap-3 p-4 bg-primary/5 dark:bg-primary/10 rounded-lg">
+<span class="material-symbols-outlined text-primary text-xl flex-shrink-0">shield_lock</span>
+<div class="flex flex-col">
+<h4 class="text-primary-dark dark:text-primary text-sm font-bold">数据安全提示</h4>
+<p class="text-slate-500 dark:text-slate-400 text-xs mt-1 leading-relaxed">
+                            您的灵感数据存储在本地设备中，导出文件仅包含您的个人创作内容。我们建议定期备份以防止意外丢失。
+                        </p>
+</div>
+</div>
+</section>
+</main>
+<!-- Navigation Placeholder for mobile-like feel -->
+<footer class="p-4 flex justify-center">
+<div class="w-1/3 h-1 bg-primary/20 rounded-full"></div>
+</footer>
+</div>
+</body></html>
