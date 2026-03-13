@@ -112,8 +112,8 @@ class HomeNotifier extends StateNotifier<HomeState> {
     }
   }
 
-  Future<bool> saveIdea(String content, {String? imageUrl}) async {
-    if (content.trim().isEmpty) {
+  Future<bool> saveIdea(String content, {List<String>? imagePaths}) async {
+    if (content.trim().isEmpty && (imagePaths == null || imagePaths.isEmpty)) {
       state = state.copyWith(error: '内容不能为空');
       return false;
     }
@@ -131,6 +131,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
         updatedAt: DateTime.now(),
         aiStatus: AIStatus.pending,
         tagIds: const [],
+        imagePaths: imagePaths ?? const [],
       );
 
       final savedIdea = await ideaRepo.save(idea);

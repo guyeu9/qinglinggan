@@ -11,6 +11,7 @@ class IdeaEntity {
   final AIStatus aiStatus;
   final List<int> tagIds;
   final List<double>? embedding;
+  final List<String> imagePaths;
 
   const IdeaEntity({
     required this.id,
@@ -23,6 +24,7 @@ class IdeaEntity {
     this.aiStatus = AIStatus.pending,
     this.tagIds = const [],
     this.embedding,
+    this.imagePaths = const [],
   });
 
   IdeaEntity copyWith({
@@ -36,6 +38,7 @@ class IdeaEntity {
     AIStatus? aiStatus,
     List<int>? tagIds,
     List<double>? embedding,
+    List<String>? imagePaths,
   }) {
     return IdeaEntity(
       id: id ?? this.id,
@@ -48,6 +51,7 @@ class IdeaEntity {
       aiStatus: aiStatus ?? this.aiStatus,
       tagIds: tagIds ?? this.tagIds,
       embedding: embedding ?? this.embedding,
+      imagePaths: imagePaths ?? this.imagePaths,
     );
   }
 

@@ -48,18 +48,23 @@ const IdeaModelSchema = CollectionSchema(
       name: r'embedding',
       type: IsarType.doubleList,
     ),
-    r'isDeleted': PropertySchema(
+    r'imagePaths': PropertySchema(
       id: 6,
+      name: r'imagePaths',
+      type: IsarType.stringList,
+    ),
+    r'isDeleted': PropertySchema(
+      id: 7,
       name: r'isDeleted',
       type: IsarType.bool,
     ),
     r'tagIds': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'tagIds',
       type: IsarType.longList,
     ),
     r'updatedAt': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -158,6 +163,13 @@ int _ideaModelEstimateSize(
       bytesCount += 3 + value.length * 8;
     }
   }
+  bytesCount += 3 + object.imagePaths.length * 3;
+  {
+    for (var i = 0; i < object.imagePaths.length; i++) {
+      final value = object.imagePaths[i];
+      bytesCount += value.length * 3;
+    }
+  }
   bytesCount += 3 + object.tagIds.length * 8;
   return bytesCount;
 }
@@ -174,9 +186,10 @@ void _ideaModelSerialize(
   writer.writeDateTime(offsets[3], object.createdAt);
   writer.writeDateTime(offsets[4], object.deletedAt);
   writer.writeDoubleList(offsets[5], object.embedding);
-  writer.writeBool(offsets[6], object.isDeleted);
-  writer.writeLongList(offsets[7], object.tagIds);
-  writer.writeDateTime(offsets[8], object.updatedAt);
+  writer.writeStringList(offsets[6], object.imagePaths);
+  writer.writeBool(offsets[7], object.isDeleted);
+  writer.writeLongList(offsets[8], object.tagIds);
+  writer.writeDateTime(offsets[9], object.updatedAt);
 }
 
 IdeaModel _ideaModelDeserialize(
@@ -195,9 +208,10 @@ IdeaModel _ideaModelDeserialize(
   object.deletedAt = reader.readDateTimeOrNull(offsets[4]);
   object.embedding = reader.readDoubleList(offsets[5]);
   object.id = id;
-  object.isDeleted = reader.readBool(offsets[6]);
-  object.tagIds = reader.readLongList(offsets[7]) ?? [];
-  object.updatedAt = reader.readDateTime(offsets[8]);
+  object.imagePaths = reader.readStringList(offsets[6]) ?? [];
+  object.isDeleted = reader.readBool(offsets[7]);
+  object.tagIds = reader.readLongList(offsets[8]) ?? [];
+  object.updatedAt = reader.readDateTime(offsets[9]);
   return object;
 }
 
@@ -222,10 +236,12 @@ P _ideaModelDeserializeProp<P>(
     case 5:
       return (reader.readDoubleList(offset)) as P;
     case 6:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringList(offset) ?? []) as P;
     case 7:
-      return (reader.readLongList(offset) ?? []) as P;
+      return (reader.readBool(offset)) as P;
     case 8:
+      return (reader.readLongList(offset) ?? []) as P;
+    case 9:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1476,6 +1492,231 @@ extension IdeaModelQueryFilter
     });
   }
 
+  QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition>
+      imagePathsElementEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'imagePaths',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition>
+      imagePathsElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'imagePaths',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition>
+      imagePathsElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'imagePaths',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition>
+      imagePathsElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'imagePaths',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition>
+      imagePathsElementStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'imagePaths',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition>
+      imagePathsElementEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'imagePaths',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition>
+      imagePathsElementContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'imagePaths',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition>
+      imagePathsElementMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'imagePaths',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition>
+      imagePathsElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'imagePaths',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition>
+      imagePathsElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'imagePaths',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition>
+      imagePathsLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'imagePaths',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition>
+      imagePathsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'imagePaths',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition>
+      imagePathsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'imagePaths',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition>
+      imagePathsLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'imagePaths',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition>
+      imagePathsLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'imagePaths',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition>
+      imagePathsLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'imagePaths',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
   QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition> isDeletedEqualTo(
       bool value) {
     return QueryBuilder.apply(this, (query) {
@@ -1914,6 +2155,12 @@ extension IdeaModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<IdeaModel, IdeaModel, QDistinct> distinctByImagePaths() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'imagePaths');
+    });
+  }
+
   QueryBuilder<IdeaModel, IdeaModel, QDistinct> distinctByIsDeleted() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isDeleted');
@@ -1974,6 +2221,12 @@ extension IdeaModelQueryProperty
   QueryBuilder<IdeaModel, List<double>?, QQueryOperations> embeddingProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'embedding');
+    });
+  }
+
+  QueryBuilder<IdeaModel, List<String>, QQueryOperations> imagePathsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'imagePaths');
     });
   }
 

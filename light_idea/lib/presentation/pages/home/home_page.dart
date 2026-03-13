@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import '../../../../core/router/route_names.dart';
 import '../../../../application/providers/home_provider.dart';
+import '../../../../application/providers/app_providers.dart';
 import '../../widgets/common/side_drawer.dart';
 
 /// 首页
@@ -27,6 +29,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _inputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final List<File> _selectedImages = [];
 
   @override
   void dispose() {
@@ -45,14 +48,74 @@ class _HomePageState extends ConsumerState<HomePage> {
     context.goNamed(RouteNames.ideaDetail, pathParameters: {'id': id.toString()});
   }
 
+  Future<void> _onImageTap() async {
+    final imagePickerService = ref.read(imagePickerServiceProvider);
+    final result = await imagePickerService.showImageSourceDialog(context);
+
+    if (result.isSuccess && result.dataOrNull!.isNotEmpty) {
+      setState(() {
+        _selectedImages.addAll(result.dataOrNull!.images);
+      });
+      HapticFeedback.mediumImpact();
+      _showImageSelectedSnackBar(result.dataOrNull!.length);
+    } else if (result.isError) {
+      _showErrorSnackBar(result.errorOrNull ?? '选择图片失败');
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _selectedImages.removeAt(index);
+    });
+    HapticFeedback.lightImpact();
+  }
+
+  void _showImageSelectedSnackBar(int count) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('已选择 $count 张图片'),
+        backgroundColor: const Color(0xFF065F46),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFFef4444),
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+    );
+  }
+
   Future<void> _onSendTap() async {
     final text = _inputController.text.trim();
-    if (text.isNotEmpty) {
+    final hasContent = text.isNotEmpty || _selectedImages.isNotEmpty;
+
+    if (hasContent) {
       _inputController.clear();
       HapticFeedback.mediumImpact();
-      
-      final success = await ref.read(homeProvider.notifier).saveIdea(text);
+
+      final imagePaths = _selectedImages.map((f) => f.path).toList();
+      final success = await ref.read(homeProvider.notifier).saveIdea(
+        text,
+        imagePaths: imagePaths,
+      );
+
       if (success && mounted) {
+        setState(() {
+          _selectedImages.clear();
+        });
         _showSaveSuccessSnackBar();
       }
     }
@@ -640,7 +703,13 @@ class _HomePageState extends ConsumerState<HomePage> {
                   ),
                   
                   const SizedBox(height: 12),
-                  
+
+                  // 已选图片预览
+                  if (_selectedImages.isNotEmpty)
+                    _buildSelectedImagesPreview(isDark),
+
+                  const SizedBox(height: 12),
+
                   // 快捷操作按钮
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -648,9 +717,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                       children: [
                         _buildQuickActionButton(
                           icon: Symbols.image,
-                          onTap: () {
-                            // TODO: 选择图片
-                          },
+                          onTap: _onImageTap,
                           isDark: isDark,
                         ),
                         const SizedBox(width: 24),
@@ -669,6 +736,56 @@ class _HomePageState extends ConsumerState<HomePage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// 已选图片预览
+  Widget _buildSelectedImagesPreview(bool isDark) {
+    return Container(
+      height: 80,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: _selectedImages.length,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    _selectedImages[index],
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: GestureDetector(
+                    onTap: () => _removeImage(index),
+                    child: Container(
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.6),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 14,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

@@ -31,6 +31,8 @@ class IdeaModel {
 
   List<int> tagIds = [];
 
+  List<String> imagePaths = [];
+
   IdeaEntity toEntity() {
     return IdeaEntity(
       id: id,
@@ -43,6 +45,7 @@ class IdeaModel {
       aiStatus: aiStatus,
       tagIds: tagIds,
       embedding: embedding,
+      imagePaths: imagePaths,
     );
   }
 
@@ -57,6 +60,7 @@ class IdeaModel {
       ..isDeleted = entity.isDeleted
       ..aiStatus = entity.aiStatus
       ..tagIds = entity.tagIds
-      ..embedding = entity.embedding;
+      ..embedding = entity.embedding
+      ..imagePaths = entity.imagePaths;
   }
 }

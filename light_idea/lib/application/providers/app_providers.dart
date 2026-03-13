@@ -22,6 +22,7 @@ import '../ai/ai_relation_service.dart';
 import '../task_queue/ai_task_queue.dart';
 import '../services/export_service.dart';
 import '../services/import_service.dart';
+import '../services/image_picker_service.dart';
 import 'ai_chat_provider.dart';
 
 final loggerProvider = Provider<AppLogger>((ref) {
@@ -152,4 +153,8 @@ final aiChatProvider = StateNotifierProvider<AIChatNotifier, AIChatState>((ref) 
   return AIChatNotifier(
     ref.watch(aiChatServiceProvider),
   );
+});
+
+final imagePickerServiceProvider = Provider<ImagePickerService>((ref) {
+  return ImagePickerService();
 });

@@ -37,6 +37,12 @@ dependencies:
   
   # 文件操作
   file_picker: ^8.0.3
+
+  # 图片选择
+  image_picker: ^1.1.2
+
+  # 权限管理
+  permission_handler: ^11.3.1
   
   # Excel 导入导出
   excel: ^4.0.3
