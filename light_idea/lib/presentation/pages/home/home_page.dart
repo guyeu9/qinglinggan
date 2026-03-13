@@ -210,23 +210,28 @@ class _HomePageState extends ConsumerState<HomePage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
+          Icon(
             Icons.lightbulb_outline,
             size: 64,
-            color: AppColors.textDisabled,
+            color: isDark 
+                ? AppColors.textSecondaryDark.withValues(alpha: 0.5)
+                : AppColors.textSecondaryLight.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
             '还没有灵感',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             '在下方输入你的第一个灵感吧',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.textDisabled,
+            style: TextStyle(
+              fontSize: 14,
+              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
             ),
           ),
         ],

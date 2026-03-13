@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_theme.dart';
 
 /// 首页顶部导航栏
 /// 
-/// 固定在顶部的导航栏，包含菜单按钮、标题、AI中心和添加按钮
+/// 固定在顶部的导航栏，白色半透明背景，包含菜单按钮、标题、AI中心和添加按钮
+/// 严格按照原型图设计：
+/// - 白色/半透明背景，模糊效果
+/// - 标题"轻灵感"
+/// - 菜单图标：notes（三个横线）
+/// - AI图标：auto_awesome
+/// - 添加图标：add
 class StickyTopNav extends StatelessWidget implements PreferredSizeWidget {
   /// 菜单按钮点击回调
   final VoidCallback? onMenuTap;
@@ -15,88 +20,79 @@ class StickyTopNav extends StatelessWidget implements PreferredSizeWidget {
   
   /// 添加按钮点击回调
   final VoidCallback? onAddTap;
-  
-  /// 标题文本
-  final String title;
-  
-  /// 是否显示AI中心按钮
-  final bool showAICenter;
-  
-  /// 是否显示添加按钮
-  final bool showAddButton;
 
   const StickyTopNav({
     super.key,
     this.onMenuTap,
     this.onAICenterTap,
     this.onAddTap,
-    this.title = 'Light Idea',
-    this.showAICenter = true,
-    this.showAddButton = true,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark 
-        ? AppColors.backgroundDark 
-        : AppColors.primaryDark;
     
     return Container(
       decoration: BoxDecoration(
-        color: backgroundColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+        color: isDark 
+            ? AppColors.backgroundDark.withValues(alpha: 0.8)
+            : Colors.white.withValues(alpha: 0.8),
+        border: Border(
+          bottom: BorderSide(
+            color: isDark 
+                ? AppColors.primaryDark.withValues(alpha: 0.3)
+                : AppColors.primary.withValues(alpha: 0.2),
+            width: 1,
           ),
-        ],
+        ),
       ),
-      child: SafeArea(
-        child: SizedBox(
-          height: preferredSize.height,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingSm),
-            child: Row(
-              children: [
-                // 菜单按钮
-                _IconButton(
-                  icon: Symbols.menu,
-                  onTap: onMenuTap,
-                  color: Colors.white,
-                ),
-                
-                const SizedBox(width: AppTheme.spacingSm),
-                
-                // 标题
-                Expanded(
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: const ColorFilter.mode(Colors.transparent, BlendMode.srcOver),
+          child: SafeArea(
+            child: SizedBox(
+              height: preferredSize.height,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    // 菜单按钮 - 使用 notes 图标（三个横线）
+                    _IconButton(
+                      icon: Symbols.notes,
+                      onTap: onMenuTap,
+                      color: AppColors.primaryDark,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
+                    
+                    // 标题 - "轻灵感"
+                    const Expanded(
+                      child: Text(
+                        '轻灵感',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryDark,
+                          letterSpacing: -0.5,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    
+                    // AI中心按钮 - auto_awesome
+                    _IconButton(
+                      icon: Symbols.auto_awesome,
+                      onTap: onAICenterTap,
+                      color: AppColors.primaryDark,
+                    ),
+                    
+                    // 添加按钮 - add
+                    _IconButton(
+                      icon: Symbols.add,
+                      onTap: onAddTap,
+                      color: AppColors.primaryDark,
+                    ),
+                  ],
                 ),
-                
-                // AI中心按钮
-                if (showAICenter)
-                  _IconButton(
-                    icon: Symbols.smart_toy,
-                    onTap: onAICenterTap,
-                    color: Colors.white,
-                  ),
-                
-                // 添加按钮
-                if (showAddButton)
-                  _IconButton(
-                    icon: Symbols.add,
-                    onTap: onAddTap,
-                    color: Colors.white,
-                  ),
-              ],
+              ),
             ),
           ),
         ),
@@ -109,28 +105,13 @@ class StickyTopNav extends StatelessWidget implements PreferredSizeWidget {
 }
 
 /// 详情页导航栏
-/// 
-/// 用于详情页面的导航栏，包含返回按钮、标题和操作按钮
 class DetailAppBar extends StatelessWidget implements PreferredSizeWidget {
-  /// 返回按钮点击回调
   final VoidCallback? onBackTap;
-  
-  /// 更多操作点击回调
   final VoidCallback? onMoreTap;
-  
-  /// 标题文本
   final String title;
-  
-  /// 自定义操作按钮列表
   final List<Widget>? actions;
-  
-  /// 是否显示返回按钮
   final bool showBackButton;
-  
-  /// 是否显示更多按钮
   final bool showMoreButton;
-  
-  /// 背景颜色（默认跟随主题）
   final Color? backgroundColor;
 
   const DetailAppBar({
@@ -148,69 +129,70 @@ class DetailAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = backgroundColor ?? (isDark 
-        ? AppColors.backgroundDark 
-        : AppColors.primaryDark);
-    final foregroundColor = isDark && backgroundColor == null 
-        ? AppColors.textPrimaryDark 
-        : Colors.white;
+        ? AppColors.backgroundDark.withValues(alpha: 0.8)
+        : Colors.white.withValues(alpha: 0.8));
+    final foregroundColor = AppColors.primaryDark;
     
     return Container(
       decoration: BoxDecoration(
         color: bgColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+        border: Border(
+          bottom: BorderSide(
+            color: isDark 
+                ? AppColors.primaryDark.withValues(alpha: 0.3)
+                : AppColors.primary.withValues(alpha: 0.2),
+            width: 1,
           ),
-        ],
+        ),
       ),
-      child: SafeArea(
-        child: SizedBox(
-          height: preferredSize.height,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingSm),
-            child: Row(
-              children: [
-                // 返回按钮
-                if (showBackButton)
-                  _IconButton(
-                    icon: Symbols.arrow_back,
-                    onTap: onBackTap ?? () => Navigator.of(context).pop(),
-                    color: foregroundColor,
-                  )
-                else
-                  const SizedBox(width: 48),
-                
-                const SizedBox(width: AppTheme.spacingSm),
-                
-                // 标题
-                Expanded(
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: foregroundColor,
-                      fontWeight: FontWeight.w600,
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: const ColorFilter.mode(Colors.transparent, BlendMode.srcOver),
+          child: SafeArea(
+            child: SizedBox(
+              height: preferredSize.height,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    if (showBackButton)
+                      _IconButton(
+                        icon: Symbols.arrow_back,
+                        onTap: onBackTap ?? () => Navigator.of(context).pop(),
+                        color: foregroundColor,
+                      )
+                    else
+                      const SizedBox(width: 48),
+                    
+                    const SizedBox(width: 8),
+                    
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryDark,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                    
+                    if (actions != null) ...actions!,
+                    
+                    if (showMoreButton)
+                      _IconButton(
+                        icon: Symbols.more_vert,
+                        onTap: onMoreTap,
+                        color: foregroundColor,
+                      )
+                    else if (actions == null)
+                      const SizedBox(width: 48),
+                  ],
                 ),
-                
-                // 自定义操作按钮
-                if (actions != null) ...actions!,
-                
-                // 更多按钮
-                if (showMoreButton)
-                  _IconButton(
-                    icon: Symbols.more_vert,
-                    onTap: onMoreTap,
-                    color: foregroundColor,
-                  )
-                else if (actions == null)
-                  const SizedBox(width: 48),
-              ],
+              ),
             ),
           ),
         ),
@@ -240,10 +222,10 @@ class _IconButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusCircular),
+        borderRadius: BorderRadius.circular(20),
         child: Container(
-          width: 44,
-          height: 44,
+          width: 40,
+          height: 40,
           alignment: Alignment.center,
           child: Icon(
             icon,
