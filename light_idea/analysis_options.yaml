@@ -17,11 +17,11 @@ analyzer:
   errors:
     missing_required_param: error
     missing_return: error
-    prefer_const_constructors: info
-    prefer_const_declarations: info
-    prefer_const_literals_to_create_immutables: info
-    use_super_parameters: info
-    deprecated_member_use: info
+    prefer_const_constructors: warning
+    prefer_const_declarations: warning
+    prefer_const_literals_to_create_immutables: warning
+    use_super_parameters: warning
+    deprecated_member_use: warning
     experimental_member_use: ignore
   language:
     strict-casts: true
