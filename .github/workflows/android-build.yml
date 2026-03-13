@@ -32,6 +32,11 @@ jobs:
     name: Run Tests
     runs-on: ubuntu-latest
     continue-on-error: true
+
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: write
     
     defaults:
       run:
@@ -74,7 +79,7 @@ jobs:
 
       - name: Publish Test Results
         uses: dorny/test-reporter@v1
-        if: always()
+        if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         with:
           name: Flutter Test Results
           path: 'light_idea/test-results.xml'
