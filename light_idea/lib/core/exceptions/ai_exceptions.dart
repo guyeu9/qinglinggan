@@ -21,8 +21,8 @@ class AIResponseParseException extends AIException {
 }
 
 class AIEmptyResponseException extends AIException {
-  const AIEmptyResponseException([super.rawContent])
-      : super('AI 返回空响应');
+  const AIEmptyResponseException([String? rawContent])
+      : super('AI 返回空响应', rawContent: rawContent);
 }
 
 class AIInvalidResponseStructureException extends AIException {

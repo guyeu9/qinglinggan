@@ -217,7 +217,7 @@ class AIAnalysisResult {
 
   static AIAnalysisResult parseFromJsonString(String jsonString) {
     if (jsonString.trim().isEmpty) {
-      throw const AIEmptyResponseException();
+      throw AIEmptyResponseException();
     }
 
     try {
