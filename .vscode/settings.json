@@ -14,5 +14,6 @@
      // 禁用官方额度检测，强制使用自定义API
      "cursor.useNativeModels": false,
      // 代码补全也强制走自定义API
-     "cursor.tabCompletion.useCustomApi": true
+    "cursor.tabCompletion.useCustomApi": true,
+    "java.configuration.updateBuildConfiguration": "interactive"
 }

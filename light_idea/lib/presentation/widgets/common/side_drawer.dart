@@ -348,7 +348,7 @@ class SideDrawer extends StatelessWidget {
               backgroundColor: isDark
                   ? Colors.white.withValues(alpha: 0.1)
                   : AppColors.primaryDark.withValues(alpha: 0.1),
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
               minHeight: 8,
             ),
           ),

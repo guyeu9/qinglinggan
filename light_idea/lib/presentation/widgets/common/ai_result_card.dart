@@ -57,7 +57,7 @@ class AIResultCard extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.auto_awesome,
                   color: AppColors.primaryDark,
                   size: 20,
@@ -228,7 +228,7 @@ class AIResultCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          SizedBox(
+          const SizedBox(
             width: 20,
             height: 20,
             child: CircularProgressIndicator(

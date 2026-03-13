@@ -66,7 +66,7 @@ $candidatesText
 请分析当前灵感与每条候选灵感的关系。''';
 
       final response = await _client.chatCompletion([
-        ChatMessage(role: 'system', content: _systemPrompt),
+        const ChatMessage(role: 'system', content: _systemPrompt),
         ChatMessage(role: 'user', content: userPrompt),
       ]);
 

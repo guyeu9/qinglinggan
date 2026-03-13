@@ -388,7 +388,7 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
+          const Icon(
             Icons.security_outlined,
             color: AppColors.warning,
             size: 20,
@@ -505,7 +505,7 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // 分类筛选
-                    Text(
+                    const Text(
                       '分类筛选',
                       style: TextStyle(
                         fontSize: 14,
@@ -515,7 +515,7 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<int?>(
-                      value: selectedCategoryId,
+                      initialValue: selectedCategoryId,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
@@ -544,7 +544,7 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
                     const SizedBox(height: 16),
 
                     // 时间范围
-                    Text(
+                    const Text(
                       '时间范围',
                       style: TextStyle(
                         fontSize: 14,
@@ -647,14 +647,14 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
                       ),
                       child: Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.info_outline,
                             size: 16,
                             color: AppColors.info,
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(
+                            child: const Text(
                               '导出文件将保存到应用文档目录',
                               style: TextStyle(
                                 fontSize: 12,
@@ -778,7 +778,7 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 冲突处理策略
-                  Text(
+                  const Text(
                     '冲突处理策略',
                     style: TextStyle(
                       fontSize: 14,
@@ -787,29 +787,37 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  ...[
-                    (ConflictStrategy.skip, '跳过已存在的记录', '保留原有数据，跳过重复记录'),
-                    (ConflictStrategy.overwrite, '覆盖已存在的记录', '用新数据替换原有数据'),
-                    (ConflictStrategy.merge, '合并记录', '保留原有数据，补充新数据'),
-                  ].map((item) {
-                    final (value, title, subtitle) = item;
-                    return RadioListTile<ConflictStrategy>(
-                      title: Text(title),
-                      subtitle: Text(
-                        subtitle,
-                        style: TextStyle(fontSize: 12, color: AppColors.textSecondaryLight),
-                      ),
-                      value: value,
-                      groupValue: strategy,
-                      onChanged: (v) {
+                  RadioGroup<ConflictStrategy>(
+                    groupValue: strategy,
+                    onChanged: (v) {
+                      if (v != null) {
                         setDialogState(() {
-                          strategy = v!;
+                          strategy = v;
                         });
-                      },
-                      contentPadding: EdgeInsets.zero,
-                      visualDensity: VisualDensity.compact,
-                    );
-                  }),
+                      }
+                    },
+                    child: Column(
+                      children: [
+                        ...[
+                          (ConflictStrategy.skip, '跳过已存在的记录', '保留原有数据，跳过重复记录'),
+                          (ConflictStrategy.overwrite, '覆盖已存在的记录', '用新数据替换原有数据'),
+                          (ConflictStrategy.merge, '合并记录', '保留原有数据，补充新数据'),
+                        ].map((item) {
+                          final (value, title, subtitle) = item;
+                          return RadioListTile<ConflictStrategy>(
+                            title: Text(title),
+                            subtitle: Text(
+                              subtitle,
+                              style: TextStyle(fontSize: 12, color: AppColors.textSecondaryLight),
+                            ),
+                            value: value,
+                            contentPadding: EdgeInsets.zero,
+                            visualDensity: VisualDensity.compact,
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 16),
 
                   // AI分析选项

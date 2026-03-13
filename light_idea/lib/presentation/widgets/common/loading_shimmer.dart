@@ -59,7 +59,7 @@ class CardShimmer extends StatelessWidget {
             children: [
               const LoadingShimmer(width: 60, height: 20, borderRadius: 4),
               const Spacer(),
-              LoadingShimmer(
+              const LoadingShimmer(
                 width: 80,
                 height: 16,
                 borderRadius: 4,
@@ -67,19 +67,19 @@ class CardShimmer extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          LoadingShimmer(
+          const LoadingShimmer(
             width: double.infinity,
             height: 16,
             borderRadius: 4,
           ),
           const SizedBox(height: 8),
-          LoadingShimmer(
+          const LoadingShimmer(
             width: double.infinity,
             height: 16,
             borderRadius: 4,
           ),
           const SizedBox(height: 8),
-          LoadingShimmer(
+          const LoadingShimmer(
             width: 200,
             height: 16,
             borderRadius: 4,

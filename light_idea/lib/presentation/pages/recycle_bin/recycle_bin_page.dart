@@ -321,7 +321,7 @@ class _RecycleBinPageState extends State<RecycleBinPage> {
       ),
       child: Row(
         children: [
-          Icon(
+          const Icon(
             Symbols.info,
             size: 18,
             color: AppColors.warning,
@@ -422,7 +422,7 @@ class _RecycleBinCard extends StatelessWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
+                    const Icon(
                       Symbols.timer,
                       size: 14,
                       color: AppColors.warning,

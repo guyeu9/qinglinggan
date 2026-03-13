@@ -30,7 +30,7 @@ android {
 
     defaultConfig {
         applicationId = "com.lightidea.light_idea"
-        minSdk = 21
+        minSdk = flutter.minSdkVersion
         targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
