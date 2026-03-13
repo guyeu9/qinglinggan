@@ -52,34 +52,34 @@ class CardShimmer extends StatelessWidget {
               : AppColors.primaryDark.withValues(alpha: 0.1),
         ),
       ),
-      child: Column(
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const LoadingShimmer(width: 60, height: 20, borderRadius: 4),
-              const Spacer(),
-              const LoadingShimmer(
+              LoadingShimmer(width: 60, height: 20, borderRadius: 4),
+              Spacer(),
+              LoadingShimmer(
                 width: 80,
                 height: 16,
                 borderRadius: 4,
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          const LoadingShimmer(
+          SizedBox(height: 12),
+          LoadingShimmer(
             width: double.infinity,
             height: 16,
             borderRadius: 4,
           ),
-          const SizedBox(height: 8),
-          const LoadingShimmer(
+          SizedBox(height: 8),
+          LoadingShimmer(
             width: double.infinity,
             height: 16,
             borderRadius: 4,
           ),
-          const SizedBox(height: 8),
-          const LoadingShimmer(
+          SizedBox(height: 8),
+          LoadingShimmer(
             width: 200,
             height: 16,
             borderRadius: 4,

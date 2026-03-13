@@ -645,16 +645,16 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
                         color: AppColors.info.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                       ),
-                      child: Row(
+                      child: const Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.info_outline,
                             size: 16,
                             color: AppColors.info,
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Expanded(
-                            child: const Text(
+                            child: Text(
                               '导出文件将保存到应用文档目录',
                               style: TextStyle(
                                 fontSize: 12,
@@ -808,7 +808,7 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
                             title: Text(title),
                             subtitle: Text(
                               subtitle,
-                              style: TextStyle(fontSize: 12, color: AppColors.textSecondaryLight),
+                              style: const TextStyle(fontSize: 12, color: AppColors.textSecondaryLight),
                             ),
                             value: value,
                             contentPadding: EdgeInsets.zero,
@@ -823,7 +823,7 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
                   // AI分析选项
                   CheckboxListTile(
                     title: const Text('触发 AI 分析'),
-                    subtitle: Text(
+                    subtitle: const Text(
                       '导入后自动对灵感进行 AI 分析',
                       style: TextStyle(fontSize: 12, color: AppColors.textSecondaryLight),
                     ),
@@ -882,7 +882,7 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
               _buildResultRow(Icons.error, AppColors.error, '错误', result.errorCount),
               if (result.errors.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                Text(
+                const Text(
                   '错误详情:',
                   style: TextStyle(
                     fontSize: 14,
@@ -907,7 +907,7 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
         padding: const EdgeInsets.only(bottom: 4),
         child: Text(
           result.errors[index],
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 12,
             color: AppColors.error,
           ),
@@ -921,7 +921,7 @@ if (result.errors.length > 10)
     padding: const EdgeInsets.only(top: 8),
     child: Text(
       '还有 ${result.errors.length - 10} 条错误未显示...',
-      style: TextStyle(
+      style: const TextStyle(
         fontSize: 12,
         color: AppColors.textSecondaryLight,
       ),
@@ -948,7 +948,7 @@ Icon(icon, color: color, size: 20),
 const SizedBox(width: 8),
 Text(
 label,
-style: TextStyle(
+style: const TextStyle(
 fontSize: 14,
 color: AppColors.textPrimaryLight,
 ),
