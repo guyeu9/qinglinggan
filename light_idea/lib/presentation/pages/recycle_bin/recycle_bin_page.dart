@@ -1,79 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/utils/date_formatter.dart';
+import '../../../../application/providers/recycle_bin_provider.dart';
 
 /// 回收站页面
 ///
-/// 原型图: 4回收站
-/// 功能: 展示已删除的灵感记录，支持恢复和彻底删除
-class RecycleBinPage extends StatefulWidget {
+/// 严格按照原型图实现:
+/// d:\trae\qinglinggan\前端原型图\4回收站\code.html
+///
+/// 颜色定义:
+/// - primary: #39E079 (与首页略有不同)
+/// - text-core: #065F46
+/// - background-light: #f6f8f7
+/// - background-dark: #122017
+/// - accent-sky: #BAE6FD
+/// - warning: #ef4444
+class RecycleBinPage extends ConsumerStatefulWidget {
   const RecycleBinPage({super.key});
 
   @override
-  State<RecycleBinPage> createState() => _RecycleBinPageState();
+  ConsumerState<RecycleBinPage> createState() => _RecycleBinPageState();
 }
 
-/// 回收站项目数据模型
-class _RecycleBinItem {
-  final String id;
-  final String content;
-  final String category;
-  final DateTime deletedAt;
-  final int daysRemaining;
-
-  const _RecycleBinItem({
-    required this.id,
-    required this.content,
-    required this.category,
-    required this.deletedAt,
-    required this.daysRemaining,
-  });
-}
-
-class _RecycleBinPageState extends State<RecycleBinPage> {
-  // 模拟数据
-  final List<_RecycleBinItem> _mockItems = [
-    _RecycleBinItem(
-      id: '1',
-      content: '尝试用极简主义风格重新设计个人主页，采用大量留白和柔和的绿色调，让内容本身成为焦点。可以参考一些日本设计师的作品，学习他们对空间的运用。',
-      category: '工作/创意',
-      deletedAt: DateTime.now().subtract(const Duration(days: 2)),
-      daysRemaining: 28,
-    ),
-    _RecycleBinItem(
-      id: '2',
-      content: '在京都的小巷里发现一家隐藏的茶室，木质结构和庭院设计让人瞬间安静下来。下次带相机来拍一组照片，记录这种宁静的氛围。',
-      category: '社交/旅行',
-      deletedAt: DateTime.now().subtract(const Duration(days: 5)),
-      daysRemaining: 25,
-    ),
-    _RecycleBinItem(
-      id: '3',
-      content: '雨天拍摄城市夜景的绝佳时机，湿润的地面反射霓虹灯光，创造出梦幻般的色彩层次。记得带上三脚架和广角镜头。',
-      category: '摄影爱好',
-      deletedAt: DateTime.now().subtract(const Duration(days: 10)),
-      daysRemaining: 20,
-    ),
-    _RecycleBinItem(
-      id: '4',
-      content: '关于AI辅助创作的思考：工具应该增强人的创造力，而不是取代它。关键在于找到合适的协作方式，让AI成为创意的催化剂。',
-      category: '工作/创意',
-      deletedAt: DateTime.now().subtract(const Duration(days: 15)),
-      daysRemaining: 15,
-    ),
-    _RecycleBinItem(
-      id: '5',
-      content: '和朋友讨论周末去海边露营的计划，需要准备帐篷、便携炉具和足够的咖啡豆。还要查一下天气预报，选一个晴朗的周末。',
-      category: '社交/旅行',
-      deletedAt: DateTime.now().subtract(const Duration(days: 20)),
-      daysRemaining: 10,
-    ),
-  ];
-
+class _RecycleBinPageState extends ConsumerState<RecycleBinPage> {
   void _goBack() {
     context.pop();
   }
@@ -84,27 +35,36 @@ class _RecycleBinPageState extends State<RecycleBinPage> {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: isDark ? AppColors.cardDark : AppColors.cardLight,
+        backgroundColor: isDark ? const Color(0xFF122017) : Colors.white,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+          borderRadius: BorderRadius.circular(12),
         ),
         title: Text(
           '清空回收站',
           style: TextStyle(
-            color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-            fontWeight: FontWeight.w600,
+            color: isDark ? const Color(0xFF6EE7B7) : const Color(0xFF065F46),
+            fontWeight: FontWeight.bold,
           ),
         ),
         content: Text(
           '确定要清空回收站吗？此操作将永久删除所有内容，无法恢复。',
           style: TextStyle(
-            color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+            color: isDark
+                ? const Color(0xFF6EE7B7).withValues(alpha: 0.8)
+                : const Color(0xFF065F46).withValues(alpha: 0.8),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('取消'),
+            child: Text(
+              '取消',
+              style: TextStyle(
+                color: isDark
+                    ? const Color(0xFF6EE7B7).withValues(alpha: 0.7)
+                    : const Color(0xFF065F46).withValues(alpha: 0.7),
+              ),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -112,7 +72,7 @@ class _RecycleBinPageState extends State<RecycleBinPage> {
               _clearAll();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
+              backgroundColor: const Color(0xFFef4444),
               foregroundColor: Colors.white,
             ),
             child: const Text('清空'),
@@ -122,41 +82,50 @@ class _RecycleBinPageState extends State<RecycleBinPage> {
     );
   }
 
-  void _clearAll() {
-    setState(() {
-      _mockItems.clear();
-    });
-    HapticFeedback.mediumImpact();
-    _showSnackBar('回收站已清空');
+  Future<void> _clearAll() async {
+    final success = await ref.read(recycleBinProvider.notifier).clearAll();
+    if (success && mounted) {
+      HapticFeedback.mediumImpact();
+      _showSnackBar('回收站已清空');
+    }
   }
 
-  void _showDeleteConfirmDialog(_RecycleBinItem item) {
+  void _showDeleteConfirmDialog(RecycleBinItem item) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: isDark ? AppColors.cardDark : AppColors.cardLight,
+        backgroundColor: isDark ? const Color(0xFF122017) : Colors.white,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+          borderRadius: BorderRadius.circular(12),
         ),
         title: Text(
           '彻底删除',
           style: TextStyle(
-            color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-            fontWeight: FontWeight.w600,
+            color: isDark ? const Color(0xFF6EE7B7) : const Color(0xFF065F46),
+            fontWeight: FontWeight.bold,
           ),
         ),
         content: Text(
           '确定要彻底删除这条灵感吗？此操作不可恢复。',
           style: TextStyle(
-            color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+            color: isDark
+                ? const Color(0xFF6EE7B7).withValues(alpha: 0.8)
+                : const Color(0xFF065F46).withValues(alpha: 0.8),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('取消'),
+            child: Text(
+              '取消',
+              style: TextStyle(
+                color: isDark
+                    ? const Color(0xFF6EE7B7).withValues(alpha: 0.7)
+                    : const Color(0xFF065F46).withValues(alpha: 0.7),
+              ),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -164,7 +133,7 @@ class _RecycleBinPageState extends State<RecycleBinPage> {
               _permanentlyDelete(item);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
+              backgroundColor: const Color(0xFFef4444),
               foregroundColor: Colors.white,
             ),
             child: const Text('删除'),
@@ -174,31 +143,33 @@ class _RecycleBinPageState extends State<RecycleBinPage> {
     );
   }
 
-  void _permanentlyDelete(_RecycleBinItem item) {
-    setState(() {
-      _mockItems.removeWhere((i) => i.id == item.id);
-    });
-    HapticFeedback.mediumImpact();
-    _showSnackBar('已彻底删除');
+  Future<void> _permanentlyDelete(RecycleBinItem item) async {
+    final success = await ref.read(recycleBinProvider.notifier).permanentDelete(item.id);
+    if (success && mounted) {
+      HapticFeedback.mediumImpact();
+      _showSnackBar('已彻底删除');
+    }
   }
 
-  void _restoreItem(_RecycleBinItem item) {
-    setState(() {
-      _mockItems.removeWhere((i) => i.id == item.id);
-    });
-    HapticFeedback.mediumImpact();
-    _showSnackBar('灵感已恢复');
+  Future<void> _restoreItem(RecycleBinItem item) async {
+    final success = await ref.read(recycleBinProvider.notifier).restoreItem(item.id);
+    if (success && mounted) {
+      HapticFeedback.mediumImpact();
+      _showSnackBar('灵感已恢复');
+    }
   }
 
   void _showSnackBar(String message) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.primaryDark,
+        backgroundColor: isDark ? const Color(0xFF065F46) : const Color(0xFF065F46),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+          borderRadius: BorderRadius.circular(8),
         ),
       ),
     );
@@ -207,7 +178,11 @@ class _RecycleBinPageState extends State<RecycleBinPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
+    final recycleBinState = ref.watch(recycleBinProvider);
+
+    // 严格使用原型图颜色
+    final backgroundColor = isDark ? const Color(0xFF122017) : const Color(0xFFf6f8f7);
+    final textColor = isDark ? const Color(0xFF6EE7B7) : const Color(0xFF065F46);
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -215,27 +190,18 @@ class _RecycleBinPageState extends State<RecycleBinPage> {
         child: Column(
           children: [
             // 顶部导航栏
-            _buildAppBar(isDark),
+            _buildAppBar(isDark, textColor, recycleBinState.items.isNotEmpty),
 
             // 提示信息栏
-            _buildInfoBanner(isDark),
+            _buildInfoBanner(isDark, textColor),
 
             // 灵感列表
             Expanded(
-              child: _mockItems.isEmpty
-                  ? _buildEmptyState(isDark)
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(AppTheme.spacingMd),
-                      itemCount: _mockItems.length,
-                      itemBuilder: (context, index) {
-                        final item = _mockItems[index];
-                        return _RecycleBinCard(
-                          item: item,
-                          onRestore: () => _restoreItem(item),
-                          onDelete: () => _showDeleteConfirmDialog(item),
-                        );
-                      },
-                    ),
+              child: recycleBinState.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : recycleBinState.items.isEmpty
+                      ? _buildEmptyState(isDark, textColor)
+                      : _buildContentList(recycleBinState, isDark, textColor),
             ),
           ],
         ),
@@ -243,97 +209,136 @@ class _RecycleBinPageState extends State<RecycleBinPage> {
     );
   }
 
-  Widget _buildAppBar(bool isDark) {
+  /// 顶部导航栏
+  ///
+  /// 原型图代码:
+  /// ```html
+  /// <header class="sticky top-0 z-10 flex items-center bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md p-4 border-b border-primary/20 justify-between">
+  ///   <button class="flex size-10 items-center justify-center rounded-full hover:bg-primary/10 transition-colors">
+  ///     <span class="material-symbols-outlined text-text-core dark:text-emerald-300">arrow_back</span>
+  ///   </button>
+  ///   <h2 class="text-lg font-bold leading-tight tracking-tight flex-1 text-center text-text-core dark:text-emerald-50">回收站</h2>
+  ///   <div class="flex w-10 items-center justify-end">
+  ///     <button class="text-warning text-sm font-bold hover:opacity-80 transition-opacity">清空</button>
+  ///   </div>
+  /// </header>
+  /// ```
+  Widget _buildAppBar(bool isDark, Color textColor, bool canClear) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppTheme.spacingMd,
-        vertical: AppTheme.spacingSm,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+        color: isDark
+            ? const Color(0xFF122017).withValues(alpha: 0.8)
+            : const Color(0xFFf6f8f7).withValues(alpha: 0.8),
+        border: Border(
+          bottom: BorderSide(
+            color: const Color(0xFF39E079).withValues(alpha: 0.2),
+          ),
+        ),
       ),
-      child: Row(
-        children: [
-          // 返回按钮
-          IconButton(
-            onPressed: _goBack,
-            icon: Icon(
-              Symbols.arrow_back,
-              color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-            ),
-            tooltip: '返回',
-          ),
-
-          const Spacer(),
-
-          // 标题
-          Text(
-            '回收站',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-
-          const Spacer(),
-
-          // 清空按钮
-          TextButton.icon(
-            onPressed: _mockItems.isEmpty ? null : _showClearAllDialog,
-            icon: const Icon(Symbols.delete_forever, size: 20),
-            label: const Text('清空'),
-            style: TextButton.styleFrom(
-              foregroundColor: _mockItems.isEmpty
-                  ? AppColors.textDisabled
-                  : AppColors.error,
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppTheme.spacingSm,
+      child: ClipRect(
+        child: Row(
+          children: [
+            // 返回按钮
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _goBack,
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Symbols.arrow_back,
+                    color: textColor,
+                    size: 24,
+                  ),
+                ),
               ),
             ),
-          ),
-        ],
+
+            // 标题
+            Expanded(
+              child: Text(
+                '回收站',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? const Color(0xFF6EE7B7) : const Color(0xFF065F46),
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ),
+
+            // 清空按钮
+            SizedBox(
+              width: 40,
+              child: canClear
+                  ? TextButton(
+                      onPressed: _showClearAllDialog,
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text(
+                        '清空',
+                        style: TextStyle(
+                          color: Color(0xFFef4444),
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    )
+                  : null,
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildInfoBanner(bool isDark) {
+  /// 提示信息栏
+  ///
+  /// 原型图代码:
+  /// ```html
+  /// <div class="px-4 py-3">
+  ///   <div class="flex items-center gap-3 rounded-xl bg-primary/10 dark:bg-primary/20 p-4 border border-primary/20">
+  ///     <span class="material-symbols-outlined text-text-core dark:text-primary text-xl">info</span>
+  ///     <p class="text-sm font-medium text-text-core/80 dark:text-emerald-200">内容将在 30 天后自动彻底删除</p>
+  ///   </div>
+  /// </div>
+  /// ```
+  Widget _buildInfoBanner(bool isDark, Color textColor) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(
-        AppTheme.spacingMd,
-        0,
-        AppTheme.spacingMd,
-        AppTheme.spacingMd,
-      ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppTheme.spacingMd,
-        vertical: AppTheme.spacingSm,
-      ),
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.warning.withValues(alpha: 0.15)
-            : AppColors.warning.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+        color: const Color(0xFF39E079).withValues(alpha: isDark ? 0.2 : 0.1),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark
-              ? AppColors.warning.withValues(alpha: 0.3)
-              : AppColors.warning.withValues(alpha: 0.2),
+          color: const Color(0xFF39E079).withValues(alpha: 0.2),
         ),
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Symbols.info,
-            size: 18,
-            color: AppColors.warning,
+            color: textColor,
+            size: 20,
           ),
-          const SizedBox(width: AppTheme.spacingSm),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
-              '内容将在30天后自动彻底删除',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              '内容将在 30 天后自动彻底删除',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
                 color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
+                    ? const Color(0xFF6EE7B7).withValues(alpha: 0.9)
+                    : const Color(0xFF065F46).withValues(alpha: 0.9),
               ),
             ),
           ),
@@ -342,7 +347,25 @@ class _RecycleBinPageState extends State<RecycleBinPage> {
     );
   }
 
-  Widget _buildEmptyState(bool isDark) {
+  /// 内容列表
+  Widget _buildContentList(RecycleBinState state, bool isDark, Color textColor) {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: state.items.length,
+      itemBuilder: (context, index) {
+        final item = state.items[index];
+        return _RecycleBinCard(
+          item: item,
+          isDark: isDark,
+          onRestore: () => _restoreItem(item),
+          onDelete: () => _showDeleteConfirmDialog(item),
+        );
+      },
+    );
+  }
+
+  /// 空状态
+  Widget _buildEmptyState(bool isDark, Color textColor) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -350,26 +373,23 @@ class _RecycleBinPageState extends State<RecycleBinPage> {
           Icon(
             Symbols.delete_outline,
             size: 64,
-            color: isDark
-                ? AppColors.textSecondaryDark.withValues(alpha: 0.5)
-                : AppColors.textSecondaryLight.withValues(alpha: 0.5),
+            color: textColor.withValues(alpha: 0.5),
           ),
-          const SizedBox(height: AppTheme.spacingMd),
+          const SizedBox(height: 16),
           Text(
             '回收站是空的',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: textColor,
             ),
           ),
-          const SizedBox(height: AppTheme.spacingSm),
+          const SizedBox(height: 8),
           Text(
             '删除的灵感会在这里显示',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: isDark
-                  ? AppColors.textSecondaryDark.withValues(alpha: 0.7)
-                  : AppColors.textSecondaryLight.withValues(alpha: 0.7),
+            style: TextStyle(
+              fontSize: 14,
+              color: textColor.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -379,234 +399,206 @@ class _RecycleBinPageState extends State<RecycleBinPage> {
 }
 
 /// 回收站卡片组件
+///
+/// 原型图代码:
+/// ```html
+/// <div class="group flex flex-col gap-3 rounded-xl bg-white dark:bg-emerald-900/30 p-4 shadow-sm border border-emerald-100 dark:border-emerald-800/50">
+///   <div class="flex justify-between items-start">
+///     <span class="text-xs font-semibold text-text-core bg-accent-sky/40 dark:bg-accent-sky/20 px-2 py-1 rounded"># 设计灵感</span>
+///     <span class="text-xs text-emerald-600/60 dark:text-emerald-400/60">23天后删除</span>
+///   </div>
+///   <p class="text-base font-medium leading-relaxed text-text-core dark:text-emerald-50">...</p>
+///   <div class="h-[1px] w-full bg-emerald-50 dark:bg-emerald-800/50 my-1"></div>
+///   <div class="flex items-center justify-between">
+///     <p class="text-xs text-emerald-600/60 dark:text-emerald-400/60">删除于：2023-10-27 14:30</p>
+///     <div class="flex gap-2">
+///       <button class="flex h-8 items-center justify-center rounded-lg px-3 bg-emerald-50 dark:bg-emerald-800 text-warning text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-700 transition-colors">彻底删除</button>
+///       <button class="flex h-8 items-center justify-center rounded-lg px-4 bg-primary text-text-core text-xs font-bold hover:opacity-90 transition-opacity">恢复</button>
+///     </div>
+///   </div>
+/// </div>
+/// ```
 class _RecycleBinCard extends StatelessWidget {
-  final _RecycleBinItem item;
+  final RecycleBinItem item;
+  final bool isDark;
   final VoidCallback onRestore;
   final VoidCallback onDelete;
 
   const _RecycleBinCard({
     required this.item,
+    required this.isDark,
     required this.onRestore,
     required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? AppColors.cardDark : AppColors.cardLight;
-    final textColor = isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final secondaryTextColor = isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: AppTheme.spacingMd),
-      color: cardColor,
-      elevation: 2,
-      shadowColor: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spacingMd),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 顶部：标签和剩余天数
-            Row(
-              children: [
-                // 分类标签
-                _CategoryChip(label: item.category),
-
-                const Spacer(),
-
-                // 剩余天数
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Symbols.timer,
-                      size: 14,
-                      color: AppColors.warning,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '剩${item.daysRemaining}天',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: AppColors.warning,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-
-            const SizedBox(height: AppTheme.spacingMd),
-
-            // 内容预览
-            Text(
-              item.content,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: textColor,
-                height: 1.5,
-              ),
-              maxLines: 4,
-              overflow: TextOverflow.ellipsis,
-            ),
-
-            const SizedBox(height: AppTheme.spacingMd),
-
-            // 底部：删除时间和操作按钮
-            Row(
-              children: [
-                // 删除时间
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Symbols.schedule,
-                      size: 14,
-                      color: secondaryTextColor,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '删除于 ${DateFormatter.formatRelative(item.deletedAt)}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: secondaryTextColor,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const Spacer(),
-
-                // 操作按钮
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // 彻底删除按钮
-                    _ActionButton(
-                      icon: Symbols.delete_forever,
-                      label: '彻底删除',
-                      color: AppColors.error,
-                      onTap: onDelete,
-                    ),
-
-                    const SizedBox(width: AppTheme.spacingSm),
-
-                    // 恢复按钮
-                    _ActionButton(
-                      icon: Symbols.restore,
-                      label: '恢复',
-                      color: AppColors.success,
-                      onTap: onRestore,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// 分类标签 Chip 组件
-class _CategoryChip extends StatelessWidget {
-  final String label;
-
-  const _CategoryChip({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color = _getCategoryColor(label);
+    final textColor = isDark ? const Color(0xFF6EE7B7) : const Color(0xFF065F46);
+    final secondaryTextColor = isDark
+        ? const Color(0xFF6EE7B7).withValues(alpha: 0.6)
+        : const Color(0xFF065F46).withValues(alpha: 0.6);
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppTheme.spacingSm,
-        vertical: 4,
-      ),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: isDark ? 0.2 : 0.15),
-        borderRadius: BorderRadius.circular(AppTheme.radiusCircular),
+        color: isDark ? const Color(0xFF065F46).withValues(alpha: 0.2) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark
+              ? const Color(0xFF065F46).withValues(alpha: 0.3)
+              : const Color(0xFF6EE7B7).withValues(alpha: 0.2),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 顶部：分类标签和剩余天数
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // 分类标签
+              if (item.categoryName != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFBAE6FD).withValues(alpha: isDark ? 0.2 : 0.4),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    '# ${item.categoryName}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: textColor,
+                    ),
+                  ),
+                )
+              else
+                const SizedBox(),
 
-  Color _getCategoryColor(String category) {
-    final lowerCategory = category.toLowerCase();
-    if (lowerCategory.contains('工作') || lowerCategory.contains('work')) {
-      return AppColors.info;
-    } else if (lowerCategory.contains('社交') || lowerCategory.contains('social')) {
-      return AppColors.accent;
-    } else if (lowerCategory.contains('旅行') || lowerCategory.contains('travel')) {
-      return AppColors.warning;
-    } else if (lowerCategory.contains('摄影') || lowerCategory.contains('photo')) {
-      return AppColors.success;
-    } else if (lowerCategory.contains('创意') || lowerCategory.contains('creative')) {
-      return AppColors.primary;
-    }
-    return AppColors.primary;
-  }
-}
-
-/// 操作按钮组件
-class _ActionButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _ActionButton({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppTheme.spacingSm,
-          vertical: 6,
-        ),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: isDark ? 0.15 : 0.1),
-          borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: color,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: color,
-                fontWeight: FontWeight.w600,
+              // 剩余天数
+              Text(
+                '${item.daysRemaining}天后删除',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: secondaryTextColor,
+                ),
               ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // 内容预览
+          Text(
+            item.content,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              height: 1.6,
+              color: isDark ? const Color(0xFF6EE7B7) : const Color(0xFF065F46),
             ),
-          ],
+            maxLines: 4,
+            overflow: TextOverflow.ellipsis,
+          ),
+
+          const SizedBox(height: 12),
+
+          // 分割线
+          Container(
+            height: 1,
+            color: isDark
+                ? const Color(0xFF065F46).withValues(alpha: 0.3)
+                : const Color(0xFF6EE7B7).withValues(alpha: 0.2),
+          ),
+
+          const SizedBox(height: 12),
+
+          // 底部：删除时间和操作按钮
+          Row(
+            children: [
+              // 删除时间
+              Text(
+                '删除于：${_formatDateTime(item.deletedAt)}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: secondaryTextColor,
+                ),
+              ),
+
+              const Spacer(),
+
+              // 操作按钮
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 彻底删除按钮
+                  _buildActionButton(
+                    label: '彻底删除',
+                    color: const Color(0xFFef4444),
+                    onTap: onDelete,
+                  ),
+
+                  const SizedBox(width: 8),
+
+                  // 恢复按钮
+                  _buildActionButton(
+                    label: '恢复',
+                    color: const Color(0xFF39E079),
+                    isPrimary: true,
+                    onTap: onRestore,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required String label,
+    required Color color,
+    bool isPrimary = false,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: isPrimary
+                ? color
+                : color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: isPrimary ? const Color(0xFF065F46) : color,
+            ),
+          ),
         ),
       ),
     );
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} '
+        '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 }

@@ -3,11 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/router/route_names.dart';
 import '../../../../application/providers/home_provider.dart';
-import '../../../../domain/entities/idea.dart';
-import '../../../../domain/entities/category.dart';
 import '../../widgets/common/side_drawer.dart';
 
 /// 首页
@@ -65,7 +62,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Text('灵感已保存'),
-        backgroundColor: AppColors.primaryDark,
+        backgroundColor: const Color(0xFF065F46),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -108,9 +105,6 @@ class _HomePageState extends ConsumerState<HomePage> {
       key: _scaffoldKey,
       backgroundColor: isDark ? const Color(0xFF022c22) : const Color(0xFFF0FDF4),
       drawer: SideDrawer(
-        totalNotes: homeState.ideas.length,
-        categoryCounts: _buildCategoryCounts(homeState.categories, homeState.ideas),
-        aiAnalysisProgress: _calculateAIProgress(homeState.ideas),
         onSettingsTap: () {
           Navigator.pop(context);
           _goToSettings();
@@ -706,20 +700,6 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  Map<String, int> _buildCategoryCounts(List<CategoryEntity> categories, List<IdeaEntity> ideas) {
-    final counts = <String, int>{};
-    for (final category in categories) {
-      final count = ideas.where((idea) => idea.categoryId == category.id).length;
-      counts[category.name] = count;
-    }
-    return counts;
-  }
-
-  double _calculateAIProgress(List<IdeaEntity> ideas) {
-    if (ideas.isEmpty) return 0;
-    final completed = ideas.where((idea) => idea.aiStatus == AIStatus.completed).length;
-    return completed / ideas.length;
-  }
 }
 
 /// 灵感卡片
