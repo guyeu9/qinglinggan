@@ -23,7 +23,7 @@ void main() {
 
     group('ResultError', () {
       test('should create error result with message', () {
-        final result = Result.error('Something went wrong');
+        final result = Result<dynamic>.error('Something went wrong');
 
         expect(result.isSuccess, false);
         expect(result.isError, true);
@@ -33,7 +33,7 @@ void main() {
 
       test('should create error result with exception', () {
         final exception = Exception('Test exception');
-        final result = Result.error('Error', exception);
+        final result = Result<dynamic>.error('Error', exception);
 
         expect(result.isError, true);
         expect(result.errorOrNull, 'Error');
@@ -62,7 +62,7 @@ void main() {
       });
 
       test('should call onError callback on error', () {
-        final result = Result.error('error message');
+        final result = Result<dynamic>.error('error message');
         var successCalled = false;
         var errorCalled = false;
 

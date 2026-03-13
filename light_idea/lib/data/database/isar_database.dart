@@ -6,6 +6,7 @@ import '../models/category_model.dart';
 import '../models/tag_model.dart';
 import '../models/ai_analysis_model.dart';
 import '../models/ai_task_model.dart';
+import '../models/association_model.dart';
 
 class IsarDatabase {
   IsarDatabase._();
@@ -26,6 +27,7 @@ class IsarDatabase {
         TagModelSchema,
         AIAnalysisModelSchema,
         AITaskModelSchema,
+        AssociationModelSchema,
       ],
       directory: dir.path,
       inspector: kDebugMode,

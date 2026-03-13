@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:excel/excel.dart';
 import '../../domain/entities/idea.dart';
 import '../../domain/entities/category.dart';
-import '../../domain/entities/tag.dart';
+
 import '../../domain/repositories/idea_repository.dart';
 import '../../domain/repositories/category_repository.dart';
 import '../../domain/repositories/tag_repository.dart';
@@ -276,7 +276,7 @@ class ImportService {
           switch (strategy) {
             case ConflictStrategy.skip:
               skipCount++;
-              _logger.info('第 $rowNum 行: ID ${existingId} 已存在，跳过');
+              _logger.info('第 $rowNum 行: ID $existingId 已存在，跳过');
               continue;
             case ConflictStrategy.overwrite:
               // 继续处理，会覆盖
@@ -286,7 +286,7 @@ class ImportService {
               final mergedIdea = await _mergeIdea(existingIdea, data);
               await _ideaRepository.update(mergedIdea);
               successCount++;
-              _logger.info('第 $rowNum 行: ID ${existingId} 已合并');
+              _logger.info('第 $rowNum 行: ID $existingId 已合并');
               if (triggerAIAnalysis) {
                 _aiTaskQueue.enqueue(mergedIdea.id);
               }
@@ -413,14 +413,4 @@ class ImportService {
     return category.id;
   }
 
-  /// 列索引转字母（如 0 -> A, 1 -> B, 26 -> AA）
-  String _colIndexToLetter(int index) {
-    final letters = <String>[];
-    var temp = index;
-    while (temp >= 0) {
-      letters.insert(0, String.fromCharCode(65 + (temp % 26)));
-      temp = (temp ~/ 26) - 1;
-    }
-    return letters.join();
-  }
 }

@@ -11,12 +11,22 @@ linter:
     sort_child_properties_last: true
     use_key_in_widget_constructors: true
     prefer_const_literals_to_create_immutables: true
+    use_super_parameters: true
 
 analyzer:
   errors:
     missing_required_param: error
     missing_return: error
+    prefer_const_constructors: info
+    prefer_const_declarations: info
+    prefer_const_literals_to_create_immutables: info
+    use_super_parameters: info
+    deprecated_member_use: info
+    experimental_member_use: ignore
   language:
     strict-casts: true
     strict-inference: true
     strict-raw-types: true
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"

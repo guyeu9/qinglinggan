@@ -8,14 +8,17 @@ import '../../domain/repositories/category_repository.dart';
 import '../../domain/repositories/tag_repository.dart';
 import '../../domain/repositories/ai_task_repository.dart';
 import '../../domain/repositories/ai_analysis_repository.dart';
+import '../../domain/repositories/association_repository.dart';
 import '../../data/repositories/idea_repository_impl.dart';
 import '../../data/repositories/category_repository_impl.dart';
 import '../../data/repositories/tag_repository_impl.dart';
 import '../../data/repositories/ai_task_repository_impl.dart';
 import '../../data/repositories/ai_analysis_repository_impl.dart';
+import '../../data/repositories/association_repository_impl.dart';
 import '../ai/ai_understanding_service.dart';
 import '../ai/ai_embedding_service.dart';
 import '../ai/ai_chat_service.dart';
+import '../ai/ai_relation_service.dart';
 import '../task_queue/ai_task_queue.dart';
 import '../services/export_service.dart';
 import '../services/import_service.dart';
@@ -71,15 +74,29 @@ final aiEmbeddingServiceProvider = Provider<AIEmbeddingService>((ref) {
   return AIEmbeddingService(client, ideaRepo, logger);
 });
 
+final associationRepositoryProvider = Provider<AssociationRepository>((ref) {
+  final isar = ref.watch(isarProvider);
+  return AssociationRepositoryImpl(isar);
+});
+
+final aiRelationServiceProvider = Provider<AIRelationService>((ref) {
+  return AIRelationService(
+    ref.watch(openAIClientProvider),
+    ref.watch(loggerProvider),
+  );
+});
+
 final aiTaskQueueProvider = Provider<AITaskQueue>((ref) {
   return AITaskQueue(
     understandingService: ref.watch(aiUnderstandingServiceProvider),
     embeddingService: ref.watch(aiEmbeddingServiceProvider),
+    relationService: ref.watch(aiRelationServiceProvider),
     taskRepository: ref.watch(aiTaskRepositoryProvider),
     ideaRepository: ref.watch(ideaRepositoryProvider),
     analysisRepository: ref.watch(aiAnalysisRepositoryProvider),
     categoryRepository: ref.watch(categoryRepositoryProvider),
     tagRepository: ref.watch(tagRepositoryProvider),
+    associationRepository: ref.watch(associationRepositoryProvider),
     logger: ref.watch(loggerProvider),
   );
 });

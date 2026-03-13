@@ -8,11 +8,13 @@ import '../../domain/repositories/idea_repository.dart';
 import '../../domain/repositories/ai_analysis_repository.dart';
 import '../../domain/repositories/category_repository.dart';
 import '../../domain/repositories/tag_repository.dart';
+import '../../domain/repositories/association_repository.dart';
 import '../../core/logger/app_logger.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/exceptions/ai_exceptions.dart';
 import '../ai/ai_understanding_service.dart';
 import '../ai/ai_embedding_service.dart';
+import '../ai/ai_relation_service.dart';
 
 enum EnqueueStatus { enqueued, skipped }
 
@@ -37,11 +39,13 @@ class AITaskQueue {
   final Queue<AITaskEntity> _queue = Queue();
   final AIUnderstandingService _understandingService;
   final AIEmbeddingService _embeddingService;
+  final AIRelationService _relationService;
   final AITaskRepository _taskRepository;
   final IdeaRepository _ideaRepository;
   final AIAnalysisRepository _analysisRepository;
   final CategoryRepository _categoryRepository;
   final TagRepository _tagRepository;
+  final AssociationRepository _associationRepository;
   final AppLogger _logger;
 
   bool _isProcessing = false;
@@ -49,19 +53,23 @@ class AITaskQueue {
   AITaskQueue({
     required AIUnderstandingService understandingService,
     required AIEmbeddingService embeddingService,
+    required AIRelationService relationService,
     required AITaskRepository taskRepository,
     required IdeaRepository ideaRepository,
     required AIAnalysisRepository analysisRepository,
     required CategoryRepository categoryRepository,
     required TagRepository tagRepository,
+    required AssociationRepository associationRepository,
     required AppLogger logger,
   })  : _understandingService = understandingService,
         _embeddingService = embeddingService,
+        _relationService = relationService,
         _taskRepository = taskRepository,
         _ideaRepository = ideaRepository,
         _analysisRepository = analysisRepository,
         _categoryRepository = categoryRepository,
         _tagRepository = tagRepository,
+        _associationRepository = associationRepository,
         _logger = logger;
 
   Future<EnqueueResult> enqueue(int ideaId, {TaskType taskType = TaskType.basicAnalysis}) async {
@@ -110,7 +118,7 @@ class AITaskQueue {
       await _ideaRepository.updateAIStatus(task.ideaId, AIStatus.processing);
 
       await _runBasicAnalysis(task.ideaId).timeout(
-        Duration(seconds: AppConstants.taskTimeoutSeconds),
+        const Duration(seconds: AppConstants.taskTimeoutSeconds),
         onTimeout: () {
           throw TimeoutException(
             '任务执行超时',
@@ -123,7 +131,7 @@ class AITaskQueue {
       await _ideaRepository.updateAIStatus(task.ideaId, AIStatus.completed);
 
       _logger.info('AI任务完成: taskId=${task.id}, ideaId=${task.ideaId}');
-    } on TimeoutException catch (e, st) {
+    } on TimeoutException catch (e) {
       _logger.error('AI任务超时: taskId=${task.id}, 超时时间=${e.duration}');
       await _handleFailure(task, '任务执行超时: ${e.duration?.inSeconds ?? AppConstants.taskTimeoutSeconds}秒');
     } on AIException catch (e, st) {
@@ -174,6 +182,33 @@ class AITaskQueue {
     await _ideaRepository.updateEmbedding(ideaId, embedding);
     if (categoryId != null) {
       await _ideaRepository.update(idea.copyWith(categoryId: categoryId));
+    }
+
+    final searchResult = await _embeddingService.searchSimilar(
+      embedding,
+      topN: 5,
+      threshold: 0.3,
+    );
+
+    if (searchResult.isSuccess && searchResult.dataOrNull!.isNotEmpty) {
+      final candidates = searchResult.dataOrNull!
+          .where((s) => s.idea.id != ideaId)
+          .map((s) => s.idea)
+          .toList();
+
+      if (candidates.isNotEmpty) {
+        final relationResult = await _relationService.judgeRelations(
+          currentIdea: idea,
+          candidates: candidates,
+        );
+
+        if (relationResult.isSuccess) {
+          for (final association in relationResult.dataOrNull!) {
+            await _associationRepository.save(association);
+            _logger.info('保存关联: ${association.sourceIdeaId} -> ${association.targetIdeaId}');
+          }
+        }
+      }
     }
 
     final analysis = AIAnalysisEntity(

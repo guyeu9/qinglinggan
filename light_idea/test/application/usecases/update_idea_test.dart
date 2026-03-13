@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:light_idea/application/usecases/update_idea.dart';
 import 'package:light_idea/domain/entities/idea.dart';
 import 'package:light_idea/domain/repositories/idea_repository.dart';
-import 'package:light_idea/core/utils/result.dart';
+
 import 'package:light_idea/core/logger/app_logger.dart';
 
 void main() {

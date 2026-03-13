@@ -109,7 +109,7 @@ $ideasSummary
 3. 建议和洞察''';
 
       final response = await _client.chatCompletion([
-        ChatMessage(role: 'system', content: _systemPrompt),
+        const ChatMessage(role: 'system', content: _systemPrompt),
         ChatMessage(role: 'user', content: prompt),
       ]);
 
@@ -160,7 +160,7 @@ $ideasSummary
 请提供详细的分析和洞察。''';
 
       final response = await _client.chatCompletion([
-        ChatMessage(role: 'system', content: _systemPrompt),
+        const ChatMessage(role: 'system', content: _systemPrompt),
         ChatMessage(role: 'user', content: prompt),
       ]);
 
@@ -224,7 +224,7 @@ $ideasSummary
       }
 
       final messages = [
-        ChatMessage(role: 'system', content: _systemPrompt),
+        const ChatMessage(role: 'system', content: _systemPrompt),
         ChatMessage(
           role: 'user',
           content: userMessage + contextPrompt,

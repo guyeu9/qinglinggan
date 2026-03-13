@@ -64,12 +64,12 @@ class ExportService {
 
       // 创建 Excel
       final excel = Excel.createExcel();
-      final sheetName = '灵感列表';
+      const sheetName = '灵感列表';
       excel.rename('Sheet1', sheetName);
       final sheet = excel[sheetName];
 
       // 设置表头
-      final headers = ['ID', '内容', '分类', '标签', '创建时间', '更新时间'];
+      const headers = ['ID', '内容', '分类', '标签', '创建时间', '更新时间'];
       for (var i = 0; i < headers.length; i++) {
         final cell = sheet
             .cell(CellIndex.indexByString('${String.fromCharCode(65 + i)}1'));

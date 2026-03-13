@@ -2,8 +2,6 @@ import 'package:logger/logger.dart';
 import '../utils/sensitive_data_masker.dart';
 
 class AppLogger {
-  AppLogger._();
-
   static final AppLogger _instance = AppLogger._internal();
   static AppLogger get instance => _instance;
 

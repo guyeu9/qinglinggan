@@ -424,7 +424,7 @@ class _AIHubPageState extends ConsumerState<AIHubPage> {
       ),
       child: Row(
         children: [
-          Icon(Symbols.error_outline, color: AppColors.error, size: 16),
+          const Icon(Symbols.error_outline, color: AppColors.error, size: 16),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -527,12 +527,12 @@ class _AIHubPageState extends ConsumerState<AIHubPage> {
                     minLines: 1,
                     textInputAction: TextInputAction.send,
                     onSubmitted: (_) => _handleSend(),
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       hintText: '向AI助手提问...',
                       hintStyle: TextStyle(
                         color: AppColors.textDisabled,
                       ),
-                      contentPadding: const EdgeInsets.symmetric(
+                      contentPadding: EdgeInsets.symmetric(
                         horizontal: AppTheme.spacingMd,
                         vertical: AppTheme.spacingSm + 4,
                       ),
@@ -582,7 +582,7 @@ class _SendButton extends StatelessWidget {
             color: isActive ? AppColors.primary : AppColors.textDisabled,
             borderRadius: BorderRadius.circular(AppTheme.radiusCircular),
           ),
-          child: Icon(
+          child: const Icon(
             Symbols.send,
             color: Colors.white,
             size: 20,
