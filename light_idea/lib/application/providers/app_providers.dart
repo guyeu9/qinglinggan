@@ -15,9 +15,11 @@ import '../../data/repositories/ai_task_repository_impl.dart';
 import '../../data/repositories/ai_analysis_repository_impl.dart';
 import '../ai/ai_understanding_service.dart';
 import '../ai/ai_embedding_service.dart';
+import '../ai/ai_chat_service.dart';
 import '../task_queue/ai_task_queue.dart';
 import '../services/export_service.dart';
 import '../services/import_service.dart';
+import 'ai_chat_provider.dart';
 
 final loggerProvider = Provider<AppLogger>((ref) {
   return AppLogger.instance;
@@ -117,5 +119,20 @@ final importServiceProvider = Provider<ImportService>((ref) {
     tagRepository: ref.watch(tagRepositoryProvider),
     aiTaskQueue: ref.watch(aiTaskQueueProvider),
     logger: ref.watch(loggerProvider),
+  );
+});
+
+final aiChatServiceProvider = Provider<AIChatService>((ref) {
+  return AIChatService(
+    ref.watch(openAIClientProvider),
+    ref.watch(ideaRepositoryProvider),
+    ref.watch(aiEmbeddingServiceProvider),
+    ref.watch(loggerProvider),
+  );
+});
+
+final aiChatProvider = StateNotifierProvider<AIChatNotifier, AIChatState>((ref) {
+  return AIChatNotifier(
+    ref.watch(aiChatServiceProvider),
   );
 });
