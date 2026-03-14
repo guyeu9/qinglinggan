@@ -27,34 +27,49 @@ const AIAnalysisModelSchema = CollectionSchema(
       name: r'categoryResult',
       type: IsarType.long,
     ),
-    r'createdAt': PropertySchema(
+    r'commonPoints': PropertySchema(
       id: 2,
+      name: r'commonPoints',
+      type: IsarType.stringList,
+    ),
+    r'createdAt': PropertySchema(
+      id: 3,
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
+    r'differences': PropertySchema(
+      id: 4,
+      name: r'differences',
+      type: IsarType.stringList,
+    ),
     r'ideaId': PropertySchema(
-      id: 3,
+      id: 5,
       name: r'ideaId',
       type: IsarType.long,
     ),
+    r'mergedIdea': PropertySchema(
+      id: 6,
+      name: r'mergedIdea',
+      type: IsarType.string,
+    ),
     r'status': PropertySchema(
-      id: 4,
+      id: 7,
       name: r'status',
       type: IsarType.string,
       enumMap: _AIAnalysisModelstatusEnumValueMap,
     ),
     r'summary': PropertySchema(
-      id: 5,
+      id: 8,
       name: r'summary',
       type: IsarType.string,
     ),
     r'tagResults': PropertySchema(
-      id: 6,
+      id: 9,
       name: r'tagResults',
       type: IsarType.longList,
     ),
     r'updatedAt': PropertySchema(
-      id: 7,
+      id: 10,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -107,6 +122,26 @@ int _aIAnalysisModelEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.aiHint.length * 3;
+  bytesCount += 3 + object.commonPoints.length * 3;
+  {
+    for (var i = 0; i < object.commonPoints.length; i++) {
+      final value = object.commonPoints[i];
+      bytesCount += value.length * 3;
+    }
+  }
+  bytesCount += 3 + object.differences.length * 3;
+  {
+    for (var i = 0; i < object.differences.length; i++) {
+      final value = object.differences[i];
+      bytesCount += value.length * 3;
+    }
+  }
+  {
+    final value = object.mergedIdea;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.status.name.length * 3;
   bytesCount += 3 + object.summary.length * 3;
   bytesCount += 3 + object.tagResults.length * 8;
@@ -121,12 +156,15 @@ void _aIAnalysisModelSerialize(
 ) {
   writer.writeString(offsets[0], object.aiHint);
   writer.writeLong(offsets[1], object.categoryResult);
-  writer.writeDateTime(offsets[2], object.createdAt);
-  writer.writeLong(offsets[3], object.ideaId);
-  writer.writeString(offsets[4], object.status.name);
-  writer.writeString(offsets[5], object.summary);
-  writer.writeLongList(offsets[6], object.tagResults);
-  writer.writeDateTime(offsets[7], object.updatedAt);
+  writer.writeStringList(offsets[2], object.commonPoints);
+  writer.writeDateTime(offsets[3], object.createdAt);
+  writer.writeStringList(offsets[4], object.differences);
+  writer.writeLong(offsets[5], object.ideaId);
+  writer.writeString(offsets[6], object.mergedIdea);
+  writer.writeString(offsets[7], object.status.name);
+  writer.writeString(offsets[8], object.summary);
+  writer.writeLongList(offsets[9], object.tagResults);
+  writer.writeDateTime(offsets[10], object.updatedAt);
 }
 
 AIAnalysisModel _aIAnalysisModelDeserialize(
@@ -138,15 +176,18 @@ AIAnalysisModel _aIAnalysisModelDeserialize(
   final object = AIAnalysisModel();
   object.aiHint = reader.readString(offsets[0]);
   object.categoryResult = reader.readLongOrNull(offsets[1]);
-  object.createdAt = reader.readDateTime(offsets[2]);
+  object.commonPoints = reader.readStringList(offsets[2]) ?? [];
+  object.createdAt = reader.readDateTime(offsets[3]);
+  object.differences = reader.readStringList(offsets[4]) ?? [];
   object.id = id;
-  object.ideaId = reader.readLong(offsets[3]);
+  object.ideaId = reader.readLong(offsets[5]);
+  object.mergedIdea = reader.readStringOrNull(offsets[6]);
   object.status =
-      _AIAnalysisModelstatusValueEnumMap[reader.readStringOrNull(offsets[4])] ??
+      _AIAnalysisModelstatusValueEnumMap[reader.readStringOrNull(offsets[7])] ??
           AnalysisStatus.pending;
-  object.summary = reader.readString(offsets[5]);
-  object.tagResults = reader.readLongList(offsets[6]) ?? [];
-  object.updatedAt = reader.readDateTime(offsets[7]);
+  object.summary = reader.readString(offsets[8]);
+  object.tagResults = reader.readLongList(offsets[9]) ?? [];
+  object.updatedAt = reader.readDateTime(offsets[10]);
   return object;
 }
 
@@ -162,18 +203,24 @@ P _aIAnalysisModelDeserializeProp<P>(
     case 1:
       return (reader.readLongOrNull(offset)) as P;
     case 2:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readStringList(offset) ?? []) as P;
     case 3:
-      return (reader.readLong(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 4:
+      return (reader.readStringList(offset) ?? []) as P;
+    case 5:
+      return (reader.readLong(offset)) as P;
+    case 6:
+      return (reader.readStringOrNull(offset)) as P;
+    case 7:
       return (_AIAnalysisModelstatusValueEnumMap[
               reader.readStringOrNull(offset)] ??
           AnalysisStatus.pending) as P;
-    case 5:
+    case 8:
       return (reader.readString(offset)) as P;
-    case 6:
+    case 9:
       return (reader.readLongList(offset) ?? []) as P;
-    case 7:
+    case 10:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -645,6 +692,231 @@ extension AIAnalysisModelQueryFilter
   }
 
   QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      commonPointsElementEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'commonPoints',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      commonPointsElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'commonPoints',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      commonPointsElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'commonPoints',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      commonPointsElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'commonPoints',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      commonPointsElementStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'commonPoints',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      commonPointsElementEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'commonPoints',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      commonPointsElementContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'commonPoints',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      commonPointsElementMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'commonPoints',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      commonPointsElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'commonPoints',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      commonPointsElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'commonPoints',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      commonPointsLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'commonPoints',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      commonPointsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'commonPoints',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      commonPointsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'commonPoints',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      commonPointsLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'commonPoints',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      commonPointsLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'commonPoints',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      commonPointsLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'commonPoints',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
       createdAtEqualTo(DateTime value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -697,6 +969,231 @@ extension AIAnalysisModelQueryFilter
         upper: upper,
         includeUpper: includeUpper,
       ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      differencesElementEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'differences',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      differencesElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'differences',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      differencesElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'differences',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      differencesElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'differences',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      differencesElementStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'differences',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      differencesElementEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'differences',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      differencesElementContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'differences',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      differencesElementMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'differences',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      differencesElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'differences',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      differencesElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'differences',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      differencesLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'differences',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      differencesIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'differences',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      differencesIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'differences',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      differencesLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'differences',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      differencesLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'differences',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      differencesLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'differences',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
     });
   }
 
@@ -808,6 +1305,160 @@ extension AIAnalysisModelQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      mergedIdeaIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'mergedIdea',
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      mergedIdeaIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'mergedIdea',
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      mergedIdeaEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'mergedIdea',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      mergedIdeaGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'mergedIdea',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      mergedIdeaLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'mergedIdea',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      mergedIdeaBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'mergedIdea',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      mergedIdeaStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'mergedIdea',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      mergedIdeaEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'mergedIdea',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      mergedIdeaContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'mergedIdea',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      mergedIdeaMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'mergedIdea',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      mergedIdeaIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'mergedIdea',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      mergedIdeaIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'mergedIdea',
+        value: '',
       ));
     });
   }
@@ -1348,6 +1999,20 @@ extension AIAnalysisModelQuerySortBy
     });
   }
 
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterSortBy>
+      sortByMergedIdea() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mergedIdea', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterSortBy>
+      sortByMergedIdeaDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mergedIdea', Sort.desc);
+    });
+  }
+
   QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterSortBy> sortByStatus() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'status', Sort.asc);
@@ -1457,6 +2122,20 @@ extension AIAnalysisModelQuerySortThenBy
     });
   }
 
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterSortBy>
+      thenByMergedIdea() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mergedIdea', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterSortBy>
+      thenByMergedIdeaDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mergedIdea', Sort.desc);
+    });
+  }
+
   QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterSortBy> thenByStatus() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'status', Sort.asc);
@@ -1515,15 +2194,36 @@ extension AIAnalysisModelQueryWhereDistinct
   }
 
   QueryBuilder<AIAnalysisModel, AIAnalysisModel, QDistinct>
+      distinctByCommonPoints() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'commonPoints');
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QDistinct>
       distinctByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'createdAt');
     });
   }
 
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QDistinct>
+      distinctByDifferences() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'differences');
+    });
+  }
+
   QueryBuilder<AIAnalysisModel, AIAnalysisModel, QDistinct> distinctByIdeaId() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'ideaId');
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QDistinct>
+      distinctByMergedIdea({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'mergedIdea', caseSensitive: caseSensitive);
     });
   }
 
@@ -1577,6 +2277,13 @@ extension AIAnalysisModelQueryProperty
     });
   }
 
+  QueryBuilder<AIAnalysisModel, List<String>, QQueryOperations>
+      commonPointsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'commonPoints');
+    });
+  }
+
   QueryBuilder<AIAnalysisModel, DateTime, QQueryOperations>
       createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
@@ -1584,9 +2291,23 @@ extension AIAnalysisModelQueryProperty
     });
   }
 
+  QueryBuilder<AIAnalysisModel, List<String>, QQueryOperations>
+      differencesProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'differences');
+    });
+  }
+
   QueryBuilder<AIAnalysisModel, int, QQueryOperations> ideaIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'ideaId');
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, String?, QQueryOperations>
+      mergedIdeaProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'mergedIdea');
     });
   }
 

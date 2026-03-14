@@ -10,6 +10,9 @@ class AIAnalysisEntity {
   final AnalysisStatus status;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final List<String> commonPoints;
+  final List<String> differences;
+  final String? mergedIdea;
 
   const AIAnalysisEntity({
     required this.id,
@@ -21,6 +24,9 @@ class AIAnalysisEntity {
     this.status = AnalysisStatus.pending,
     required this.createdAt,
     required this.updatedAt,
+    this.commonPoints = const [],
+    this.differences = const [],
+    this.mergedIdea,
   });
 
   AIAnalysisEntity copyWith({
@@ -33,6 +39,9 @@ class AIAnalysisEntity {
     AnalysisStatus? status,
     DateTime? createdAt,
     DateTime? updatedAt,
+    List<String>? commonPoints,
+    List<String>? differences,
+    String? mergedIdea,
   }) {
     return AIAnalysisEntity(
       id: id ?? this.id,
@@ -44,6 +53,9 @@ class AIAnalysisEntity {
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      commonPoints: commonPoints ?? this.commonPoints,
+      differences: differences ?? this.differences,
+      mergedIdea: mergedIdea ?? this.mergedIdea,
     );
   }
 

@@ -203,6 +203,15 @@ class _IdeaDetailPageState extends ConsumerState<IdeaDetailPage> {
 
                             const SizedBox(height: 24),
 
+                            // 综合分析区
+                            if (state.analysis != null && 
+                                (state.analysis!.commonPoints.isNotEmpty || 
+                                 state.analysis!.differences.isNotEmpty || 
+                                 (state.analysis!.mergedIdea ?? '').isNotEmpty))
+                              _buildSynthesisSection(isDark, state),
+
+                            const SizedBox(height: 24),
+
                             // 关联灵感轴
                             if (state.relatedIdeas.isNotEmpty)
                               _buildRelatedIdeasSection(isDark, state),
@@ -473,6 +482,184 @@ class _IdeaDetailPageState extends ConsumerState<IdeaDetailPage> {
                   ),
                 ],
               ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 综合分析区
+  /// 
+  /// 展示共同点、差异点和综合优化版本
+  Widget _buildSynthesisSection(bool isDark, IdeaDetailState state) {
+    final analysis = state.analysis!;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '智能优化建议',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF065F46),
+            letterSpacing: 1,
+          ),
+        ),
+        
+        const SizedBox(height: 12),
+        
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFA78BFA).withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color(0xFFA78BFA).withValues(alpha: 0.3),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 共同点
+              if (analysis.commonPoints.isNotEmpty) ...[
+                _buildSynthesisItem(
+                  icon: Symbols.link,
+                  label: '共同点',
+                  items: analysis.commonPoints,
+                  color: const Color(0xFF3B82F6),
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 16),
+              ],
+              
+              // 差异点
+              if (analysis.differences.isNotEmpty) ...[
+                _buildSynthesisItem(
+                  icon: Symbols.compare_arrows,
+                  label: '差异点',
+                  items: analysis.differences,
+                  color: const Color(0xFFF59E0B),
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 16),
+              ],
+              
+              // 综合优化版本
+              if ((analysis.mergedIdea ?? '').isNotEmpty) ...[
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(
+                        Symbols.auto_awesome,
+                        size: 16,
+                        color: Color(0xFF10B981),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '综合优化版本',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF065F46).withValues(alpha: 0.7),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            analysis.mergedIdea!,
+                            style: TextStyle(
+                              fontSize: 14,
+                              height: 1.5,
+                              color: isDark ? Colors.white70 : const Color(0xFF065F46).withValues(alpha: 0.8),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSynthesisItem({
+    required IconData icon,
+    required String label,
+    required List<String> items,
+    required Color color,
+    required bool isDark,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Icon(
+            icon,
+            size: 16,
+            color: color,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF065F46).withValues(alpha: 0.7),
+                ),
+              ),
+              const SizedBox(height: 6),
+              ...items.map((item) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '• ',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: color,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        item,
+                        style: TextStyle(
+                          fontSize: 13,
+                          height: 1.4,
+                          color: isDark ? Colors.white70 : const Color(0xFF065F46).withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )),
             ],
           ),
         ),

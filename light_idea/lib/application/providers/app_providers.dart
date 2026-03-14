@@ -19,6 +19,7 @@ import '../ai/ai_understanding_service.dart';
 import '../ai/ai_embedding_service.dart';
 import '../ai/ai_chat_service.dart';
 import '../ai/ai_relation_service.dart';
+import '../ai/ai_synthesis_service.dart';
 import '../task_queue/ai_task_queue.dart';
 import '../services/export_service.dart';
 import '../services/import_service.dart';
@@ -87,11 +88,19 @@ final aiRelationServiceProvider = Provider<AIRelationService>((ref) {
   );
 });
 
+final aiSynthesisServiceProvider = Provider<AISynthesisService>((ref) {
+  return AISynthesisService(
+    ref.watch(openAIClientProvider),
+    ref.watch(loggerProvider),
+  );
+});
+
 final aiTaskQueueProvider = Provider<AITaskQueue>((ref) {
   return AITaskQueue(
     understandingService: ref.watch(aiUnderstandingServiceProvider),
     embeddingService: ref.watch(aiEmbeddingServiceProvider),
     relationService: ref.watch(aiRelationServiceProvider),
+    synthesisService: ref.watch(aiSynthesisServiceProvider),
     taskRepository: ref.watch(aiTaskRepositoryProvider),
     ideaRepository: ref.watch(ideaRepositoryProvider),
     analysisRepository: ref.watch(aiAnalysisRepositoryProvider),

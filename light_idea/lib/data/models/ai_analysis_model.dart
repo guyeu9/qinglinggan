@@ -26,6 +26,12 @@ class AIAnalysisModel {
 
   DateTime updatedAt = DateTime.now();
 
+  List<String> commonPoints = [];
+
+  List<String> differences = [];
+
+  String? mergedIdea;
+
   AIAnalysisEntity toEntity() {
     return AIAnalysisEntity(
       id: id,
@@ -37,6 +43,9 @@ class AIAnalysisModel {
       status: status,
       createdAt: createdAt,
       updatedAt: updatedAt,
+      commonPoints: commonPoints,
+      differences: differences,
+      mergedIdea: mergedIdea,
     );
   }
 
@@ -50,6 +59,9 @@ class AIAnalysisModel {
       ..aiHint = entity.aiHint
       ..status = entity.status
       ..createdAt = entity.createdAt
-      ..updatedAt = entity.updatedAt;
+      ..updatedAt = entity.updatedAt
+      ..commonPoints = entity.commonPoints
+      ..differences = entity.differences
+      ..mergedIdea = entity.mergedIdea;
   }
 }

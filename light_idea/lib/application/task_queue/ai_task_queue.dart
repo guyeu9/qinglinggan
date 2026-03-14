@@ -3,6 +3,7 @@ import 'dart:collection';
 import '../../domain/entities/ai_task.dart';
 import '../../domain/entities/ai_analysis.dart';
 import '../../domain/entities/idea.dart';
+import '../../domain/entities/association.dart';
 import '../../domain/repositories/ai_task_repository.dart';
 import '../../domain/repositories/idea_repository.dart';
 import '../../domain/repositories/ai_analysis_repository.dart';
@@ -15,6 +16,7 @@ import '../../core/exceptions/ai_exceptions.dart';
 import '../ai/ai_understanding_service.dart';
 import '../ai/ai_embedding_service.dart';
 import '../ai/ai_relation_service.dart';
+import '../ai/ai_synthesis_service.dart';
 
 enum EnqueueStatus { enqueued, skipped }
 
@@ -40,6 +42,7 @@ class AITaskQueue {
   final AIUnderstandingService _understandingService;
   final AIEmbeddingService _embeddingService;
   final AIRelationService _relationService;
+  final AISynthesisService _synthesisService;
   final AITaskRepository _taskRepository;
   final IdeaRepository _ideaRepository;
   final AIAnalysisRepository _analysisRepository;
@@ -54,6 +57,7 @@ class AITaskQueue {
     required AIUnderstandingService understandingService,
     required AIEmbeddingService embeddingService,
     required AIRelationService relationService,
+    required AISynthesisService synthesisService,
     required AITaskRepository taskRepository,
     required IdeaRepository ideaRepository,
     required AIAnalysisRepository analysisRepository,
@@ -64,6 +68,7 @@ class AITaskQueue {
   })  : _understandingService = understandingService,
         _embeddingService = embeddingService,
         _relationService = relationService,
+        _synthesisService = synthesisService,
         _taskRepository = taskRepository,
         _ideaRepository = ideaRepository,
         _analysisRepository = analysisRepository,
@@ -184,6 +189,9 @@ class AITaskQueue {
       await _ideaRepository.update(idea.copyWith(categoryId: categoryId));
     }
 
+    List<AssociationEntity> savedAssociations = [];
+    List<IdeaEntity> relatedIdeas = [];
+
     final searchResult = await _embeddingService.searchSimilar(
       embedding,
       topN: 5,
@@ -205,9 +213,33 @@ class AITaskQueue {
         if (relationResult.isSuccess) {
           for (final association in relationResult.dataOrNull!) {
             await _associationRepository.save(association);
+            savedAssociations.add(association);
             _logger.info('保存关联: ${association.sourceIdeaId} -> ${association.targetIdeaId}');
           }
+
+          final candidateIds = savedAssociations.map((a) => a.targetIdeaId).toSet();
+          relatedIdeas = candidates.where((c) => candidateIds.contains(c.id)).toList();
         }
+      }
+    }
+
+    List<String> commonPoints = [];
+    List<String> differences = [];
+    String? mergedIdea;
+
+    if (savedAssociations.isNotEmpty && relatedIdeas.isNotEmpty) {
+      final synthesisResult = await _synthesisService.generateSynthesis(
+        currentIdea: idea,
+        associations: savedAssociations,
+        relatedIdeas: relatedIdeas,
+      );
+
+      if (synthesisResult.isSuccess) {
+        final output = synthesisResult.dataOrNull!;
+        commonPoints = output.commonPoints;
+        differences = output.differences;
+        mergedIdea = output.mergedIdea.isEmpty ? null : output.mergedIdea;
+        _logger.info('综合分析完成: 共同点=${commonPoints.length}, 差异点=${differences.length}');
       }
     }
 
@@ -221,6 +253,9 @@ class AITaskQueue {
       status: AnalysisStatus.completed,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
+      commonPoints: commonPoints,
+      differences: differences,
+      mergedIdea: mergedIdea,
     );
     await _analysisRepository.save(analysis);
   }

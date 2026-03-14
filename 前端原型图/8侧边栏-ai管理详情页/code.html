@@ -1,14 +1,13 @@
 <!DOCTYPE html>
-
-<html lang="zh-CN"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>AI 设置 - 轻盈灵感</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>AI 模型管理 - 轻盈灵感</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
             theme: {
@@ -26,123 +25,608 @@
                         "DEFAULT": "0.25rem",
                         "lg": "0.5rem",
                         "xl": "0.75rem",
+                        "2xl": "1rem",
                         "full": "9999px"
                     },
                 },
             },
         }
     </script>
-<style>
+    <style>
         body {
             font-family: 'Public Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
         }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .custom-select {
             appearance: none;
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23065F46' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-            background-position: right 0.5rem center;
+            background-position: right 0.75rem center;
             background-repeat: no-repeat;
-            background-size: 1.5em 1.5em;
+            background-size: 1.25em 1.25em;
         }
         body {
             min-height: max(884px, 100dvh);
         }
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .modal-enter {
+            animation: slideUp 0.3s ease-out;
+        }
+        .overlay-enter {
+            animation: fadeIn 0.2s ease-out;
+        }
+        .radio-checked {
+            border-color: #6EE7B7;
+            background-color: #6EE7B7;
+        }
+        .radio-checked::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            display: block;
+        }
     </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark font-display text-primary-dark dark:text-slate-100 min-h-screen">
-<!-- Top Navigation Bar -->
-<header class="sticky top-0 z-10 bg-white">
-<div class="flex items-center p-4">
-<button class="flex items-center justify-center size-10 rounded-full hover:bg-primary/10 transition-colors">
-<span class="material-symbols-outlined text-primary-dark">arrow_back</span>
-</button>
-<h1 class="ml-4 text-xl font-bold tracking-tight">AI 设置</h1>
-</div>
-</header>
-<main class="p-4 pb-32 space-y-8">
-<!-- Section 1: Analysis API Settings -->
-<section class="space-y-6">
-<div class="flex items-center justify-between">
-<h2 class="text-lg font-semibold flex items-center gap-2">
-<span class="material-symbols-outlined text-primary">analytics</span>
-                    分析 API 设置
-                </h2>
-<label class="relative inline-flex items-center cursor-pointer">
-<input checked="" class="sr-only peer" type="checkbox" value=""/>
-<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-<span class="ms-3 text-sm font-medium">启用分析</span>
-</label>
-</div>
-<div class="grid gap-4">
-<div class="flex flex-col gap-1.5">
-<label class="text-sm font-medium opacity-80">API 接口地址</label>
-<input class="w-full px-4 py-3 rounded-xl border border-primary/20 bg-white focus:border-primary focus:ring-0 transition-all placeholder:text-gray-400" placeholder="https://api.openai.com/v1" type="text" value="https://api.openai.com/v1"/>
-</div>
-<div class="flex flex-col gap-1.5">
-<label class="text-sm font-medium opacity-80">API 密钥</label>
-<div class="relative">
-<input class="w-full px-4 py-3 rounded-xl border border-primary/20 bg-white focus:border-primary focus:ring-0 transition-all" placeholder="sk-••••••••••••••••" type="password" value="sk-proj-......................."/>
-<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer hover:text-primary-dark">visibility</span>
-</div>
-</div>
-<div class="flex flex-col gap-1.5">
-<label class="text-sm font-medium opacity-80">模型选择</label>
-<select class="custom-select w-full px-4 py-3 rounded-xl border border-primary/20 bg-white focus:border-primary focus:ring-0 transition-all appearance-none">
-<option value="gpt-4o">GPT-4o (默认)</option>
-<option value="claude-3-5">Claude 3.5 Sonnet</option>
-<option value="gpt-4-turbo">GPT-4 Turbo</option>
-<option value="mistral-large">Mistral Large</option>
-</select>
-</div>
-</div>
-</section>
-<hr class="border-primary/10"/>
-<!-- Section 2: Vector API Settings -->
-<section class="space-y-6">
-<div class="flex items-center justify-between">
-<h2 class="text-lg font-semibold flex items-center gap-2">
-<span class="material-symbols-outlined text-primary">account_tree</span>
-                    向量 API 设置
-                </h2>
-<button class="text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full border border-primary text-primary-dark hover:bg-primary/10 transition-colors">
-                    测试连接
+    <!-- Top Navigation Bar -->
+    <header class="sticky top-0 z-10 bg-white">
+        <div class="flex items-center justify-between p-4">
+            <div class="flex items-center">
+                <button class="flex items-center justify-center size-10 rounded-full hover:bg-primary/10 transition-colors" onclick="goBack()">
+                    <span class="material-symbols-outlined text-primary-dark">arrow_back</span>
                 </button>
-</div>
-<div class="grid gap-4">
-<div class="flex flex-col gap-1.5">
-<label class="text-sm font-medium opacity-80">嵌入接口地址</label>
-<input class="w-full px-4 py-3 rounded-xl border border-primary/20 bg-white focus:border-primary focus:ring-0 transition-all placeholder:text-gray-400" placeholder="https://api.pinecone.io" type="text"/>
-</div>
-<div class="flex flex-col gap-1.5">
-<label class="text-sm font-medium opacity-80">向量 API 密钥</label>
-<input class="w-full px-4 py-3 rounded-xl border border-primary/20 bg-white focus:border-primary focus:ring-0 transition-all" placeholder="pcsk_••••••••••••••••" type="password"/>
-</div>
-<div class="flex flex-col gap-1.5">
-<label class="text-sm font-medium opacity-80">向量维度</label>
-<div class="flex items-center gap-3">
-<input class="flex-1 px-4 py-3 rounded-xl border border-primary/20 bg-white focus:border-primary focus:ring-0 transition-all" type="number" value="1536"/>
-<span class="text-sm opacity-60">Ada-002 标准</span>
-</div>
-</div>
-</div>
-</section>
-<!-- Illustration / Visual Accent -->
-<div class="mt-8 p-6 rounded-2xl bg-primary/10 flex items-center gap-6">
-<div class="size-16 rounded-2xl bg-primary/20 flex items-center justify-center">
-<span class="material-symbols-outlined text-primary-dark text-3xl">auto_awesome</span>
-</div>
-<div>
-<h4 class="font-bold text-primary-dark">神经引擎已激活</h4>
-<p class="text-sm opacity-70">配置更改在保存后将立即影响全局灵感算法。</p>
-</div>
-</div>
-</main>
-<!-- Bottom Action Area -->
-<div class="fixed bottom-0 left-0 right-0 bg-background-light p-4">
-<div class="w-full">
-<button class="w-full bg-primary hover:bg-primary/90 text-primary-dark font-bold py-4 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
-<span class="material-symbols-outlined">save</span>
-                保存配置
+                <h1 class="ml-4 text-xl font-bold tracking-tight">AI 模型管理</h1>
+            </div>
+            <button class="flex items-center justify-center size-10 rounded-full hover:bg-primary/10 transition-colors">
+                <span class="material-symbols-outlined text-primary-dark">help_outline</span>
             </button>
-</div>
-</div>
-</body></html>
+        </div>
+    </header>
+
+    <main class="p-4 pb-32">
+        <!-- Tab Switcher -->
+        <div class="flex bg-white rounded-xl p-1 mb-6">
+            <button id="tab-chat" class="flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all bg-primary text-primary-dark" onclick="switchTab('chat')">
+                对话服务
+            </button>
+            <button id="tab-embedding" class="flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all text-gray-500 hover:text-primary-dark" onclick="switchTab('embedding')">
+                Embedding 服务
+            </button>
+        </div>
+
+        <!-- Provider List -->
+        <div id="provider-list" class="space-y-3">
+            <!-- Provider cards will be rendered here -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden flex flex-col items-center justify-center py-16">
+            <div class="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                <span class="material-symbols-outlined text-4xl text-primary">smart_toy</span>
+            </div>
+            <p class="text-gray-500 text-sm">暂无服务商配置</p>
+            <p class="text-gray-400 text-xs mt-1">点击右下角按钮添加</p>
+        </div>
+    </main>
+
+    <!-- Floating Add Button -->
+    <button onclick="openModal()" class="fixed bottom-6 right-6 bg-primary hover:bg-primary/90 text-primary-dark font-semibold py-3 px-6 rounded-full shadow-lg shadow-primary/30 transition-all active:scale-95 flex items-center gap-2 z-20">
+        <span class="material-symbols-outlined text-xl">add</span>
+        添加服务商
+    </button>
+
+    <!-- Modal Overlay -->
+    <div id="modal-overlay" class="fixed inset-0 bg-black/50 z-30 hidden" onclick="closeModalOnOverlay(event)"></div>
+
+    <!-- Add/Edit Provider Modal -->
+    <div id="provider-modal" class="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-40 hidden max-h-[90vh] overflow-hidden">
+        <div class="flex flex-col h-full">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-4 border-b border-gray-100">
+                <h2 id="modal-title" class="text-lg font-bold">添加对话服务商</h2>
+                <button onclick="closeModal()" class="flex items-center justify-center size-10 rounded-full hover:bg-gray-100 transition-colors">
+                    <span class="material-symbols-outlined text-gray-500">close</span>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="flex-1 overflow-y-auto p-4">
+                <!-- Quick Templates -->
+                <div class="mb-6">
+                    <p class="text-xs text-gray-500 mb-3">快速选择模板</p>
+                    <div class="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
+                        <button onclick="applyTemplate('deepseek')" class="flex flex-col items-center gap-2 p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-primary/5 transition-all min-w-[80px]">
+                            <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-blue-500">psychology</span>
+                            </div>
+                            <span class="text-xs font-medium">DeepSeek</span>
+                        </button>
+                        <button onclick="applyTemplate('qwen')" class="flex flex-col items-center gap-2 p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-primary/5 transition-all min-w-[80px]">
+                            <div class="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-purple-500">cloud</span>
+                            </div>
+                            <span class="text-xs font-medium">通义千问</span>
+                        </button>
+                        <button onclick="applyTemplate('claude')" class="flex flex-col items-center gap-2 p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-primary/5 transition-all min-w-[80px]">
+                            <div class="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-orange-500">emoji_objects</span>
+                            </div>
+                            <span class="text-xs font-medium">Claude</span>
+                        </button>
+                        <button onclick="applyTemplate('gemini')" class="flex flex-col items-center gap-2 p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-primary/5 transition-all min-w-[80px]">
+                            <div class="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-indigo-500">auto_awesome</span>
+                            </div>
+                            <span class="text-xs font-medium">Gemini</span>
+                        </button>
+                        <button onclick="applyTemplate('openai')" class="flex flex-col items-center gap-2 p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-primary/5 transition-all min-w-[80px]">
+                            <div class="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-green-500">chat</span>
+                            </div>
+                            <span class="text-xs font-medium">OpenAI</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Form -->
+                <form id="provider-form" class="space-y-4">
+                    <input type="hidden" id="edit-id" value="">
+                    
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-sm font-medium text-gray-700">服务商名称</label>
+                        <input type="text" id="provider-name" class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:border-primary focus:ring-0 transition-all placeholder:text-gray-400" placeholder="例如：免费grok" required/>
+                    </div>
+
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-sm font-medium text-gray-700">API 类型</label>
+                        <select id="api-type" class="custom-select w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:border-primary focus:ring-0 transition-all">
+                            <option value="openai-compatible">OpenAI 兼容</option>
+                            <option value="anthropic">Anthropic</option>
+                            <option value="google">Google AI</option>
+                            <option value="azure">Azure OpenAI</option>
+                        </select>
+                    </div>
+
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-sm font-medium text-gray-700">Base URL</label>
+                        <input type="url" id="base-url" class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:border-primary focus:ring-0 transition-all placeholder:text-gray-400" placeholder="https://api.openai.com/v1" required/>
+                    </div>
+
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-sm font-medium text-gray-700">API Key</label>
+                        <div class="relative">
+                            <input type="password" id="api-key" class="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 bg-white focus:border-primary focus:ring-0 transition-all placeholder:text-gray-400" placeholder="sk-xxxxxxxxxxxxxxxx" required/>
+                            <button type="button" onclick="toggleApiKeyVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-gray-100 transition-colors">
+                                <span id="eye-icon" class="material-symbols-outlined text-gray-400 text-xl">visibility</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-sm font-medium text-gray-700">模型名称</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="model-name" class="flex-1 px-4 py-3 rounded-xl border border-gray-200 bg-white focus:border-primary focus:ring-0 transition-all placeholder:text-gray-400" placeholder="输入模型名称或点击加载" required/>
+                            <button type="button" onclick="loadModels()" class="px-4 py-3 bg-primary hover:bg-primary/90 text-primary-dark font-medium rounded-xl transition-all active:scale-95 flex items-center gap-1 whitespace-nowrap">
+                                <span class="material-symbols-outlined text-lg">cloud_download</span>
+                                加载
+                            </button>
+                        </div>
+                        <p id="model-hint" class="text-xs text-gray-400 mt-1">填写 Base URL 和 API Key 后点击加载获取可用模型</p>
+                    </div>
+
+                    <!-- Model Select Dropdown (hidden by default) -->
+                    <div id="model-select-container" class="hidden flex flex-col gap-1.5">
+                        <label class="text-sm font-medium text-gray-700">选择模型</label>
+                        <select id="model-select" onchange="onModelSelectChange()" class="custom-select w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:border-primary focus:ring-0 transition-all">
+                            <option value="">请选择模型</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-gray-100">
+                <button onclick="saveProvider()" class="w-full bg-primary hover:bg-primary/90 text-primary-dark font-bold py-4 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                    保存
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50" onclick="closeDeleteModal()"></div>
+        <div class="relative bg-white rounded-2xl p-6 w-full max-w-sm">
+            <div class="flex flex-col items-center text-center">
+                <div class="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mb-4">
+                    <span class="material-symbols-outlined text-red-500 text-2xl">delete_outline</span>
+                </div>
+                <h3 class="text-lg font-bold mb-2">确认删除？</h3>
+                <p class="text-sm text-gray-500 mb-6">删除后将无法恢复，是否继续？</p>
+                <div class="flex gap-3 w-full">
+                    <button onclick="closeDeleteModal()" class="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-all">
+                        取消
+                    </button>
+                    <button onclick="confirmDelete()" class="flex-1 py-3 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 transition-all">
+                        删除
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Management
+        const STORAGE_KEY = 'ai_providers';
+        let providers = [];
+        let currentTab = 'chat';
+        let deleteTargetId = null;
+
+        // Templates
+        const templates = {
+            deepseek: {
+                name: 'DeepSeek',
+                apiType: 'openai-compatible',
+                baseUrl: 'https://api.deepseek.com/v1',
+                model: 'deepseek-chat'
+            },
+            qwen: {
+                name: '通义千问',
+                apiType: 'openai-compatible',
+                baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+                model: 'qwen-turbo'
+            },
+            claude: {
+                name: 'Claude',
+                apiType: 'anthropic',
+                baseUrl: 'https://api.anthropic.com/v1',
+                model: 'claude-3-sonnet-20240229'
+            },
+            gemini: {
+                name: 'Gemini',
+                apiType: 'google',
+                baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+                model: 'gemini-pro'
+            },
+            openai: {
+                name: 'OpenAI',
+                apiType: 'openai-compatible',
+                baseUrl: 'https://api.openai.com/v1',
+                model: 'gpt-4o'
+            }
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProviders();
+            renderProviderList();
+        });
+
+        // Load providers from localStorage
+        function loadProviders() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                providers = JSON.parse(stored);
+            } else {
+                // Default providers for demo
+                providers = [
+                    {
+                        id: '1',
+                        name: '免费grok',
+                        type: 'OPENAI',
+                        apiType: 'openai-compatible',
+                        baseUrl: 'https://api.x.ai/v1',
+                        apiKey: 'sk-xxxxCGrV',
+                        model: 'grok-4.20-beta',
+                        isDefault: false,
+                        serviceType: 'chat'
+                    },
+                    {
+                        id: '2',
+                        name: '默认',
+                        type: 'OPENAI',
+                        apiType: 'openai-compatible',
+                        baseUrl: 'https://api.openai.com/v1',
+                        apiKey: 'sk-xxxxp5oj',
+                        model: 'gemini-3.1-flash-lite',
+                        isDefault: true,
+                        serviceType: 'chat'
+                    }
+                ];
+                saveProviders();
+            }
+        }
+
+        // Save providers to localStorage
+        function saveProviders() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(providers));
+        }
+
+        // Switch tab
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('tab-chat').className = tab === 'chat' 
+                ? 'flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all bg-primary text-primary-dark'
+                : 'flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all text-gray-500 hover:text-primary-dark';
+            document.getElementById('tab-embedding').className = tab === 'embedding'
+                ? 'flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all bg-primary text-primary-dark'
+                : 'flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all text-gray-500 hover:text-primary-dark';
+            renderProviderList();
+        }
+
+        // Render provider list
+        function renderProviderList() {
+            const listContainer = document.getElementById('provider-list');
+            const emptyState = document.getElementById('empty-state');
+            const filteredProviders = providers.filter(p => p.serviceType === currentTab);
+
+            if (filteredProviders.length === 0) {
+                listContainer.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            listContainer.innerHTML = filteredProviders.map(provider => `
+                <div class="bg-white rounded-xl p-4 ${provider.isDefault ? 'ring-2 ring-primary' : ''}">
+                    <div class="flex items-start gap-3">
+                        <button onclick="setDefault('${provider.id}')" class="mt-1 flex-shrink-0">
+                            <div class="w-5 h-5 rounded-full border-2 ${provider.isDefault ? 'border-primary bg-primary' : 'border-gray-300'} flex items-center justify-center transition-all">
+                                ${provider.isDefault ? '<div class="w-2 h-2 bg-white rounded-full"></div>' : ''}
+                            </div>
+                        </button>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="font-semibold text-primary-dark">${provider.name}</span>
+                                <span class="px-2 py-0.5 bg-primary/20 text-primary-dark text-xs font-medium rounded">${provider.type}</span>
+                            </div>
+                            <p class="text-sm text-gray-600">${provider.model}</p>
+                            <p class="text-xs text-gray-400 mt-1">${maskApiKey(provider.apiKey)}</p>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <button onclick="editProvider('${provider.id}')" class="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                                <span class="material-symbols-outlined text-gray-400">edit</span>
+                            </button>
+                            <button onclick="showDeleteModal('${provider.id}')" class="p-2 rounded-lg hover:bg-red-50 transition-colors">
+                                <span class="material-symbols-outlined text-red-400">delete_outline</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Mask API key
+        function maskApiKey(key) {
+            if (!key || key.length < 8) return key;
+            return key.substring(0, 5) + '****' + key.substring(key.length - 4);
+        }
+
+        // Set default provider
+        function setDefault(id) {
+            providers = providers.map(p => ({
+                ...p,
+                isDefault: p.id === id && p.serviceType === currentTab
+            }));
+            saveProviders();
+            renderProviderList();
+        }
+
+        // Modal functions
+        function openModal(editId = null) {
+            const modal = document.getElementById('provider-modal');
+            const overlay = document.getElementById('modal-overlay');
+            const title = document.getElementById('modal-title');
+            const form = document.getElementById('provider-form');
+
+            form.reset();
+            document.getElementById('model-select-container').classList.add('hidden');
+            document.getElementById('edit-id').value = '';
+
+            if (editId) {
+                const provider = providers.find(p => p.id === editId);
+                if (provider) {
+                    title.textContent = '编辑对话服务商';
+                    document.getElementById('edit-id').value = provider.id;
+                    document.getElementById('provider-name').value = provider.name;
+                    document.getElementById('api-type').value = provider.apiType;
+                    document.getElementById('base-url').value = provider.baseUrl;
+                    document.getElementById('api-key').value = provider.apiKey;
+                    document.getElementById('model-name').value = provider.model;
+                }
+            } else {
+                title.textContent = '添加对话服务商';
+            }
+
+            overlay.classList.remove('hidden');
+            overlay.classList.add('overlay-enter');
+            modal.classList.remove('hidden');
+            modal.classList.add('modal-enter');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('provider-modal');
+            const overlay = document.getElementById('modal-overlay');
+            modal.classList.remove('modal-enter');
+            overlay.classList.remove('overlay-enter');
+            modal.classList.add('hidden');
+            overlay.classList.add('hidden');
+        }
+
+        function closeModalOnOverlay(event) {
+            if (event.target === event.currentTarget) {
+                closeModal();
+            }
+        }
+
+        // Apply template
+        function applyTemplate(templateKey) {
+            const template = templates[templateKey];
+            if (template) {
+                document.getElementById('provider-name').value = template.name;
+                document.getElementById('api-type').value = template.apiType;
+                document.getElementById('base-url').value = template.baseUrl;
+                document.getElementById('model-name').value = template.model;
+            }
+        }
+
+        // Toggle API key visibility
+        function toggleApiKeyVisibility() {
+            const input = document.getElementById('api-key');
+            const icon = document.getElementById('eye-icon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.textContent = 'visibility_off';
+            } else {
+                input.type = 'password';
+                icon.textContent = 'visibility';
+            }
+        }
+
+        // Load models from cloud (simulated)
+        async function loadModels() {
+            const baseUrl = document.getElementById('base-url').value;
+            const apiKey = document.getElementById('api-key').value;
+
+            if (!baseUrl || !apiKey) {
+                alert('请先填写 Base URL 和 API Key');
+                return;
+            }
+
+            const btn = event.target.closest('button');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> 加载中...';
+            btn.disabled = true;
+
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            // Mock models data
+            const mockModels = [
+                { id: 'gpt-4o', name: 'GPT-4o' },
+                { id: 'gpt-4-turbo', name: 'GPT-4 Turbo' },
+                { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo' },
+                { id: 'claude-3-opus', name: 'Claude 3 Opus' },
+                { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet' },
+                { id: 'deepseek-chat', name: 'DeepSeek Chat' },
+                { id: 'deepseek-coder', name: 'DeepSeek Coder' },
+            ];
+
+            const select = document.getElementById('model-select');
+            select.innerHTML = '<option value="">请选择模型</option>' + 
+                mockModels.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+
+            document.getElementById('model-select-container').classList.remove('hidden');
+            document.getElementById('model-hint').textContent = '已从云端获取模型列表，请选择';
+
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+        }
+
+        function onModelSelectChange() {
+            const select = document.getElementById('model-select');
+            const modelInput = document.getElementById('model-name');
+            if (select.value) {
+                modelInput.value = select.value;
+            }
+        }
+
+        // Save provider
+        function saveProvider() {
+            const editId = document.getElementById('edit-id').value;
+            const name = document.getElementById('provider-name').value;
+            const apiType = document.getElementById('api-type').value;
+            const baseUrl = document.getElementById('base-url').value;
+            const apiKey = document.getElementById('api-key').value;
+            const model = document.getElementById('model-name').value;
+
+            if (!name || !baseUrl || !apiKey || !model) {
+                alert('请填写所有必填项');
+                return;
+            }
+
+            const typeMap = {
+                'openai-compatible': 'OPENAI',
+                'anthropic': 'ANTHROPIC',
+                'google': 'GOOGLE',
+                'azure': 'AZURE'
+            };
+
+            if (editId) {
+                // Update existing
+                providers = providers.map(p => {
+                    if (p.id === editId) {
+                        return {
+                            ...p,
+                            name,
+                            apiType,
+                            type: typeMap[apiType] || 'OPENAI',
+                            baseUrl,
+                            apiKey,
+                            model
+                        };
+                    }
+                    return p;
+                });
+            } else {
+                // Add new
+                const newProvider = {
+                    id: Date.now().toString(),
+                    name,
+                    type: typeMap[apiType] || 'OPENAI',
+                    apiType,
+                    baseUrl,
+                    apiKey,
+                    model,
+                    isDefault: providers.filter(p => p.serviceType === currentTab).length === 0,
+                    serviceType: currentTab
+                };
+                providers.push(newProvider);
+            }
+
+            saveProviders();
+            renderProviderList();
+            closeModal();
+        }
+
+        // Edit provider
+        function editProvider(id) {
+            openModal(id);
+        }
+
+        // Delete modal
+        function showDeleteModal(id) {
+            deleteTargetId = id;
+            document.getElementById('delete-modal').classList.remove('hidden');
+        }
+
+        function closeDeleteModal() {
+            deleteTargetId = null;
+            document.getElementById('delete-modal').classList.add('hidden');
+        }
+
+        function confirmDelete() {
+            if (deleteTargetId) {
+                providers = providers.filter(p => p.id !== deleteTargetId);
+                saveProviders();
+                renderProviderList();
+            }
+            closeDeleteModal();
+        }
+
+        // Go back
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+</body>
+</html>

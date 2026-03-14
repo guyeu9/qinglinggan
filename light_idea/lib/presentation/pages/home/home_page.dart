@@ -409,8 +409,8 @@ class _HomePageState extends ConsumerState<HomePage> {
     final tabs = const ['时间轴', '社交/旅行/惊喜', '工作/创意', '摄影爱好'];
 
     return Container(
-      color: isDark ? const Color(0xFF022c22) : Colors.white,
       decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF022c22) : Colors.white,
         border: Border(
           bottom: BorderSide(
             color: isDark
