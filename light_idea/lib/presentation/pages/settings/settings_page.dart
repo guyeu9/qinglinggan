@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/router/route_names.dart';
 import '../../../../data/database/isar_database.dart';
 import '../../../../config/ai_config.dart';
+import '../../../../application/providers/user_provider.dart';
 
 /// 设置详情页
 ///
 /// 根据原型图 6设置详情页 实现
 /// 包含：账户资料、内容管理、个性化、隐私通知、支持关于等区域
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
     final cardColor = isDark ? AppColors.cardDark : AppColors.cardLight;
@@ -44,7 +46,7 @@ class SettingsPage extends StatelessWidget {
                 isDark: isDark,
                 cardColor: cardColor,
                 children: [
-                  _buildUserProfileTile(context, textPrimary, textSecondary),
+                  _buildUserProfileTile(context, textPrimary, textSecondary, ref),
                   _buildDivider(isDark),
                   _buildSettingsTile(
                     context: context,
@@ -294,9 +296,12 @@ class SettingsPage extends StatelessWidget {
     BuildContext context,
     Color textPrimary,
     Color textSecondary,
+    WidgetRef ref,
   ) {
+    final userState = ref.watch(userProvider);
+    
     return InkWell(
-      onTap: () => _showNotImplemented(context),
+      onTap: () => _showUserNameDialog(context, ref),
       borderRadius: const BorderRadius.vertical(
         top: Radius.circular(AppTheme.radiusMedium),
       ),
@@ -329,7 +334,7 @@ class SettingsPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '用户昵称',
+                    userState.userName,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -338,7 +343,7 @@ class SettingsPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'user@example.com',
+                    userState.userEmail,
                     style: TextStyle(
                       fontSize: 14,
                       color: textSecondary,
@@ -464,6 +469,47 @@ class SettingsPage extends StatelessWidget {
       height: 1,
       indent: 60,
       color: isDark ? AppColors.borderDark : AppColors.borderLight,
+    );
+  }
+
+  /// 显示用户名称编辑对话框
+  void _showUserNameDialog(BuildContext context, WidgetRef ref) {
+    final controller = TextEditingController(text: ref.read(userProvider).userName);
+    
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('编辑用户名'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: '请输入用户名',
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final name = controller.text.trim();
+              if (name.isNotEmpty) {
+                await ref.read(userProvider.notifier).setUserName(name);
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('用户名已更新')),
+                  );
+                }
+              }
+            },
+            child: const Text('保存'),
+          ),
+        ],
+      ),
     );
   }
 

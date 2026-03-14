@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../../application/providers/idea_detail_provider.dart';
 import '../../../../application/providers/app_providers.dart';
 import '../../../../application/ai/ai_embedding_service.dart';
@@ -110,7 +111,20 @@ class _IdeaDetailPageState extends ConsumerState<IdeaDetailPage> {
   }
 
   void _shareIdea() {
-    _showSnackBar('分享功能开发中...');
+    final idea = ref.read(ideaDetailProvider).idea;
+    if (idea == null) return;
+    
+    final buffer = StringBuffer();
+    buffer.writeln('【轻灵感分享】');
+    buffer.writeln('');
+    buffer.writeln(idea.content);
+    buffer.writeln('');
+    buffer.writeln('— 来自「轻灵感」App');
+    
+    Share.share(
+      buffer.toString(),
+      subject: '灵感分享',
+    );
   }
 
   void _showMoreOptions() {
@@ -120,14 +134,6 @@ class _IdeaDetailPageState extends ConsumerState<IdeaDetailPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              leading: const Icon(Symbols.archive),
-              title: const Text('归档'),
-              onTap: () {
-                Navigator.pop(context);
-                _showSnackBar('已归档');
-              },
-            ),
             ListTile(
               leading: const Icon(Symbols.folder_copy),
               title: const Text('移动到分类'),

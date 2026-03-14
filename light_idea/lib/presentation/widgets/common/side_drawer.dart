@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import '../../../../application/providers/sidebar_provider.dart';
+import '../../../../application/providers/user_provider.dart';
 
 /// 侧边栏抽屉
 ///
@@ -81,7 +82,7 @@ class SideDrawer extends ConsumerWidget {
             ),
 
             // User Footer - 用户信息
-            _buildUserFooter(isDark, textColor, secondaryTextColor),
+            _buildUserFooter(isDark, textColor, secondaryTextColor, ref),
           ],
         ),
       ),
@@ -516,7 +517,9 @@ class SideDrawer extends ConsumerWidget {
   ///   </div>
   /// </div>
   /// ```
-  Widget _buildUserFooter(bool isDark, Color textColor, Color secondaryTextColor) {
+  Widget _buildUserFooter(bool isDark, Color textColor, Color secondaryTextColor, WidgetRef ref) {
+    final userState = ref.watch(userProvider);
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -549,7 +552,7 @@ class SideDrawer extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '灵感家 Alex',
+                  userState.userName,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -558,7 +561,7 @@ class SideDrawer extends ConsumerWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  'alex@inspiration.app',
+                  userState.userEmail,
                   style: TextStyle(
                     fontSize: 12,
                     color: secondaryTextColor,

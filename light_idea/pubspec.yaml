@@ -52,6 +52,9 @@ dependencies:
   
   # Material Symbols 图标
   material_symbols_icons: ^4.2805.1
+  
+  # 分享功能
+  share_plus: ^10.0.0
 
 dev_dependencies:
   flutter_test:

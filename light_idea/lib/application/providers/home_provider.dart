@@ -209,6 +209,29 @@ class HomeNotifier extends StateNotifier<HomeState> {
   void clearError() {
     state = state.copyWith(clearError: true);
   }
+
+  
+  Future<int?> createEmptyIdea() async {
+    try {
+      final ideaRepo = _ref.read(ideaRepositoryProvider);
+      
+      final idea = IdeaEntity(
+        id: 0,
+        content: '',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        aiStatus: AIStatus.pending,
+        tagIds: const [],
+        imagePaths: const [],
+      );
+
+      final savedIdea = await ideaRepo.save(idea);
+      return savedIdea.id;
+    } catch (e) {
+      state = state.copyWith(error: '创建灵感失败: $e');
+      return null;
+    }
+  }
 }
 
 final homeProvider = StateNotifierProvider<HomeNotifier, HomeState>((ref) {

@@ -48,6 +48,13 @@ class _HomePageState extends ConsumerState<HomePage> {
     context.pushNamed(RouteNames.ideaDetail, pathParameters: {'id': id.toString()});
   }
 
+  Future<void> _openNewIdeaDetail() async {
+    final ideaId = await ref.read(homeProvider.notifier).createEmptyIdea();
+    if (ideaId != null && mounted) {
+      context.pushNamed(RouteNames.ideaDetail, pathParameters: {'id': ideaId.toString()});
+    }
+  }
+
   Future<void> _onImageTap() async {
     final imagePickerService = ref.read(imagePickerServiceProvider);
     final result = await imagePickerService.showImageSourceDialog(context);
@@ -276,9 +283,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                           ),
                           _buildIconButton(
                             icon: Symbols.add,
-                            onTap: () {
-                              // TODO: 打开详细输入弹窗
-                            },
+                            onTap: _openNewIdeaDetail,
                             color: const Color(0xFF065F46),
                           ),
                         ],
@@ -718,14 +723,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                         _buildQuickActionButton(
                           icon: Symbols.image,
                           onTap: _onImageTap,
-                          isDark: isDark,
-                        ),
-                        const SizedBox(width: 24),
-                        _buildQuickActionButton(
-                          icon: Symbols.mic,
-                          onTap: () {
-                            // TODO: 语音输入
-                          },
                           isDark: isDark,
                         ),
                       ],
