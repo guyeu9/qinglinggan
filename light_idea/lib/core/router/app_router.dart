@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'route_names.dart';
 import '../../presentation/pages/home/home_page.dart';
 import '../../presentation/pages/idea_detail/idea_detail_page.dart';
+import '../../presentation/pages/association/association_page.dart';
 import '../../presentation/pages/settings/settings_page.dart';
 import '../../presentation/pages/data_management/data_management_page.dart';
 import '../../presentation/pages/ai_hub/ai_hub_page.dart';
@@ -24,6 +25,14 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) {
         final id = state.pathParameters['id'] ?? '';
         return IdeaDetailPage(ideaId: id);
+      },
+    ),
+    GoRoute(
+      path: RoutePaths.association,
+      name: RouteNames.association,
+      builder: (context, state) {
+        final id = state.pathParameters['id'] ?? '';
+        return AssociationPage(ideaId: int.tryParse(id) ?? 0);
       },
     ),
     ShellRoute(
@@ -138,6 +147,10 @@ class _ErrorPage extends StatelessWidget {
 extension GoRouterExtension on BuildContext {
   void pushToIdeaDetail(String id) {
     pushNamed(RouteNames.ideaDetail, pathParameters: {'id': id});
+  }
+
+  void pushToAssociation(String id) {
+    pushNamed(RouteNames.association, pathParameters: {'id': id});
   }
 
   void pushToHome() {

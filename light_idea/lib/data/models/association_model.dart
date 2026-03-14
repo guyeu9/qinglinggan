@@ -13,6 +13,7 @@ class AssociationModel {
   @Index()
   late int targetIdeaId;
 
+  @Index()
   @Enumerated(EnumType.name)
   late RelationType type;
 

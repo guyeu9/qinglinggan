@@ -5,6 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import '../../../../application/providers/idea_detail_provider.dart';
 import '../../../../application/ai/ai_embedding_service.dart';
+import '../../../../core/router/app_router.dart';
+import '../../../../domain/entities/association.dart';
+import '../../../../domain/entities/idea.dart';
 
 /// 灵感详情页
 /// 
@@ -213,9 +216,13 @@ class _IdeaDetailPageState extends ConsumerState<IdeaDetailPage> {
                             const SizedBox(height: 24),
 
                             // 关联灵感轴
-                            if (state.relatedIdeas.isNotEmpty)
+                            if (state.relatedIdeas.isNotEmpty || state.associations.isNotEmpty)
                               _buildRelatedIdeasSection(isDark, state),
-                            
+
+                            // 查看全部关联按钮
+                            if (state.associations.isNotEmpty)
+                              _buildViewAllAssociationsButton(isDark, state),
+
                             const SizedBox(height: 32),
                           ],
                         ),
@@ -680,28 +687,224 @@ class _IdeaDetailPageState extends ConsumerState<IdeaDetailPage> {
   ///     </div>
   /// ```
   Widget _buildRelatedIdeasSection(bool isDark, IdeaDetailState state) {
+    final associations = state.associations;
     final relatedIdeas = state.relatedIdeas;
+
+    if (associations.isEmpty && relatedIdeas.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final similarAssociations = associations.where((a) => a.type == RelationType.similar).toList();
+    final complementaryAssociations = associations.where((a) => a.type == RelationType.complementary).toList();
+    final evolutionaryAssociations = associations.where((a) => a.type == RelationType.evolutionary).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 4),
-          child: Text(
-            '关联灵感轴',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF065F46),
-              letterSpacing: 1,
-            ),
+          child: Row(
+            children: [
+              Text(
+                '关联灵感轴',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF065F46),
+                  letterSpacing: 1,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6EE7B7).withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${associations.length}',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF065F46),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         
         const SizedBox(height: 12),
         
-        ...relatedIdeas.map((SimilarIdea related) => _buildRelatedIdeaItem(related, isDark)),
+        if (similarAssociations.isNotEmpty) ...[
+          _buildAssociationTypeSection(
+            '相似',
+            const Color(0xFF3B82F6),
+            similarAssociations,
+            state.idea!,
+            isDark,
+          ),
+          const SizedBox(height: 16),
+        ],
+        
+        if (complementaryAssociations.isNotEmpty) ...[
+          _buildAssociationTypeSection(
+            '互补',
+            const Color(0xFFF59E0B),
+            complementaryAssociations,
+            state.idea!,
+            isDark,
+          ),
+          const SizedBox(height: 16),
+        ],
+        
+        if (evolutionaryAssociations.isNotEmpty) ...[
+          _buildAssociationTypeSection(
+            '演化',
+            const Color(0xFF8B5CF6),
+            evolutionaryAssociations,
+            state.idea!,
+            isDark,
+          ),
+          const SizedBox(height: 16),
+        ],
+        
+        if (relatedIdeas.isNotEmpty && associations.isEmpty) ...[
+          ...relatedIdeas.map((SimilarIdea related) => _buildRelatedIdeaItem(related, isDark)),
+        ],
       ],
+    );
+  }
+
+  Widget _buildAssociationTypeSection(
+    String label,
+    Color color,
+    List<AssociationEntity> associations,
+    IdeaEntity currentIdea,
+    bool isDark,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF065F46).withValues(alpha: 0.7),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '${associations.length}',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ...associations.map((assoc) => _buildAssociationItem(assoc, currentIdea, color, isDark)),
+      ],
+    );
+  }
+
+  Widget _buildAssociationItem(
+    AssociationEntity association,
+    IdeaEntity currentIdea,
+    Color color,
+    bool isDark,
+  ) {
+    final isSource = association.sourceIdeaId == currentIdea.id;
+    final targetId = isSource ? association.targetIdeaId : association.sourceIdeaId;
+    final confidencePercent = (association.confidence * 100).toInt();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF022c22).withValues(alpha: 0.4) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: color.withValues(alpha: 0.3),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '灵感 #$targetId',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF065F46),
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    '$confidencePercent%',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (association.reason.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                association.reason,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: const Color(0xFF065F46).withValues(alpha: 0.6),
+                  height: 1.4,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 
@@ -783,6 +986,50 @@ class _IdeaDetailPageState extends ConsumerState<IdeaDetailPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildViewAllAssociationsButton(bool isDark, IdeaDetailState state) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: GestureDetector(
+        onTap: () => context.pushToAssociation(widget.ideaId),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF065F46).withValues(alpha: 0.3) : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color(0xFF6EE7B7).withValues(alpha: 0.5),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Symbols.link,
+                size: 18,
+                color: const Color(0xFF6EE7B7),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '查看全部关联 (${state.associations.length})',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF6EE7B7),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                Symbols.arrow_forward,
+                size: 18,
+                color: const Color(0xFF6EE7B7),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

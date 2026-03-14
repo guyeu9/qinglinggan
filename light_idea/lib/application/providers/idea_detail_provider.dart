@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/idea.dart';
 import '../../domain/entities/ai_analysis.dart';
 import '../../domain/entities/tag.dart';
+import '../../domain/entities/association.dart';
 import '../ai/ai_embedding_service.dart';
 import 'app_providers.dart';
 
@@ -10,6 +11,7 @@ class IdeaDetailState {
   final AIAnalysisEntity? analysis;
   final List<TagEntity> tags;
   final List<SimilarIdea> relatedIdeas;
+  final List<AssociationEntity> associations;
   final bool isLoading;
   final bool isAnalyzing;
   final String? error;
@@ -19,16 +21,22 @@ class IdeaDetailState {
     this.analysis,
     this.tags = const [],
     this.relatedIdeas = const [],
+    this.associations = const [],
     this.isLoading = false,
     this.isAnalyzing = false,
     this.error,
   });
+
+  int get similarCount => associations.where((a) => a.type == RelationType.similar).length;
+  int get complementaryCount => associations.where((a) => a.type == RelationType.complementary).length;
+  int get evolutionaryCount => associations.where((a) => a.type == RelationType.evolutionary).length;
 
   IdeaDetailState copyWith({
     IdeaEntity? idea,
     AIAnalysisEntity? analysis,
     List<TagEntity>? tags,
     List<SimilarIdea>? relatedIdeas,
+    List<AssociationEntity>? associations,
     bool? isLoading,
     bool? isAnalyzing,
     String? error,
@@ -38,6 +46,7 @@ class IdeaDetailState {
       analysis: analysis ?? this.analysis,
       tags: tags ?? this.tags,
       relatedIdeas: relatedIdeas ?? this.relatedIdeas,
+      associations: associations ?? this.associations,
       isLoading: isLoading ?? this.isLoading,
       isAnalyzing: isAnalyzing ?? this.isAnalyzing,
       error: error,
@@ -58,6 +67,7 @@ class IdeaDetailNotifier extends StateNotifier<IdeaDetailState> {
       final analysisRepo = _ref.read(aiAnalysisRepositoryProvider);
       final tagRepo = _ref.read(tagRepositoryProvider);
       final embeddingService = _ref.read(aiEmbeddingServiceProvider);
+      final associationRepo = _ref.read(associationRepositoryProvider);
 
       final idea = await ideaRepo.getById(id);
       if (idea == null) {
@@ -83,11 +93,14 @@ class IdeaDetailNotifier extends StateNotifier<IdeaDetailState> {
         }
       }
 
+      final associations = await associationRepo.getByIdeaId(id);
+
       state = state.copyWith(
         idea: idea,
         analysis: analysis,
         tags: tags,
         relatedIdeas: relatedIdeas,
+        associations: associations,
         isLoading: false,
       );
     } catch (e) {

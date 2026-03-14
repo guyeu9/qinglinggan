@@ -54,6 +54,28 @@ class AssociationRepositoryImpl implements AssociationRepository {
   }
 
   @override
+  Future<List<AssociationEntity>> getByIdeaIdAndType(int ideaId, RelationType type) async {
+    final sourceModels = await _isar.associationModels
+        .where()
+        .sourceIdeaIdEqualTo(ideaId)
+        .filter()
+        .typeEqualTo(type)
+        .findAll();
+    final targetModels = await _isar.associationModels
+        .where()
+        .targetIdeaIdEqualTo(ideaId)
+        .filter()
+        .typeEqualTo(type)
+        .findAll();
+
+    final allModels = <AssociationModel>[...sourceModels, ...targetModels];
+    final seenIds = <int>{};
+    final uniqueModels = allModels.where((m) => seenIds.add(m.id)).toList();
+
+    return uniqueModels.map((m) => m.toEntity()).toList();
+  }
+
+  @override
   Future<AssociationEntity?> getById(int id) async {
     final model = await _isar.associationModels.get(id);
     return model?.toEntity();
@@ -99,6 +121,23 @@ class AssociationRepositoryImpl implements AssociationRepository {
     final targetCount = await _isar.associationModels
         .where()
         .targetIdeaIdEqualTo(ideaId)
+        .count();
+    return sourceCount + targetCount;
+  }
+
+  @override
+  Future<int> countByIdeaIdAndType(int ideaId, RelationType type) async {
+    final sourceCount = await _isar.associationModels
+        .where()
+        .sourceIdeaIdEqualTo(ideaId)
+        .filter()
+        .typeEqualTo(type)
+        .count();
+    final targetCount = await _isar.associationModels
+        .where()
+        .targetIdeaIdEqualTo(ideaId)
+        .filter()
+        .typeEqualTo(type)
         .count();
     return sourceCount + targetCount;
   }

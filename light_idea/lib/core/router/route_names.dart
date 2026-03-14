@@ -14,6 +14,9 @@ class RouteNames {
   /// 灵感详情页
   static const String ideaDetail = 'ideaDetail';
 
+  /// 关联内容页
+  static const String association = 'association';
+
   /// 回收站
   static const String recycleBin = 'recycleBin';
 
@@ -43,6 +46,9 @@ class RoutePaths {
   /// 灵感详情页
   static const String ideaDetail = '/idea/:id';
 
+  /// 关联内容页
+  static const String association = '/idea/:id/association';
+
   /// 回收站
   static const String recycleBin = '/recycle-bin';
 
@@ -63,4 +69,7 @@ class RoutePaths {
 
   /// 构建灵感详情页路径
   static String ideaDetailPath(String id) => '/idea/$id';
+
+  /// 构建关联内容页路径
+  static String associationPath(String id) => '/idea/$id/association';
 }
