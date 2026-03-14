@@ -45,7 +45,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   void _onIdeaTap(int id) {
-    context.goNamed(RouteNames.ideaDetail, pathParameters: {'id': id.toString()});
+    context.pushNamed(RouteNames.ideaDetail, pathParameters: {'id': id.toString()});
   }
 
   Future<void> _onImageTap() async {
@@ -140,19 +140,19 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   void _goToAiHub() {
-    context.goNamed(RouteNames.aiHub);
+    context.pushNamed(RouteNames.aiHub);
   }
 
   void _goToSettings() {
-    context.goNamed(RouteNames.settings);
+    context.pushNamed(RouteNames.settings);
   }
 
   void _goToAiSettings() {
-    context.goNamed(RouteNames.aiSettings);
+    context.pushNamed(RouteNames.aiSettings);
   }
 
   void _goToDataManagement() {
-    context.goNamed(RouteNames.dataManagement);
+    context.pushNamed(RouteNames.dataManagement);
   }
 
   void _onSearch(String query) {
@@ -182,7 +182,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         },
         onHelpTap: () {
           Navigator.pop(context);
-          context.goNamed(RouteNames.help);
+          context.pushNamed(RouteNames.help);
         },
       ),
       body: Column(

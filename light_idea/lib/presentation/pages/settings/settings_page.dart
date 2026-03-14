@@ -96,7 +96,7 @@ class SettingsPage extends StatelessWidget {
                     subtitle: '查看和恢复已删除的灵感',
                     textPrimary: textPrimary,
                     textSecondary: textSecondary,
-                    onTap: () => context.goNamed(RouteNames.recycleBin),
+                    onTap: () => context.pushNamed(RouteNames.recycleBin),
                     showBadge: true,
                     badgeCount: 5,
                   ),
@@ -191,7 +191,7 @@ class SettingsPage extends StatelessWidget {
                     subtitle: '常见问题和使用指南',
                     textPrimary: textPrimary,
                     textSecondary: textSecondary,
-                    onTap: () => context.goNamed(RouteNames.help),
+                    onTap: () => context.pushNamed(RouteNames.help),
                   ),
                   _buildDivider(isDark),
                   _buildSettingsTile(

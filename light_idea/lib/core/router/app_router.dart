@@ -9,18 +9,15 @@ import '../../presentation/pages/ai_hub/ai_hub_page.dart';
 import '../../presentation/pages/ai_settings/ai_settings_page.dart';
 import '../../presentation/pages/recycle_bin/recycle_bin_page.dart';
 
-/// 全局路由实例
 final GoRouter appRouter = GoRouter(
   initialLocation: RoutePaths.home,
   debugLogDiagnostics: true,
   routes: [
-    // 首页
     GoRoute(
       path: RoutePaths.home,
       name: RouteNames.home,
       builder: (context, state) => const HomePage(),
     ),
-    // 灵感详情页
     GoRoute(
       path: RoutePaths.ideaDetail,
       name: RouteNames.ideaDetail,
@@ -29,186 +26,153 @@ final GoRouter appRouter = GoRouter(
         return IdeaDetailPage(ideaId: id);
       },
     ),
-    // 回收站
-    GoRoute(
-      path: RoutePaths.recycleBin,
-      name: RouteNames.recycleBin,
-      builder: (context, state) => const RecycleBinPage(),
+    ShellRoute(
+      builder: (context, state, child) => _SettingsShell(child: child),
+      routes: [
+        GoRoute(
+          path: RoutePaths.settings,
+          name: RouteNames.settings,
+          builder: (context, state) => const SettingsPage(),
+        ),
+        GoRoute(
+          path: RoutePaths.recycleBin,
+          name: RouteNames.recycleBin,
+          builder: (context, state) => const RecycleBinPage(),
+        ),
+        GoRoute(
+          path: RoutePaths.help,
+          name: RouteNames.help,
+          builder: (context, state) => const _HelpPage(),
+        ),
+      ],
     ),
-    // 数据管理
     GoRoute(
       path: RoutePaths.dataManagement,
       name: RouteNames.dataManagement,
       builder: (context, state) => const DataManagementPage(),
     ),
-    // 设置
-    GoRoute(
-      path: RoutePaths.settings,
-      name: RouteNames.settings,
-      builder: (context, state) => const SettingsPage(),
-    ),
-    // AI灵感中心
     GoRoute(
       path: RoutePaths.aiHub,
       name: RouteNames.aiHub,
       builder: (context, state) => const AIHubPage(),
     ),
-    // AI设置
     GoRoute(
       path: RoutePaths.aiSettings,
       name: RouteNames.aiSettings,
       builder: (context, state) => const AiSettingsPage(),
     ),
-    // 帮助
-    GoRoute(
-      path: RoutePaths.help,
-      name: RouteNames.help,
-      builder: (context, state) => const PlaceholderPage(
-        title: '帮助',
-        icon: Icons.help_outline,
-      ),
-    ),
   ],
+  errorBuilder: (context, state) => _ErrorPage(error: state.error.toString()),
 );
 
-/// 占位符页面
-///
-/// 临时用于展示各路由页面，后续会被实际页面替换
-class PlaceholderPage extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final String? subtitle;
+class _SettingsShell extends StatelessWidget {
+  final Widget child;
 
-  const PlaceholderPage({
-    super.key,
-    required this.title,
-    required this.icon,
-    this.subtitle,
-  });
+  const _SettingsShell({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return child;
+  }
+}
+
+class _HelpPage extends StatelessWidget {
+  const _HelpPage();
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF022c22) : const Color(0xFFF0FDF4),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF065F46)),
+          onPressed: () => context.pop(),
+        ),
+        title: const Text(
+          '帮助中心',
+          style: TextStyle(color: Color(0xFF065F46)),
+        ),
+        centerTitle: true,
+        backgroundColor: isDark ? const Color(0xFF022c22) : const Color(0xFFF0FDF4),
+        elevation: 0,
+      ),
+      body: const Center(
+        child: Text('帮助中心 - 开发中'),
+      ),
+    );
+  }
+}
+
+class _ErrorPage extends StatelessWidget {
+  final String error;
+
+  const _ErrorPage({required this.error});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        leading: Navigator.canPop(context)
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => context.pop(),
-              )
-            : null,
-      ),
+      appBar: AppBar(title: const Text('错误')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 80,
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
-            ),
+            const Icon(Icons.error_outline, size: 64, color: Colors.red),
+            const SizedBox(height: 16),
+            Text('页面不存在', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            Text(error, style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: 24),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            if (subtitle != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                subtitle!,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Colors.grey,
-                    ),
-              ),
-            ],
-            const SizedBox(height: 32),
-            Container(
-              width: 200,
-              height: 150,
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.outline,
-                  style: BorderStyle.solid,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Center(
-                child: Text(
-                  '页面开发中...',
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ),
-            ),
-            const SizedBox(height: 32),
-            // 导航测试按钮
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              alignment: WrapAlignment.center,
-              children: [
-                _buildNavButton(context, '首页', RoutePaths.home),
-                _buildNavButton(context, '回收站', RoutePaths.recycleBin),
-                _buildNavButton(context, '设置', RoutePaths.settings),
-                _buildNavButton(context, 'AI中心', RoutePaths.aiHub),
-                _buildNavButton(context, '帮助', RoutePaths.help),
-              ],
+            ElevatedButton(
+              onPressed: () => context.go(RoutePaths.home),
+              child: const Text('返回首页'),
             ),
           ],
         ),
       ),
     );
   }
-
-  Widget _buildNavButton(BuildContext context, String label, String path) {
-    return ElevatedButton(
-      onPressed: () => context.go(path),
-      child: Text(label),
-    );
-  }
 }
 
-/// 路由导航扩展方法
 extension GoRouterExtension on BuildContext {
-  /// 跳转到灵感详情页
-  void goToIdeaDetail(String id) {
-    go(RoutePaths.ideaDetailPath(id));
+  void pushToIdeaDetail(String id) {
+    pushNamed(RouteNames.ideaDetail, pathParameters: {'id': id});
   }
 
-  /// 跳转到首页
+  void pushToHome() {
+    push(RoutePaths.home);
+  }
+
+  void pushToRecycleBin() {
+    pushNamed(RouteNames.recycleBin);
+  }
+
+  void pushToDataManagement() {
+    pushNamed(RouteNames.dataManagement);
+  }
+
+  void pushToSettings() {
+    pushNamed(RouteNames.settings);
+  }
+
+  void pushToAiHub() {
+    pushNamed(RouteNames.aiHub);
+  }
+
+  void pushToAiSettings() {
+    pushNamed(RouteNames.aiSettings);
+  }
+
+  void pushToHelp() {
+    pushNamed(RouteNames.help);
+  }
+
   void goToHome() {
     go(RoutePaths.home);
   }
 
-  /// 跳转到回收站
-  void goToRecycleBin() {
-    go(RoutePaths.recycleBin);
-  }
-
-  /// 跳转到数据管理
-  void goToDataManagement() {
-    go(RoutePaths.dataManagement);
-  }
-
-  /// 跳转到设置
-  void goToSettings() {
-    go(RoutePaths.settings);
-  }
-
-  /// 跳转到AI灵感中心
-  void goToAiHub() {
-    go(RoutePaths.aiHub);
-  }
-
-  /// 跳转到AI设置
-  void goToAiSettings() {
-    go(RoutePaths.aiSettings);
-  }
-
-  /// 跳转到帮助
-  void goToHelp() {
-    go(RoutePaths.help);
+  void goToIdeaDetail(String id) {
+    go(RoutePaths.ideaDetailPath(id));
   }
 }
