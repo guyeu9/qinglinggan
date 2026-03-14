@@ -2,24 +2,42 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:light_idea/application/usecases/delete_idea.dart';
 import 'package:light_idea/domain/entities/idea.dart';
 import 'package:light_idea/domain/repositories/idea_repository.dart';
+import 'package:light_idea/domain/repositories/association_repository.dart';
+import 'package:light_idea/domain/repositories/ai_analysis_repository.dart';
+import 'package:light_idea/domain/repositories/ai_task_repository.dart';
+import 'package:light_idea/domain/entities/association.dart';
+import 'package:light_idea/domain/entities/ai_analysis.dart';
+import 'package:light_idea/domain/entities/ai_task.dart';
 
 import 'package:light_idea/core/logger/app_logger.dart';
 
 void main() {
   late DeleteIdeaUseCase useCase;
-  late _MockIdeaRepository mockRepository;
+  late _MockIdeaRepository mockIdeaRepository;
+  late _MockAssociationRepository mockAssociationRepository;
+  late _MockAIAnalysisRepository mockAnalysisRepository;
+  late _MockAITaskRepository mockTaskRepository;
   late _MockLogger mockLogger;
 
   setUp(() {
-    mockRepository = _MockIdeaRepository();
+    mockIdeaRepository = _MockIdeaRepository();
+    mockAssociationRepository = _MockAssociationRepository();
+    mockAnalysisRepository = _MockAIAnalysisRepository();
+    mockTaskRepository = _MockAITaskRepository();
     mockLogger = _MockLogger();
-    useCase = DeleteIdeaUseCase(mockRepository, mockLogger);
+    useCase = DeleteIdeaUseCase(
+      mockIdeaRepository,
+      mockAssociationRepository,
+      mockAnalysisRepository,
+      mockTaskRepository,
+      mockLogger,
+    );
   });
 
   group('DeleteIdeaUseCase', () {
     group('execute', () {
       test('should soft delete idea by default', () async {
-        mockRepository.existingIdea = IdeaEntity(
+        mockIdeaRepository.existingIdea = IdeaEntity(
           id: 1,
           content: 'Test idea',
           createdAt: DateTime(2024, 1, 1),
@@ -29,12 +47,15 @@ void main() {
         final result = await useCase.execute(1);
 
         expect(result.isSuccess, true);
-        expect(mockRepository.softDeleteCalled, true);
-        expect(mockRepository.permanentDeleteCalled, false);
+        expect(mockIdeaRepository.softDeleteCalled, true);
+        expect(mockIdeaRepository.permanentDeleteCalled, false);
+        expect(mockAssociationRepository.deleteByIdeaIdCalled, true);
+        expect(mockAnalysisRepository.deleteByIdeaIdCalled, true);
+        expect(mockTaskRepository.deleteByIdeaIdCalled, true);
       });
 
       test('should permanent delete when permanent is true', () async {
-        mockRepository.existingIdea = IdeaEntity(
+        mockIdeaRepository.existingIdea = IdeaEntity(
           id: 1,
           content: 'Test idea',
           createdAt: DateTime(2024, 1, 1),
@@ -44,12 +65,12 @@ void main() {
         final result = await useCase.execute(1, permanent: true);
 
         expect(result.isSuccess, true);
-        expect(mockRepository.permanentDeleteCalled, true);
-        expect(mockRepository.softDeleteCalled, false);
+        expect(mockIdeaRepository.permanentDeleteCalled, true);
+        expect(mockIdeaRepository.softDeleteCalled, false);
       });
 
       test('should fail if idea does not exist', () async {
-        mockRepository.existingIdea = null;
+        mockIdeaRepository.existingIdea = null;
 
         final result = await useCase.execute(1);
 
@@ -58,7 +79,7 @@ void main() {
       });
 
       test('should log success message for soft delete', () async {
-        mockRepository.existingIdea = IdeaEntity(
+        mockIdeaRepository.existingIdea = IdeaEntity(
           id: 1,
           content: 'Test idea',
           createdAt: DateTime(2024, 1, 1),
@@ -72,7 +93,7 @@ void main() {
       });
 
       test('should log success message for permanent delete', () async {
-        mockRepository.existingIdea = IdeaEntity(
+        mockIdeaRepository.existingIdea = IdeaEntity(
           id: 1,
           content: 'Test idea',
           createdAt: DateTime(2024, 1, 1),
@@ -86,7 +107,7 @@ void main() {
       });
 
       test('should log warning if idea does not exist', () async {
-        mockRepository.existingIdea = null;
+        mockIdeaRepository.existingIdea = null;
 
         await useCase.execute(1);
 
@@ -94,13 +115,13 @@ void main() {
       });
 
       test('should handle repository exception', () async {
-        mockRepository.existingIdea = IdeaEntity(
+        mockIdeaRepository.existingIdea = IdeaEntity(
           id: 1,
           content: 'Test idea',
           createdAt: DateTime(2024, 1, 1),
           updatedAt: DateTime(2024, 1, 1),
         );
-        mockRepository.shouldThrow = true;
+        mockIdeaRepository.shouldThrow = true;
 
         final result = await useCase.execute(1);
 
@@ -110,13 +131,13 @@ void main() {
       });
 
       test('should handle permanent delete exception', () async {
-        mockRepository.existingIdea = IdeaEntity(
+        mockIdeaRepository.existingIdea = IdeaEntity(
           id: 1,
           content: 'Test idea',
           createdAt: DateTime(2024, 1, 1),
           updatedAt: DateTime(2024, 1, 1),
         );
-        mockRepository.shouldThrow = true;
+        mockIdeaRepository.shouldThrow = true;
 
         final result = await useCase.execute(1, permanent: true);
 
@@ -149,7 +170,7 @@ class _MockIdeaRepository implements IdeaRepository {
   Future<List<IdeaEntity>> getByPage(int offset, int limit) async => [];
 
   @override
-  Future<int> count({bool includeDeleted = false}) async => 0;
+  Future<int> count({bool includeDeleted = false}) async => 1;
 
   @override
   Future<void> update(IdeaEntity idea) async {}
@@ -189,10 +210,124 @@ class _MockIdeaRepository implements IdeaRepository {
   Future<void> clearDeleted() async {}
 
   @override
-  Future<List<IdeaEntity>> getIdeasWithEmbedding({int limit = 100, int offset = 0}) async => [];
+  Future<List<IdeaEntity>> getIdeasWithEmbedding({int limit = 100, int offset = 1}) async => [];
 
   @override
   Future<int> countIdeasWithEmbedding() async => 0;
+}
+
+class _MockAssociationRepository implements AssociationRepository {
+  bool deleteByIdeaIdCalled = false;
+
+  @override
+  Future<AssociationEntity> save(AssociationEntity association) async => association;
+
+  @override
+  Future<List<AssociationEntity>> getBySourceIdeaId(int ideaId) async => [];
+
+  @override
+  Future<List<AssociationEntity>> getByTargetIdeaId(int ideaId) async => [];
+
+  @override
+  Future<List<AssociationEntity>> getByIdeaId(int ideaId) async => [];
+
+  @override
+  Future<List<AssociationEntity>> getByIdeaIdAndType(int ideaId, RelationType type) async => [];
+
+  @override
+  Future<AssociationEntity?> getById(int id) async => null;
+
+  @override
+  Future<void> deleteBySourceIdeaId(int ideaId) async {}
+
+  @override
+  Future<void> deleteByIdeaId(int ideaId) async {
+    deleteByIdeaIdCalled = true;
+  }
+
+  @override
+  Future<void> deleteAll() async {}
+
+  @override
+  Future<int> countByIdeaId(int ideaId) async => 0;
+
+  @override
+  Future<int> countByIdeaIdAndType(int ideaId, RelationType type) async => 0;
+}
+
+class _MockAIAnalysisRepository implements AIAnalysisRepository {
+  bool deleteByIdeaIdCalled = false;
+
+  @override
+  Future<AIAnalysisEntity> save(AIAnalysisEntity analysis) async => analysis;
+
+  @override
+  Future<AIAnalysisEntity?> getById(int id) async => null;
+
+  @override
+  Future<AIAnalysisEntity?> getByIdeaId(int ideaId) async => null;
+
+  @override
+  Future<List<AIAnalysisEntity>> getAll() async => [];
+
+  @override
+  Future<void> update(AIAnalysisEntity analysis) async {}
+
+  @override
+  Future<void> updateStatus(int id, AnalysisStatus status) async {}
+
+  @override
+  Future<void> delete(int id) async {}
+
+  @override
+  Future<void> deleteByIdeaId(int ideaId) async {
+    deleteByIdeaIdCalled = true;
+  }
+}
+
+class _MockAITaskRepository implements AITaskRepository {
+  bool deleteByIdeaIdCalled = false;
+
+  @override
+  Future<AITaskEntity> save(AITaskEntity task) async => task;
+
+  @override
+  Future<AITaskEntity?> getById(int id) async => null;
+
+  @override
+  Future<AITaskEntity?> getByIdeaId(int ideaId) async => null;
+
+  @override
+  Future<List<AITaskEntity>> getPendingTasks() async => [];
+
+  @override
+  Future<List<AITaskEntity>> getProcessingTasks() async => [];
+
+  @override
+  Future<void> update(AITaskEntity task) async {}
+
+  @override
+  Future<void> updateStatus(int id, TaskStatus status, {String? errorMessage}) async {}
+
+  @override
+  Future<void> incrementRetryCount(int id) async {}
+
+  @override
+  Future<void> delete(int id) async {}
+
+  @override
+  Future<void> deleteByIdeaId(int ideaId) async {
+    deleteByIdeaIdCalled = true;
+  }
+
+  @override
+  Future<void> deleteCompletedTasks() async {}
+
+  @override
+  Future<AITaskEntity?> getActiveTaskByIdeaId(int ideaId) async => null;
+
+  @override
+  Future<AITaskEntity?> getLatestTaskByIdeaId(int ideaId) async => null;
 }
 
 class _MockLogger implements AppLogger {

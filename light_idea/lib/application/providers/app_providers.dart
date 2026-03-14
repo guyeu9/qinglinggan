@@ -65,8 +65,9 @@ final aiAnalysisRepositoryProvider = Provider<AIAnalysisRepository>((ref) {
 
 final aiUnderstandingServiceProvider = Provider<AIUnderstandingService>((ref) {
   final client = ref.watch(openAIClientProvider);
+  final categoryRepo = ref.watch(categoryRepositoryProvider);
   final logger = ref.watch(loggerProvider);
-  return AIUnderstandingService(client, logger);
+  return AIUnderstandingService(client, categoryRepo, logger);
 });
 
 final aiEmbeddingServiceProvider = Provider<AIEmbeddingService>((ref) {

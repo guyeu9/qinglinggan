@@ -4,6 +4,7 @@ import '../../domain/entities/ai_task.dart';
 import '../../domain/entities/ai_analysis.dart';
 import '../../domain/entities/idea.dart';
 import '../../domain/entities/association.dart';
+import '../../domain/entities/category.dart';
 import '../../domain/repositories/ai_task_repository.dart';
 import '../../domain/repositories/idea_repository.dart';
 import '../../domain/repositories/ai_analysis_repository.dart';
@@ -171,11 +172,37 @@ class AITaskQueue {
 
     int? categoryId;
     final categories = await _categoryRepository.getAll();
+    final categoryName = understanding.categoryName;
+    
     for (final category in categories) {
-      if (category.name == understanding.categoryName) {
+      if (category.name == categoryName) {
         categoryId = category.id;
         break;
       }
+    }
+    
+    if (categoryId == null && categoryName != null && categoryName.isNotEmpty) {
+      for (final category in categories) {
+        if (category.name.contains(categoryName) ||
+            categoryName.contains(category.name)) {
+          categoryId = category.id;
+          _logger.info('分类模糊匹配: $categoryName -> ${category.name}');
+          break;
+        }
+      }
+    }
+    
+    if (categoryId == null && categoryName != null && categoryName.isNotEmpty) {
+      final newCategory = CategoryEntity(
+        id: 0,
+        name: categoryName,
+        icon: 'folder',
+        sortOrder: categories.length,
+        createdAt: DateTime.now(),
+      );
+      final savedCategory = await _categoryRepository.save(newCategory);
+      categoryId = savedCategory.id;
+      _logger.info('创建新分类: $categoryName (id=$categoryId)');
     }
 
     final tagIds = <int>[];

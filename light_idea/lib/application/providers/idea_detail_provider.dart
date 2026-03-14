@@ -156,7 +156,15 @@ class IdeaDetailNotifier extends StateNotifier<IdeaDetailState> {
 
     try {
       final ideaRepo = _ref.read(ideaRepositoryProvider);
+      final associationRepo = _ref.read(associationRepositoryProvider);
+      final analysisRepo = _ref.read(aiAnalysisRepositoryProvider);
+      final taskRepo = _ref.read(aiTaskRepositoryProvider);
+      
+      await associationRepo.deleteByIdeaId(state.idea!.id);
+      await analysisRepo.deleteByIdeaId(state.idea!.id);
+      await taskRepo.deleteByIdeaId(state.idea!.id);
       await ideaRepo.softDelete(state.idea!.id);
+      
       return true;
     } catch (e) {
       state = state.copyWith(error: e.toString());

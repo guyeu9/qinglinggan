@@ -4,22 +4,27 @@ import '../../core/utils/result.dart';
 import '../../core/logger/app_logger.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/exceptions/ai_exceptions.dart';
+import '../../domain/repositories/category_repository.dart';
 
 class AIUnderstandingService {
   final OpenAIClient _client;
+  final CategoryRepository _categoryRepository;
   final AppLogger _logger;
 
-  AIUnderstandingService(this._client, this._logger);
+  AIUnderstandingService(this._client, this._categoryRepository, this._logger);
 
-  static const String _systemPrompt = '''你是一个专业的内容分析助手。你的任务是分析用户输入的灵感内容，并返回结构化的分析结果。
+  String _buildSystemPrompt(List<String> categoryNames) {
+    final categoryList = categoryNames.asMap().entries.map((e) {
+      return '${e.key + 1}. ${e.value}';
+    }).join('\n');
 
-请根据内容的性质，将其归类到以下三个分类之一：
-1. 社交 / 旅行 / 惊喜类 - 社交活动、旅行计划、惊喜创意
-2. 工作 / 创意策划类 - 工作任务、创意策划、项目规划
-3. 摄影爱好类 - 摄影技巧、爱好记录、影像创作
+    return '''你是一个专业的内容分析助手。你的任务是分析用户输入的灵感内容，并返回结构化的分析结果。
+
+请根据内容的性质，将其归类到以下分类之一：
+$categoryList
 
 请生成以下内容：
-1. 分类：从上述三个分类中选择最合适的一个
+1. 分类：从上述分类中选择最合适的一个（返回完整的分类名称，必须与上述分类名称完全一致）
 2. 标签：生成3-5个相关标签
 3. 摘要：用一句话概括内容核心（不超过50字）
 4. AI提示语：基于内容生成一个引导性的问题或建议，帮助用户深入思考
@@ -37,7 +42,9 @@ class AIUnderstandingService {
 注意：
 - 标签要简洁、准确，避免重复
 - 摘要要抓住核心要点
-- AI提示语要有启发性，帮助用户延伸思考''';
+- AI提示语要有启发性，帮助用户延伸思考
+- 分类名称必须与提供的分类列表中的名称完全一致''';
+  }
 
   Future<Result<AIAnalysisResult>> analyze(String content) async {
     if (content.trim().isEmpty) {
@@ -53,7 +60,17 @@ class AIUnderstandingService {
     try {
       _logger.info('开始AI内容分析: ${content.length}字符');
 
-      final response = await _client.chat(_systemPrompt, content);
+      final categories = await _categoryRepository.getAll();
+      final categoryNames = categories.map((c) => c.name).toList();
+      
+      if (categoryNames.isEmpty) {
+        _logger.warning('没有可用的分类，使用默认分类');
+        categoryNames.addAll(['社交 / 旅行 / 惊喜类', '工作 / 创意策划类', '摄影爱好类']);
+      }
+
+      final systemPrompt = _buildSystemPrompt(categoryNames);
+
+      final response = await _client.chat(systemPrompt, content);
 
       if (response.isEmpty) {
         _logger.error('AI分析失败: 响应为空');
