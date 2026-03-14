@@ -34,6 +34,9 @@ class RouteNames {
 
   /// 帮助
   static const String help = 'help';
+
+  /// 分类管理
+  static const String categoryManagement = 'categoryManagement';
 }
 
 /// 路由路径常量定义
@@ -66,6 +69,9 @@ class RoutePaths {
 
   /// 帮助
   static const String help = '/help';
+
+  /// 分类管理
+  static const String categoryManagement = '/category-management';
 
   /// 构建灵感详情页路径
   static String ideaDetailPath(String id) => '/idea/$id';

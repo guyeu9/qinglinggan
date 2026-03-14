@@ -11,5 +11,7 @@ abstract class CategoryRepository {
 
   Future<void> update(CategoryEntity category);
 
+  Future<void> delete(int id);
+
   Future<int> count();
 }

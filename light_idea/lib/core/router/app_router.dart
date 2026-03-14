@@ -5,6 +5,7 @@ import '../../presentation/pages/home/home_page.dart';
 import '../../presentation/pages/idea_detail/idea_detail_page.dart';
 import '../../presentation/pages/association/association_page.dart';
 import '../../presentation/pages/settings/settings_page.dart';
+import '../../presentation/pages/settings/category_management_page.dart';
 import '../../presentation/pages/data_management/data_management_page.dart';
 import '../../presentation/pages/ai_hub/ai_hub_page.dart';
 import '../../presentation/pages/ai_settings/ai_settings_page.dart';
@@ -52,6 +53,11 @@ final GoRouter appRouter = GoRouter(
           path: RoutePaths.help,
           name: RouteNames.help,
           builder: (context, state) => const _HelpPage(),
+        ),
+        GoRoute(
+          path: RoutePaths.categoryManagement,
+          name: RouteNames.categoryManagement,
+          builder: (context, state) => const CategoryManagementPage(),
         ),
       ],
     ),
@@ -179,6 +185,10 @@ extension GoRouterExtension on BuildContext {
 
   void pushToHelp() {
     pushNamed(RouteNames.help);
+  }
+
+  void pushToCategoryManagement() {
+    pushNamed(RouteNames.categoryManagement);
   }
 
   void goToHome() {

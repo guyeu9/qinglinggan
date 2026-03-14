@@ -40,6 +40,11 @@ class CategoryRepositoryImpl implements CategoryRepository {
   }
 
   @override
+  Future<void> delete(int id) async {
+    await _isar.writeTxn(() => _isar.categoryModels.delete(id));
+  }
+
+  @override
   Future<int> count() async {
     return _isar.categoryModels.count();
   }

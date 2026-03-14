@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/router/route_names.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../data/database/isar_database.dart';
 import '../../../../config/ai_config.dart';
 import '../../../../application/providers/user_provider.dart';
@@ -88,7 +89,7 @@ class SettingsPage extends ConsumerWidget {
                     subtitle: '管理灵感标签和分类',
                     textPrimary: textPrimary,
                     textSecondary: textSecondary,
-                    onTap: () => _showNotImplemented(context),
+                    onTap: () => context.pushToCategoryManagement(),
                   ),
                   _buildDivider(isDark),
                   // 回收站入口 - 新增
