@@ -1,9 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:screenshot/screenshot.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../../../application/providers/idea_detail_provider.dart';
 import '../../../../application/providers/app_providers.dart';
 import '../../../../application/ai/ai_embedding_service.dart';
@@ -36,6 +39,7 @@ class _IdeaDetailPageState extends ConsumerState<IdeaDetailPage> {
   late TextEditingController _contentController;
   bool _isEditing = false;
   bool _isReanalyzing = false;
+  final ScreenshotController _screenshotController = ScreenshotController();
 
   @override
   void initState() {
@@ -110,21 +114,34 @@ class _IdeaDetailPageState extends ConsumerState<IdeaDetailPage> {
     );
   }
 
-  void _shareIdea() {
-    final idea = ref.read(ideaDetailProvider).idea;
-    if (idea == null) return;
-    
-    final buffer = StringBuffer();
-    buffer.writeln('【轻灵感分享】');
-    buffer.writeln('');
-    buffer.writeln(idea.content);
-    buffer.writeln('');
-    buffer.writeln('— 来自「轻灵感」App');
-    
-    Share.share(
-      buffer.toString(),
-      subject: '灵感分享',
-    );
+  Future<void> _shareIdea() async {
+    try {
+      final uint8List = await _screenshotController.capture(
+        pixelRatio: 2.0,
+      );
+      
+      if (uint8List == null) {
+        if (mounted) {
+          _showSnackBar('截图失败');
+        }
+        return;
+      }
+      
+      final tempDir = await getTemporaryDirectory();
+      final file = File('${tempDir.path}/idea_share.png');
+      await file.writeAsBytes(uint8List);
+      
+      if (mounted) {
+        await Share.shareXFiles(
+          [XFile(file.path)],
+          subject: '灵感分享',
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar('分享失败: $e');
+      }
+    }
   }
 
   void _showMoreOptions() {
@@ -278,11 +295,13 @@ class _IdeaDetailPageState extends ConsumerState<IdeaDetailPage> {
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF022c22) : const Color(0xFFF0FDF4),
-      body: state.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : state.idea == null
-              ? _buildErrorState(isDark)
-              : CustomScrollView(
+      body: Screenshot(
+        controller: _screenshotController,
+        child: state.isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : state.idea == null
+                ? _buildErrorState(isDark)
+                : CustomScrollView(
                   slivers: [
                     // 顶部导航栏
                     _buildAppBar(isDark),
@@ -328,6 +347,7 @@ class _IdeaDetailPageState extends ConsumerState<IdeaDetailPage> {
                     ),
                   ],
                 ),
+      ),
     );
   }
 

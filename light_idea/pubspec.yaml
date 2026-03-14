@@ -55,6 +55,9 @@ dependencies:
   
   # 分享功能
   share_plus: ^10.0.0
+  
+  # 截图功能
+  screenshot: ^3.0.0
 
 dev_dependencies:
   flutter_test:
