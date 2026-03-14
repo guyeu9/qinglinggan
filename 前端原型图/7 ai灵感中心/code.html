@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<html class="light" lang="en"><head>
+<html class="light" lang="zh-CN"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>轻灵感 - AI Insight Hub</title>
@@ -16,7 +16,6 @@
                         "primary": "#6EE7B7",
                         "primary-dark": "#065F46",
                         "background-light": "#F0FDF4",
-                        "secondary-accent": "#BAE6FD",
                     },
                     fontFamily: {
                         "display": ["Public Sans"]
@@ -54,8 +53,8 @@
 </head>
 <body class="bg-background-light font-display text-primary-dark min-h-screen flex flex-col transition-colors duration-300">
 <!-- Header -->
-<header class="sticky top-0 z-50 bg-background-light/80 backdrop-blur-md border-b border-primary/20">
-<div class="flex items-center p-4 justify-between max-w-2xl mx-auto w-full">
+<header class="sticky top-0 z-50 bg-white">
+<div class="flex items-center p-4 justify-between w-full">
 <div class="text-primary-dark flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-primary/20 cursor-pointer transition-all">
 <span class="material-symbols-outlined">arrow_back</span>
 </div>
@@ -67,11 +66,11 @@
 </div>
 </div>
 </header>
-<main class="flex-1 max-w-2xl mx-auto w-full p-4 space-y-6 pb-40">
+<main class="flex-1 w-full p-4 space-y-6 pb-40">
 <!-- Lightweight Summary Card -->
 <section class="@container animate-fade-in opacity-0">
-<div class="flex flex-col items-stretch justify-start rounded-xl shadow-sm border border-primary/20 bg-white overflow-hidden hover:shadow-md transition-shadow">
-<div class="w-full h-32 bg-gradient-to-br from-primary/30 to-secondary-accent/20 relative overflow-hidden">
+<div class="flex flex-col items-stretch justify-start rounded-xl shadow-sm bg-white overflow-hidden hover:shadow-md transition-shadow">
+<div class="w-full h-32 bg-gradient-to-br from-primary/30 to-primary/10 relative overflow-hidden">
 <div class="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_50%_50%,_#6EE7B7_0%,_transparent_50%)]"></div>
 <div class="absolute bottom-4 left-4">
 <span class="text-primary-dark text-xs font-bold tracking-widest uppercase">总结报告</span>
@@ -80,7 +79,7 @@
 <div class="flex w-full grow flex-col items-stretch justify-center gap-2 p-4">
 <h3 class="text-primary-dark text-lg font-bold leading-tight">近15天灵感总结</h3>
 <div class="flex flex-col sm:flex-row sm:items-end gap-3 justify-between">
-<p class="text-primary-dark/70 text-sm font-normal leading-relaxed">你记录了 <span class="text-primary-dark font-bold">42</span> 个新想法，主要集中在‘电影感光影’和‘城市纹理’。</p>
+<p class="text-primary-dark/70 text-sm font-normal leading-relaxed">你记录了 <span class="text-primary-dark font-bold">42</span> 个新想法，主要集中在'电影感光影'和'城市纹理'。</p>
 <button class="flex whitespace-nowrap min-w-[120px] cursor-pointer items-center justify-center rounded-lg h-9 px-4 bg-primary text-primary-dark text-sm font-bold hover:brightness-95 active:scale-95 transition-all">查看报告</button>
 </div>
 </div>
@@ -93,7 +92,7 @@
 <div class="flex flex-col gap-1 items-end">
 <p class="text-primary-dark/50 text-[11px] font-medium uppercase tracking-wider px-1">用户</p>
 <div class="rounded-2xl rounded-tr-none px-4 py-3 bg-primary text-primary-dark shadow-sm">
-<p class="text-sm font-normal leading-relaxed">帮我分析下最近关于“霓虹赛博”审美摄影的想法。</p>
+<p class="text-sm font-normal leading-relaxed">帮我分析下最近关于"霓虹赛博"审美摄影的想法。</p>
 </div>
 </div>
 <div class="bg-primary/20 rounded-full w-8 h-8 flex items-center justify-center shrink-0">
@@ -108,7 +107,7 @@
 <div class="flex flex-col gap-3 items-start w-full">
 <p class="text-primary-dark/50 text-[11px] font-medium uppercase tracking-wider px-1">AI 助手</p>
 <!-- Text Content -->
-<div class="rounded-2xl rounded-tl-none px-4 py-3 bg-secondary-accent/10 border border-secondary-accent/30 shadow-sm w-full">
+<div class="rounded-2xl rounded-tl-none px-4 py-3 bg-white shadow-sm w-full">
 <p class="text-sm text-primary-dark font-normal leading-relaxed">基于您最近的12条记录，您的创作风格正从 <span class="text-primary-dark font-bold">赛博朋克</span> 转向更接地气的 <span class="text-primary-dark font-bold">雨夜都市</span> 风格。您目前关注于：</p>
 <ul class="mt-2 space-y-1 text-sm text-primary-dark/80">
 <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-primary rounded-full"></span> 湿地表面反射 (8条笔记)</li>
@@ -117,7 +116,7 @@
 </div>
 <!-- Cited Inspiration Cards -->
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
-<button class="text-left flex items-center gap-3 p-2 rounded-xl bg-white border border-primary/10 hover:border-primary/50 hover:bg-secondary-accent/5 transition-all group overflow-hidden shadow-sm">
+<button class="text-left flex items-center gap-3 p-2 rounded-xl bg-white hover:bg-primary/5 transition-all group overflow-hidden shadow-sm">
 <div class="w-16 h-16 rounded-lg overflow-hidden shrink-0 bg-slate-200">
 <img alt="Cyberpunk city street neon lights" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3pJKqqLZ9lTYyIuxBnkwVC0L_RCJPow5VyiRNi3jWxTA7Htd8y2ROWEmQfgyMoudNETtyevE9aMxlASxu5F5k-JJ4mF3J3PqS4tJiODC4R5jMemLfwLANeYcf5fGQY86jLTdQzmXZpJbsEptjfYEMDqbEdnWANpTO6vS3MCyPKPkg_wY5tX6bDjkAU6SkOnh8-xSfjjMWWV_MqSXNx9Rw5hgmFBCzHtN86f3t_U789TrHUY7wp7rT-2la4ReK5KRjXDb3oBaGGfg"/>
 </div>
@@ -127,7 +126,7 @@
 </div>
 <span class="material-symbols-outlined text-primary-dark/20 group-hover:text-primary-dark transition-colors text-lg">chevron_right</span>
 </button>
-<button class="text-left flex items-center gap-3 p-2 rounded-xl bg-white border border-primary/10 hover:border-primary/50 hover:bg-secondary-accent/5 transition-all group overflow-hidden shadow-sm">
+<button class="text-left flex items-center gap-3 p-2 rounded-xl bg-white hover:bg-primary/5 transition-all group overflow-hidden shadow-sm">
 <div class="w-16 h-16 rounded-lg overflow-hidden shrink-0 bg-slate-200">
 <img alt="High contrast urban skyline night" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbnX5x4ptmm3l_OZcZL6-bXmiBL33z_D-VLyAiS0ua0BjeIaJADFwHEA2-wHW1RdELhmSTD9wo8Owtl0hCBqTHwW1VovOLNhvrIV9OehqBbnZb7rqi8Rk5_jht5AvJVie-z03kYQwsXvGEq6tj5Gx2LvDcaTzBz0TN7PfubOgdMRuqPzYgeu2rHHwCaBIYsZoKEZWxoEN86uzHqKlu_8KS63-QgNxuMjqxFhYxOSw3SV0oMU9VWZWYWv8nmk_1aSml-_eBv9WD1X4"/>
 </div>
@@ -143,14 +142,14 @@
 </div>
 </main>
 <!-- Bottom Navigation & Input Area -->
-<div class="fixed bottom-0 inset-x-0 bg-background-light border-t border-primary/20 pb-6 animate-fade-in opacity-0 animate-delay-3">
+<div class="fixed bottom-0 inset-x-0 bg-background-light pb-6 animate-fade-in opacity-0 animate-delay-3">
 <!-- Input Area Suggestions -->
 <div class="flex gap-2 overflow-x-auto pb-3 px-4 no-scrollbar -mx-4 pt-4">
 <button class="whitespace-nowrap rounded-full px-4 py-1.5 border border-primary/30 bg-white text-xs font-medium text-primary-dark hover:bg-primary/20 hover:border-primary transition-all">分析最近半个月的想法</button>
 <button class="whitespace-nowrap rounded-full px-4 py-1.5 border border-primary/30 bg-white text-xs font-medium text-primary-dark hover:bg-primary/20 hover:border-primary transition-all">找出与摄影相关的灵感</button>
 <button class="whitespace-nowrap rounded-full px-4 py-1.5 border border-primary/30 bg-white text-xs font-medium text-primary-dark hover:bg-primary/20 hover:border-primary transition-all">总结我的工作创意</button>
 </div>
-<div class="max-w-2xl mx-auto px-4 pt-2 pb-2">
+<div class="w-full px-4 pt-2 pb-2">
 <div class="relative flex items-center">
 <input class="w-full bg-white border border-primary/30 rounded-full py-3 pl-5 pr-12 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-primary-dark placeholder:text-primary-dark/40" placeholder="向 AI 提问你的灵感..." type="text"/>
 <button class="absolute right-2 p-1.5 bg-primary-dark text-white rounded-full hover:brightness-125 active:scale-90 transition-all">
