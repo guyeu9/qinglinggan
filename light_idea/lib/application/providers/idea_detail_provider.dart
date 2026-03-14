@@ -164,6 +164,52 @@ class IdeaDetailNotifier extends StateNotifier<IdeaDetailState> {
     }
   }
 
+  Future<bool> updateCategory(int categoryId) async {
+    if (state.idea == null) return false;
+
+    try {
+      final ideaRepo = _ref.read(ideaRepositoryProvider);
+      final updatedIdea = state.idea!.copyWith(
+        categoryId: categoryId,
+        updatedAt: DateTime.now(),
+      );
+      await ideaRepo.update(updatedIdea);
+
+      state = state.copyWith(idea: updatedIdea);
+      return true;
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> updateTags(List<int> tagIds) async {
+    if (state.idea == null) return false;
+
+    try {
+      final ideaRepo = _ref.read(ideaRepositoryProvider);
+      final updatedIdea = state.idea!.copyWith(
+        tagIds: tagIds,
+        updatedAt: DateTime.now(),
+      );
+      await ideaRepo.update(updatedIdea);
+
+      // 重新加载标签
+      final tagRepo = _ref.read(tagRepositoryProvider);
+      final tags = <TagEntity>[];
+      for (final tagId in tagIds) {
+        final tag = await tagRepo.getById(tagId);
+        if (tag != null) tags.add(tag);
+      }
+
+      state = state.copyWith(idea: updatedIdea, tags: tags);
+      return true;
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+      return false;
+    }
+  }
+
   void clearError() {
     state = state.copyWith(error: null);
   }

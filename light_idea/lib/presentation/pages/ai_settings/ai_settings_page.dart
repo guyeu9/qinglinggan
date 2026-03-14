@@ -71,6 +71,20 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
         final key = await AIConfig.getApiKey();
         _maskedApiKey = SensitiveDataMasker.maskApiKey(key);
       }
+
+      final enableAI = await AIConfig.getEnableAI();
+      final chatModel = await AIConfig.getChatModel();
+      final apiBaseUrl = await AIConfig.getApiBaseUrl();
+      final embeddingBaseUrl = await AIConfig.getEmbeddingBaseUrl();
+      final embeddingDimension = await AIConfig.getEmbeddingDimension();
+
+      setState(() {
+        _analysisEnabled = enableAI;
+        _selectedModel = chatModel;
+        _apiUrlController.text = apiBaseUrl;
+        _embeddingUrlController.text = embeddingBaseUrl;
+        _vectorDimensionController.text = embeddingDimension.toString();
+      });
     } catch (_) {
     }
 
@@ -125,6 +139,20 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
       if (_apiKeyController.text.isNotEmpty) {
         await AIConfig.setApiKey(_apiKeyController.text);
         _maskedApiKey = SensitiveDataMasker.maskApiKey(_apiKeyController.text);
+      }
+
+      await AIConfig.setEnableAI(_analysisEnabled);
+      await AIConfig.setChatModel(_selectedModel);
+      await AIConfig.setApiBaseUrl(_apiUrlController.text);
+      await AIConfig.setEmbeddingBaseUrl(_embeddingUrlController.text);
+      
+      final dimension = int.tryParse(_vectorDimensionController.text);
+      if (dimension != null) {
+        await AIConfig.setEmbeddingDimension(dimension);
+      }
+
+      if (_vectorApiKeyController.text.isNotEmpty) {
+        await AIConfig.setEmbeddingApiKey(_vectorApiKeyController.text);
       }
 
       if (mounted) {

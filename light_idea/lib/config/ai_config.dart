@@ -25,6 +25,12 @@ class AIConfig {
     wOptions: WindowsOptions(),
   );
   static const _apiKeyKey = 'openai_api_key';
+  static const _chatModelKey = 'chat_model';
+  static const _embeddingApiKeyKey = 'embedding_api_key';
+  static const _embeddingBaseUrlKey = 'embedding_base_url';
+  static const _embeddingDimensionKey = 'embedding_dimension';
+  static const _enableAIKey = 'enable_ai';
+  static const _apiBaseUrlKey = 'api_base_url';
 
   static String? _cachedApiKey;
   static bool _initialized = false;
@@ -64,4 +70,63 @@ class AIConfig {
   static String? get cachedApiKey => _cachedApiKey;
   
   static bool get isInitialized => _initialized;
+
+  static Future<void> setChatModel(String model) async {
+    await _storage.write(key: _chatModelKey, value: model);
+  }
+
+  static Future<String> getChatModel() async {
+    final model = await _storage.read(key: _chatModelKey);
+    return model ?? defaultChatModel;
+  }
+
+  static Future<void> setEmbeddingApiKey(String key) async {
+    await _storage.write(key: _embeddingApiKeyKey, value: key);
+  }
+
+  static Future<String?> getEmbeddingApiKey() async {
+    return await _storage.read(key: _embeddingApiKeyKey);
+  }
+
+  static Future<void> setEmbeddingBaseUrl(String url) async {
+    await _storage.write(key: _embeddingBaseUrlKey, value: url);
+  }
+
+  static Future<String> getEmbeddingBaseUrl() async {
+    final url = await _storage.read(key: _embeddingBaseUrlKey);
+    return url ?? 'https://api.openai.com/v1/embeddings';
+  }
+
+  static Future<void> setEmbeddingDimension(int dimension) async {
+    await _storage.write(key: _embeddingDimensionKey, value: dimension.toString());
+  }
+
+  static Future<int> getEmbeddingDimension() async {
+    final dimension = await _storage.read(key: _embeddingDimensionKey);
+    return dimension != null ? int.tryParse(dimension) ?? embeddingDimension : embeddingDimension;
+  }
+
+  static Future<void> setEnableAI(bool enable) async {
+    await _storage.write(key: _enableAIKey, value: enable.toString());
+  }
+
+  static Future<bool> getEnableAI() async {
+    final value = await _storage.read(key: _enableAIKey);
+    return value != 'false';
+  }
+
+  static Future<void> setApiBaseUrl(String url) async {
+    await _storage.write(key: _apiBaseUrlKey, value: url);
+  }
+
+  static Future<String> getApiBaseUrl() async {
+    final url = await _storage.read(key: _apiBaseUrlKey);
+    return url ?? apiBaseUrl;
+  }
+
+  static Future<void> clearAll() async {
+    await _storage.deleteAll();
+    _cachedApiKey = null;
+    _initialized = false;
+  }
 }

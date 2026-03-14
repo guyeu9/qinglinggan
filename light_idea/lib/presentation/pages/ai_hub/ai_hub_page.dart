@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import '../../../../application/providers/app_providers.dart';
 import '../../../../application/providers/ai_chat_provider.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../domain/entities/idea.dart';
 
 /// AI灵感中心页面
@@ -440,41 +441,44 @@ class _AIHubPageState extends ConsumerState<AIHubPage> {
 
   /// 引用的灵感卡片
   Widget _buildReferencedIdeaCard(IdeaEntity idea, bool isDark) {
-    return Container(
-      margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF065F46).withValues(alpha: 0.2) : Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: const Color(0xFF6EE7B7).withValues(alpha: 0.2),
+    return GestureDetector(
+      onTap: () => context.pushToIdeaDetail(idea.id.toString()),
+      child: Container(
+        margin: const EdgeInsets.only(top: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF065F46).withValues(alpha: 0.2) : Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: const Color(0xFF6EE7B7).withValues(alpha: 0.2),
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              idea.content,
-              style: TextStyle(
-                fontSize: 12,
-                height: 1.4,
-                color: isDark
-                    ? const Color(0xFF6EE7B7).withValues(alpha: 0.8)
-                    : const Color(0xFF065F46).withValues(alpha: 0.8),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                idea.content,
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 1.4,
+                  color: isDark
+                      ? const Color(0xFF6EE7B7).withValues(alpha: 0.8)
+                      : const Color(0xFF065F46).withValues(alpha: 0.8),
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
-          ),
-          const SizedBox(width: 8),
-          Icon(
-            Symbols.chevron_right,
-            color: isDark
-                ? const Color(0xFF6EE7B7).withValues(alpha: 0.4)
-                : const Color(0xFF065F46).withValues(alpha: 0.4),
-            size: 20,
-          ),
-        ],
+            const SizedBox(width: 8),
+            Icon(
+              Symbols.chevron_right,
+              color: isDark
+                  ? const Color(0xFF6EE7B7).withValues(alpha: 0.4)
+                  : const Color(0xFF065F46).withValues(alpha: 0.4),
+              size: 20,
+            ),
+          ],
+        ),
       ),
     );
   }

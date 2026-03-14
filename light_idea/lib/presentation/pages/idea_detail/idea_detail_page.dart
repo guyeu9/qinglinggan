@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import '../../../../application/providers/idea_detail_provider.dart';
+import '../../../../application/providers/app_providers.dart';
 import '../../../../application/ai/ai_embedding_service.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../domain/entities/association.dart';
 import '../../../../domain/entities/idea.dart';
+import '../../../../domain/entities/tag.dart';
 
 /// 灵感详情页
 /// 
@@ -32,6 +34,7 @@ class IdeaDetailPage extends ConsumerStatefulWidget {
 class _IdeaDetailPageState extends ConsumerState<IdeaDetailPage> {
   late TextEditingController _contentController;
   bool _isEditing = false;
+  bool _isReanalyzing = false;
 
   @override
   void initState() {
@@ -155,12 +158,101 @@ class _IdeaDetailPageState extends ConsumerState<IdeaDetailPage> {
     );
   }
 
-  void _showCategoryPicker() {
-    _showSnackBar('分类选择功能开发中...');
+  void _showCategoryPicker() async {
+    final categories = await ref.read(categoryRepositoryProvider).getAll();
+    
+    if (!mounted) return;
+    
+    final currentIdea = ref.read(ideaDetailProvider).idea;
+    if (currentIdea == null) return;
+    
+    final selectedCategoryId = await showDialog<int>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('选择分类'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: categories.length,
+            itemBuilder: (context, index) {
+              final cat = categories[index];
+              final isSelected = cat.id == currentIdea.categoryId;
+              return RadioListTile<int>(
+                title: Row(
+                  children: [
+                    Text(cat.icon),
+                    const SizedBox(width: 8),
+                    Text(cat.name),
+                  ],
+                ),
+                value: cat.id,
+                groupValue: currentIdea.categoryId,
+                onChanged: (value) {
+                  Navigator.pop(context, value);
+                },
+                secondary: isSelected ? const Icon(Icons.check, color: Color(0xFF6EE7B7)) : null,
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+        ],
+      ),
+    );
+    
+    if (selectedCategoryId != null && selectedCategoryId != currentIdea.categoryId) {
+      final success = await ref.read(ideaDetailProvider.notifier).updateCategory(selectedCategoryId);
+      if (success && mounted) {
+        _showSnackBar('分类已更新');
+      }
+    }
   }
 
-  void _showTagManager() {
-    _showSnackBar('标签管理功能开发中...');
+  void _showTagManager() async {
+    final allTags = await ref.read(tagRepositoryProvider).getAll();
+    final currentIdea = ref.read(ideaDetailProvider).idea;
+    
+    if (!mounted || currentIdea == null) return;
+    
+    final currentTagIds = currentIdea.tagIds.toSet();
+    final selectedTagIds = await showDialog<Set<int>>(
+      context: context,
+      builder: (context) => _TagsSelectionDialog(
+        allTags: allTags,
+        initialSelectedIds: currentTagIds,
+      ),
+    );
+    
+    if (selectedTagIds != null) {
+      final success = await ref.read(ideaDetailProvider.notifier)
+          .updateTags(selectedTagIds.toList());
+      if (success && mounted) {
+        _showSnackBar('标签已更新');
+      }
+    }
+  }
+
+  Future<void> _reanalyzeIdea() async {
+    if (_isReanalyzing) return;
+    
+    setState(() => _isReanalyzing = true);
+    
+    try {
+      await ref.read(ideaDetailProvider.notifier).refreshAnalysis();
+      
+      if (mounted) {
+        _showSnackBar('已重新提交分析任务');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isReanalyzing = false);
+      }
+    }
   }
 
   void _showSnackBar(String message) {
@@ -261,6 +353,20 @@ class _IdeaDetailPageState extends ConsumerState<IdeaDetailPage> {
         onPressed: () => context.pop(),
       ),
       actions: [
+        IconButton(
+          icon: _isReanalyzing 
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Color(0xFF065F46),
+                  ),
+                )
+              : const Icon(Symbols.refresh, color: Color(0xFF065F46)),
+          tooltip: '重新分析',
+          onPressed: _isReanalyzing ? null : _reanalyzeIdea,
+        ),
         IconButton(
           icon: const Icon(Symbols.share, color: Color(0xFF065F46)),
           onPressed: _shareIdea,
@@ -841,68 +947,71 @@ class _IdeaDetailPageState extends ConsumerState<IdeaDetailPage> {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF022c22).withValues(alpha: 0.4) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: color.withValues(alpha: 0.3),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+      child: GestureDetector(
+        onTap: () => context.pushToIdeaDetail(targetId.toString()),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF022c22).withValues(alpha: 0.4) : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: color.withValues(alpha: 0.3),
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    '灵感 #$targetId',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF065F46),
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    '$confidencePercent%',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: color,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            if (association.reason.isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Text(
-                association.reason,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: const Color(0xFF065F46).withValues(alpha: 0.6),
-                  height: 1.4,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
               ),
             ],
-          ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '灵感 #$targetId',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF065F46),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      '$confidencePercent%',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: color,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (association.reason.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  association.reason,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: const Color(0xFF065F46).withValues(alpha: 0.6),
+                    height: 1.4,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
@@ -1082,5 +1191,98 @@ class _IdeaDetailPageState extends ConsumerState<IdeaDetailPage> {
     } else {
       return '${time.month}月${time.day}日 ${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
     }
+  }
+}
+
+class _TagsSelectionDialog extends StatefulWidget {
+  final List<TagEntity> allTags;
+  final Set<int> initialSelectedIds;
+
+  const _TagsSelectionDialog({
+    required this.allTags,
+    required this.initialSelectedIds,
+  });
+
+  @override
+  State<_TagsSelectionDialog> createState() => _TagsSelectionDialogState();
+}
+
+class _TagsSelectionDialogState extends State<_TagsSelectionDialog> {
+  late Set<int> _selectedIds;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIds = widget.initialSelectedIds.toSet();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('管理标签'),
+      content: SizedBox(
+        width: double.maxFinite,
+        height: 300,
+        child: widget.allTags.isEmpty
+            ? const Center(
+                child: Text('暂无标签'),
+              )
+            : ListView.builder(
+                shrinkWrap: true,
+                itemCount: widget.allTags.length,
+                itemBuilder: (context, index) {
+                  final tag = widget.allTags[index];
+                  final isSelected = _selectedIds.contains(tag.id);
+                  
+                  return CheckboxListTile(
+                    title: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF6EE7B7).withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '#${tag.name}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF065F46),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    value: isSelected,
+                    onChanged: (checked) {
+                      setState(() {
+                        if (checked == true) {
+                          _selectedIds.add(tag.id);
+                        } else {
+                          _selectedIds.remove(tag.id);
+                        }
+                      });
+                    },
+                    activeColor: const Color(0xFF6EE7B7),
+                    checkColor: const Color(0xFF065F46),
+                  );
+                },
+              ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('取消'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, _selectedIds),
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF6EE7B7),
+            foregroundColor: const Color(0xFF065F46),
+          ),
+          child: const Text('确定'),
+        ),
+      ],
+    );
   }
 }
