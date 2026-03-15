@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/idea.dart';
 import '../../domain/entities/ai_analysis.dart';
 import '../../domain/entities/category.dart';
+import '../../domain/entities/tag.dart';
 import 'app_providers.dart';
 
 class HomeState {
@@ -16,6 +17,7 @@ class HomeState {
   final bool isSaving;
   final bool isAnalyzing;
   final String? error;
+  final Map<int, List<String>> ideaTags;
 
   const HomeState({
     this.ideas = const [],
@@ -27,6 +29,7 @@ class HomeState {
     this.isSaving = false,
     this.isAnalyzing = false,
     this.error,
+    this.ideaTags = const {},
   });
 
   HomeState copyWith({
@@ -42,6 +45,7 @@ class HomeState {
     bool clearLastSaved = false,
     bool clearLastAnalysis = false,
     bool clearError = false,
+    Map<int, List<String>>? ideaTags,
   }) {
     return HomeState(
       ideas: ideas ?? this.ideas,
@@ -53,13 +57,14 @@ class HomeState {
       isSaving: isSaving ?? this.isSaving,
       isAnalyzing: isAnalyzing ?? this.isAnalyzing,
       error: clearError ? null : (error ?? this.error),
+      ideaTags: ideaTags ?? this.ideaTags,
     );
   }
 }
 
 class HomeNotifier extends StateNotifier<HomeState> {
   final Ref _ref;
-  Timer? _pollingTimer;
+  final Map<int, Timer> _pollingTimers = {};  // 改为Map存储，支持多个并发轮询
 
   HomeNotifier(this._ref) : super(const HomeState()) {
     _initialize();
@@ -72,7 +77,11 @@ class HomeNotifier extends StateNotifier<HomeState> {
 
   @override
   void dispose() {
-    _pollingTimer?.cancel();
+    // 取消所有轮询
+    for (final timer in _pollingTimers.values) {
+      timer.cancel();
+    }
+    _pollingTimers.clear();
     super.dispose();
   }
 
@@ -90,6 +99,9 @@ class HomeNotifier extends StateNotifier<HomeState> {
     developer.log('开始加载灵感列表...', name: 'HomeProvider');
     try {
       final ideaRepo = _ref.read(ideaRepositoryProvider);
+      final analysisRepo = _ref.read(aiAnalysisRepositoryProvider);
+      final tagRepo = _ref.read(tagRepositoryProvider);
+      
       List<IdeaEntity> ideas;
 
       if (state.selectedCategoryIndex == 0) {
@@ -118,8 +130,46 @@ class HomeNotifier extends StateNotifier<HomeState> {
       // 按创建时间倒序排序（最新的在前面）
       ideas.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       
+      // 加载每个灵感的标签
+      final Map<int, List<String>> ideaTagsMap = {};
+      for (final idea in ideas) {
+        // 首先检查Idea本身的tagIds
+        if (idea.tagIds.isNotEmpty) {
+          final tags = <String>[];
+          for (final tagId in idea.tagIds) {
+            final tag = await tagRepo.getById(tagId);
+            if (tag != null) {
+              tags.add(tag.name);
+            }
+          }
+          if (tags.isNotEmpty) {
+            ideaTagsMap[idea.id] = tags;
+            developer.log('Idea ${idea.id} 有标签: $tags');
+          }
+        }
+        
+        // 如果Idea本身没有标签，尝试从分析结果获取
+        if (!ideaTagsMap.containsKey(idea.id)) {
+          final analysis = await analysisRepo.getByIdeaId(idea.id);
+          if (analysis != null && analysis.tagResults.isNotEmpty) {
+            final tags = <String>[];
+            for (final tagId in analysis.tagResults) {
+              final tag = await tagRepo.getById(tagId);
+              if (tag != null) {
+                tags.add(tag.name);
+              }
+            }
+            if (tags.isNotEmpty) {
+              ideaTagsMap[idea.id] = tags;
+              developer.log('Idea ${idea.id} 从分析结果获取标签: $tags');
+            }
+          }
+        }
+      }
+      
+      developer.log('标签加载完成，共 ${ideaTagsMap.length} 条有标签', name: 'HomeProvider');
       developer.log('排序完成，更新状态: ${ideas.length} 条', name: 'HomeProvider');
-      state = state.copyWith(ideas: ideas);
+      state = state.copyWith(ideas: ideas, ideaTags: ideaTagsMap);
     } catch (e, stackTrace) {
       developer.log('加载灵感失败: $e', name: 'HomeProvider', error: e, stackTrace: stackTrace);
       state = state.copyWith(error: '加载灵感失败: $e');
@@ -186,21 +236,24 @@ class HomeNotifier extends StateNotifier<HomeState> {
   }
 
   /// 后台静默轮询AI分析结果（不显示加载状态）
+  /// 支持多个并发轮询，每个灵感有独立的轮询Timer
   void _pollAnalysisResultSilent(int ideaId) {
-    _pollingTimer?.cancel();
-    developer.log('开始后台静默轮询AI分析结果: ideaId=$ideaId', name: 'HomeProvider');
+    // 取消该ideaId的旧轮询（如果存在）
+    _pollingTimers[ideaId]?.cancel();
+    
+    developer.log('开始后台静默轮询AI分析结果: ideaId=$ideaId, 当前轮询数=${_pollingTimers.length}', name: 'HomeProvider');
 
     int attemptCount = 0;
     const maxAttempts = 120; // 2分钟超时
-    bool hasResult = false;
 
-    _pollingTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
+    _pollingTimers[ideaId] = Timer.periodic(const Duration(seconds: 2), (timer) async {
       attemptCount++;
 
       // 超时处理
       if (attemptCount > maxAttempts) {
-        developer.log('后台轮询超时，停止轮询', name: 'HomeProvider');
+        developer.log('后台轮询超时，停止轮询: ideaId=$ideaId', name: 'HomeProvider');
         timer.cancel();
+        _pollingTimers.remove(ideaId);
         return;
       }
 
@@ -211,9 +264,9 @@ class HomeNotifier extends StateNotifier<HomeState> {
         if (analysis != null) {
           // 分析完成
           if (analysis.status == AnalysisStatus.completed) {
-            developer.log('后台分析已完成，自动刷新列表', name: 'HomeProvider');
-            hasResult = true;
+            developer.log('后台分析已完成，自动刷新列表: ideaId=$ideaId', name: 'HomeProvider');
             timer.cancel();
+            _pollingTimers.remove(ideaId);
             if (mounted) {
               // 静默刷新列表，显示更新后的标签
               await loadIdeas();
@@ -223,15 +276,18 @@ class HomeNotifier extends StateNotifier<HomeState> {
           }
           // 分析失败
           else if (analysis.status == AnalysisStatus.failed) {
-            developer.log('后台分析失败，停止轮询', name: 'HomeProvider');
+            developer.log('后台分析失败，停止轮询: ideaId=$ideaId', name: 'HomeProvider');
             timer.cancel();
+            _pollingTimers.remove(ideaId);
             return;
           }
           // 分析中，继续轮询（静默，不显示任何UI）
+          developer.log('轮询中: ideaId=$ideaId, attempt=$attemptCount, status=${analysis.status}', name: 'HomeProvider');
         }
       } catch (e, stackTrace) {
-        developer.log('后台轮询出错: $e', name: 'HomeProvider', error: e, stackTrace: stackTrace);
+        developer.log('后台轮询出错: ideaId=$ideaId, error=$e', name: 'HomeProvider', error: e, stackTrace: stackTrace);
         timer.cancel();
+        _pollingTimers.remove(ideaId);
       }
     });
   }

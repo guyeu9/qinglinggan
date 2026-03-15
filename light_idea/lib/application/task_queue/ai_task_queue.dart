@@ -212,9 +212,14 @@ class AITaskQueue {
     }
 
     await _ideaRepository.updateEmbedding(ideaId, embedding);
-    if (categoryId != null) {
-      await _ideaRepository.update(idea.copyWith(categoryId: categoryId));
-    }
+    
+    // 同时更新categoryId和tagIds到Idea表
+    final updatedIdea = idea.copyWith(
+      categoryId: categoryId,
+      tagIds: tagIds,
+    );
+    await _ideaRepository.update(updatedIdea);
+    _logger.info('更新Idea: categoryId=$categoryId, tagIds=$tagIds');
 
     List<AssociationEntity> savedAssociations = [];
     List<IdeaEntity> relatedIdeas = [];

@@ -219,22 +219,14 @@ class _HomePageState extends ConsumerState<HomePage> {
   /// 
   /// 原型图代码：
   /// ```html
-  /// <nav class="sticky top-0 z-50 grid grid-cols-3 items-center px-4 py-3 bg-white/80 dark:bg-emerald-950/80 backdrop-blur-md border-b border-emerald-100 dark:border-emerald-900">
+  /// <nav class="sticky top-0 z-50 grid grid-cols-3 items-center px-4 py-3 bg-white dark:bg-emerald-950">
   /// ```
   Widget _buildTopNav(bool isDark) {
     return Container(
       decoration: BoxDecoration(
         color: isDark 
-            ? const Color(0xFF022c22).withValues(alpha: 0.8)
+            ? const Color(0xFF064E3B).withValues(alpha: 0.8)
             : Colors.white.withValues(alpha: 0.8),
-        border: Border(
-          bottom: BorderSide(
-            color: isDark 
-                ? const Color(0xFF065F46).withValues(alpha: 0.3)
-                : const Color(0xFF6EE7B7).withValues(alpha: 0.2),
-            width: 1,
-          ),
-        ),
       ),
       child: ClipRect(
         child: BackdropFilter(
@@ -263,7 +255,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     '轻灵感',
                     style: TextStyle(
                       fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w400,
                       letterSpacing: -0.5,
                       color: Color(0xFF065F46),
                     ),
@@ -328,38 +320,24 @@ class _HomePageState extends ConsumerState<HomePage> {
   /// 
   /// 原型图代码：
   /// ```html
-  /// <div class="px-4 py-3 bg-white dark:bg-emerald-950 shadow-sm">
+  /// <div class="px-4 py-2 bg-background-light">
   ///   <div class="relative flex items-center w-full">
-  ///     <span class="material-symbols-outlined absolute left-3 text-slate-400">search</span>
-  ///     <input class="w-full h-11 pl-10 pr-4 bg-emerald-50/50 dark:bg-emerald-900/50 border border-emerald-100 dark:border-emerald-800 rounded-xl focus:ring-2 focus:ring-primary/50 text-sm placeholder:text-emerald-800/40 text-primary-dark dark:text-emerald-50 transition-all" placeholder="搜索灵感" type="text"/>
+  ///     <span class="material-symbols-outlined absolute left-3 text-gray-400 text-lg">search</span>
+  ///     <input class="w-full h-10 pl-10 pr-4 bg-white rounded-2xl text-sm placeholder:text-gray-400 text-primary-dark dark:text-emerald-50 transition-all border-0 outline-none focus:ring-0" placeholder="搜索灵感" type="text"/>
   ///   </div>
   /// </div>
   /// ```
   Widget _buildSearchBar(bool isDark) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF022c22) : Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: isDark ? const Color(0xFF022c22) : const Color(0xFFF0FDF4),
       ),
       child: Container(
-        height: 44,
+        height: 40,
         decoration: BoxDecoration(
-          color: isDark
-              ? const Color(0xFF065F46).withValues(alpha: 0.3)
-              : const Color(0xFF6EE7B7).withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isDark
-                ? const Color(0xFF065F46).withValues(alpha: 0.3)
-                : const Color(0xFF6EE7B7).withValues(alpha: 0.2),
-          ),
+          color: isDark ? const Color(0xFF064E3B) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
           children: [
@@ -368,8 +346,8 @@ class _HomePageState extends ConsumerState<HomePage> {
               Symbols.search,
               color: isDark
                   ? Colors.white.withValues(alpha: 0.5)
-                  : const Color(0xFF065F46).withValues(alpha: 0.4),
-              size: 20,
+                  : const Color(0xFF9CA3AF),
+              size: 18,
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -386,13 +364,22 @@ class _HomePageState extends ConsumerState<HomePage> {
                     fontSize: 14,
                     color: isDark
                         ? Colors.white.withValues(alpha: 0.4)
-                        : const Color(0xFF065F46).withValues(alpha: 0.4),
+                        : const Color(0xFF9CA3AF),
                   ),
                   border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  errorBorder: InputBorder.none,
+                  focusedErrorBorder: InputBorder.none,
+                  disabledBorder: InputBorder.none,
                   contentPadding: EdgeInsets.zero,
+                  filled: false,
+                  fillColor: Colors.transparent,
+                  isDense: true,
                 ),
               ),
             ),
+            const SizedBox(width: 12),
           ],
         ),
       ),
@@ -403,9 +390,10 @@ class _HomePageState extends ConsumerState<HomePage> {
   /// 
   /// 原型图代码：
   /// ```html
-  /// <div class="bg-white dark:bg-emerald-950 border-b border-emerald-100 dark:border-emerald-800">
-  ///   <div class="flex px-2 overflow-x-auto hide-scrollbar">
-  ///     <button class="flex-none px-3 py-3 text-xs font-bold border-b-2 border-primary text-primary-dark dark:text-primary tab-transition">时间轴</button>
+  /// <div class="bg-background-light">
+  ///   <div class="flex px-4 overflow-x-auto hide-scrollbar">
+  ///     <button class="flex-none px-2 py-2 text-[11px] font-bold border-b-2 border-primary text-primary-dark dark:text-primary tab-transition">时间轴</button>
+  ///     <button class="flex-none px-2 py-2 text-[11px] font-medium text-gray-400 dark:text-emerald-400 border-b-2 border-transparent tab-transition">社交/旅行/惊喜</button>
   ///     ...
   ///   </div>
   /// </div>
@@ -415,50 +403,45 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF022c22) : Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: isDark
-                ? const Color(0xFF065F46).withValues(alpha: 0.3)
-                : const Color(0xFF6EE7B7).withValues(alpha: 0.2),
-            width: 1,
-          ),
-        ),
+        color: isDark ? const Color(0xFF022c22) : const Color(0xFFF0FDF4),
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        child: Row(
-          children: List.generate(tabs.length, (index) {
-            final isSelected = index == selectedIndex;
-            return GestureDetector(
-              onTap: () => _onCategoryChanged(index),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: List.generate(tabs.length, (index) {
+              final isSelected = index == selectedIndex;
+              return GestureDetector(
+                onTap: () => _onCategoryChanged(index),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: isSelected
+                            ? const Color(0xFF6EE7B7)
+                            : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                  child: Text(
+                    tabs[index],
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                       color: isSelected
-                          ? const Color(0xFF6EE7B7)
-                          : Colors.transparent,
-                      width: 2,
+                          ? (isDark ? const Color(0xFF6EE7B7) : const Color(0xFF065F46))
+                          : (isDark
+                              ? const Color(0xFF6EE7B7).withValues(alpha: 0.6)
+                              : const Color(0xFF9CA3AF)),
                     ),
                   ),
                 ),
-                child: Text(
-                  tabs[index],
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                    color: isSelected
-                        ? (isDark ? const Color(0xFF6EE7B7) : const Color(0xFF065F46))
-                        : (isDark
-                            ? const Color(0xFF6EE7B7).withValues(alpha: 0.6)
-                            : const Color(0xFF065F46).withValues(alpha: 0.6)),
-                  ),
-                ),
-              ),
-            );
-          }),
+              );
+            }),
+          ),
         ),
       ),
     );
@@ -484,6 +467,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         itemBuilder: (context, index) {
           final idea = homeState.ideas[index];
           final category = homeState.categories.where((c) => c.id == idea.categoryId).firstOrNull;
+          final tags = homeState.ideaTags[idea.id] ?? [];
 
           return Padding(
             padding: const EdgeInsets.only(bottom: 16),
@@ -491,6 +475,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               content: idea.content,
               category: category?.name ?? '未分类',
               timestamp: idea.createdAt,
+              tags: tags,
               onTap: () => _onIdeaTap(idea.id),
               isDark: isDark,
             ),
@@ -586,19 +571,16 @@ class _HomePageState extends ConsumerState<HomePage> {
   /// 
   /// 原型图代码：
   /// ```html
-  /// <div class="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-emerald-950/90 backdrop-blur-md border-t border-emerald-100 dark:border-emerald-800 px-4 pt-3 pb-8">
-  ///   <div class="flex items-center gap-3 bg-emerald-50/50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800 rounded-2xl p-2 mb-3 shadow-sm">
-  ///     <textarea class="flex-1 px-3 py-2 bg-transparent border-none focus:ring-0 resize-none text-sm placeholder:text-emerald-800/40 text-primary-dark dark:text-emerald-50 min-h-[44px]" placeholder="记录下当下的灵感..." rows="1"></textarea>
-  ///     <button class="flex items-center justify-center w-10 h-10 bg-primary text-primary-dark rounded-xl shadow-lg shadow-primary/20 active:scale-95 transition-all btn-pulse">
+  /// <div class="fixed bottom-0 left-0 right-0 bg-background-light px-4 pt-3 pb-8">
+  ///   <div class="flex items-center gap-3 bg-white rounded-2xl p-2 mb-3 shadow-sm">
+  ///     <textarea class="flex-1 px-3 py-2 bg-transparent border-none focus:ring-0 resize-none text-sm placeholder:text-gray-400 text-primary-dark dark:text-emerald-50 min-h-[44px] outline-none" placeholder="记录下当下的灵感..." rows="1"></textarea>
+  ///     <button class="flex items-center justify-center w-10 h-10 bg-primary text-primary-dark rounded-full shadow-lg shadow-primary/20 active:scale-95 transition-all btn-pulse">
   ///       <span class="material-symbols-outlined text-xl">send</span>
   ///     </button>
   ///   </div>
   ///   <div class="flex items-center gap-6 px-2">
-  ///     <button class="text-emerald-800/40 hover:text-primary transition-colors btn-pulse">
+  ///     <button class="text-gray-400 hover:text-primary transition-colors btn-pulse">
   ///       <span class="material-symbols-outlined">image</span>
-  ///     </button>
-  ///     <button class="text-emerald-800/40 hover:text-primary transition-colors btn-pulse">
-  ///       <span class="material-symbols-outlined">mic</span>
   ///     </button>
   ///   </div>
   /// </div>
@@ -606,125 +588,103 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget _buildBottomInput(bool isDark) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark 
-            ? const Color(0xFF022c22).withValues(alpha: 0.9)
-            : Colors.white.withValues(alpha: 0.9),
-        border: Border(
-          top: BorderSide(
-            color: isDark
-                ? const Color(0xFF065F46).withValues(alpha: 0.3)
-                : const Color(0xFF6EE7B7).withValues(alpha: 0.2),
-            width: 1,
-          ),
-        ),
+        color: isDark ? const Color(0xFF022c22) : const Color(0xFFF0FDF4),
       ),
-      child: ClipRect(
-        child: BackdropFilter(
-          filter: const ColorFilter.mode(Colors.transparent, BlendMode.srcOver),
-          child: SafeArea(
-            top: false,
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // 输入框区域
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF065F46).withValues(alpha: 0.2)
-                          : const Color(0xFF6EE7B7).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDark
-                            ? const Color(0xFF065F46).withValues(alpha: 0.3)
-                            : const Color(0xFF6EE7B7).withValues(alpha: 0.2),
+      child: SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 输入框区域
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF064E3B) : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _inputController,
+                        maxLines: 4,
+                        minLines: 1,
+                        textInputAction: TextInputAction.send,
+                        onSubmitted: (_) => _onSendTap(),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isDark ? Colors.white : const Color(0xFF065F46),
+                        ),
+                        decoration: InputDecoration(
+                          hintText: '记录下当下的灵感...',
+                          hintStyle: TextStyle(
+                            fontSize: 14,
+                            color: isDark
+                                ? const Color(0xFF6EE7B7).withValues(alpha: 0.4)
+                                : const Color(0xFF9CA3AF),
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                        ),
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
                     ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _inputController,
-                            maxLines: 4,
-                            minLines: 1,
-                            textInputAction: TextInputAction.send,
-                            onSubmitted: (_) => _onSendTap(),
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: isDark ? Colors.white : const Color(0xFF065F46),
-                            ),
-                            decoration: InputDecoration(
-                              hintText: '记录下当下的灵感...',
-                              hintStyle: TextStyle(
-                                fontSize: 14,
-                                color: isDark
-                                    ? const Color(0xFF6EE7B7).withValues(alpha: 0.4)
-                                    : const Color(0xFF065F46).withValues(alpha: 0.4),
-                              ),
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                            ),
+                    const SizedBox(width: 8),
+                    Material(
+                      color: const Color(0xFF6EE7B7),
+                      borderRadius: BorderRadius.circular(20),
+                      child: InkWell(
+                        onTap: _onSendTap,
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          alignment: Alignment.center,
+                          child: const Icon(
+                            Symbols.send,
+                            color: Color(0xFF065F46),
+                            size: 20,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Material(
-                          color: const Color(0xFF6EE7B7),
-                          borderRadius: BorderRadius.circular(12),
-                          child: InkWell(
-                            onTap: _onSendTap,
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              width: 40,
-                              height: 40,
-                              alignment: Alignment.center,
-                              child: const Icon(
-                                Symbols.send,
-                                color: Color(0xFF065F46),
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                  
-                  const SizedBox(height: 12),
-
-                  // 已选图片预览
-                  if (_selectedImages.isNotEmpty)
-                    _buildSelectedImagesPreview(isDark),
-
-                  const SizedBox(height: 12),
-
-                  // 快捷操作按钮
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Row(
-                      children: [
-                        _buildQuickActionButton(
-                          icon: Symbols.image,
-                          onTap: _onImageTap,
-                          isDark: isDark,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+              
+              const SizedBox(height: 12),
+
+              // 已选图片预览
+              if (_selectedImages.isNotEmpty)
+                _buildSelectedImagesPreview(isDark),
+
+              const SizedBox(height: 12),
+
+              // 快捷操作按钮
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Row(
+                  children: [
+                    _buildQuickActionButton(
+                      icon: Symbols.image,
+                      onTap: _onImageTap,
+                      isDark: isDark,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -814,19 +774,19 @@ class _HomePageState extends ConsumerState<HomePage> {
 /// 
 /// 原型图代码：
 /// ```html
-/// <div class="bg-white dark:bg-emerald-950 rounded-xl p-4 shadow-sm border border-emerald-100 dark:border-emerald-800 animate-fade-in-up card-hover">
+/// <div class="bg-white dark:bg-emerald-950 rounded-xl p-4 shadow-sm animate-fade-in-up card-hover">
 ///   <div class="flex justify-between items-start mb-2">
 ///     <span class="px-2 py-0.5 bg-primary/20 text-primary-dark dark:text-primary text-[10px] font-bold rounded uppercase tracking-wider btn-pulse cursor-pointer transition-transform">工作/创意</span>
 ///     <span class="text-[10px] text-slate-400 font-medium">10:30 AM</span>
 ///   </div>
 ///   <p class="text-sm leading-relaxed text-primary-dark/90 dark:text-emerald-100">...</p>
-///   <div class="mt-4 w-full aspect-video rounded-lg bg-cover bg-center bg-slate-200" ...></div>
 /// </div>
 /// ```
 class _InspirationCard extends StatelessWidget {
   final String content;
   final String category;
   final DateTime timestamp;
+  final List<String> tags;
   final VoidCallback? onTap;
   final bool isDark;
 
@@ -834,6 +794,7 @@ class _InspirationCard extends StatelessWidget {
     required this.content,
     required this.category,
     required this.timestamp,
+    this.tags = const [],
     this.onTap,
     required this.isDark,
   });
@@ -841,28 +802,15 @@ class _InspirationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: isDark ? const Color(0xFF022c22) : Colors.white,
+      color: isDark ? const Color(0xFF064E3B) : Colors.white,
       borderRadius: BorderRadius.circular(12),
+      elevation: 2,
+      shadowColor: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isDark
-                  ? const Color(0xFF065F46).withValues(alpha: 0.3)
-                  : const Color(0xFF6EE7B7).withValues(alpha: 0.2),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -874,7 +822,7 @@ class _InspirationCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF6EE7B7).withValues(alpha: isDark ? 0.2 : 0.15),
+                      color: const Color(0xFF6EE7B7).withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -895,13 +843,40 @@ class _InspirationCard extends StatelessWidget {
                       fontSize: 10,
                       color: isDark
                           ? const Color(0xFF6EE7B7).withValues(alpha: 0.6)
-                          : const Color(0xFF065F46).withValues(alpha: 0.6),
+                          : const Color(0xFF9CA3AF),
                     ),
                   ),
                 ],
               ),
               
               const SizedBox(height: 8),
+              
+              // 标签显示
+              if (tags.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: tags.take(3).map((tag) => Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6EE7B7).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: const Color(0xFF6EE7B7).withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Text(
+                        tag,
+                        style: TextStyle(
+                          fontSize: 9,
+                          color: isDark ? const Color(0xFF6EE7B7) : const Color(0xFF065F46),
+                        ),
+                      ),
+                    )).toList(),
+                  ),
+                ),
               
               // 内容文本
               Text(
@@ -916,8 +891,6 @@ class _InspirationCard extends StatelessWidget {
                 maxLines: 4,
                 overflow: TextOverflow.ellipsis,
               ),
-              
-
             ],
           ),
         ),
