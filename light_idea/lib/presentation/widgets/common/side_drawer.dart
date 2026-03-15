@@ -435,7 +435,6 @@ class SideDrawer extends ConsumerWidget {
           isDark: isDark,
           textColor: textColor,
           secondaryTextColor: secondaryTextColor,
-          isSelected: true,
           onTap: onAiManagementTap,
         ),
         _buildMenuItem(
