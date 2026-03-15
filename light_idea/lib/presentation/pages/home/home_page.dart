@@ -162,6 +162,10 @@ class _HomePageState extends ConsumerState<HomePage> {
     context.pushNamed(RouteNames.dataManagement);
   }
 
+  void _goToRecycleBin() {
+    context.pushNamed(RouteNames.recycleBin);
+  }
+
   void _onSearch(String query) {
     ref.read(homeProvider.notifier).search(query);
   }
@@ -186,6 +190,10 @@ class _HomePageState extends ConsumerState<HomePage> {
         onBackupTap: () {
           Navigator.pop(context);
           _goToDataManagement();
+        },
+        onRecycleBinTap: () {
+          Navigator.pop(context);
+          _goToRecycleBin();
         },
         onHelpTap: () {
           Navigator.pop(context);

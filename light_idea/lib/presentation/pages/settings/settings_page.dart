@@ -69,7 +69,7 @@ class SettingsPage extends ConsumerWidget {
 
               const SizedBox(height: 24),
 
-              _buildSectionTitle('个性化', mutedTextColor),
+              _buildSectionTitle('个性化', textColor),
               _buildSettingsCard(
                 cardColor: cardColor,
                 children: [
@@ -95,7 +95,7 @@ class SettingsPage extends ConsumerWidget {
 
               const SizedBox(height: 24),
 
-              _buildSectionTitle('隐私与通知', mutedTextColor),
+              _buildSectionTitle('隐私与通知', textColor),
               _buildSettingsCard(
                 cardColor: cardColor,
                 children: [
@@ -119,7 +119,7 @@ class SettingsPage extends ConsumerWidget {
 
               const SizedBox(height: 24),
 
-              _buildSectionTitle('支持与关于', mutedTextColor),
+              _buildSectionTitle('支持与关于', textColor),
               _buildSettingsCard(
                 cardColor: cardColor,
                 children: [

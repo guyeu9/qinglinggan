@@ -19,6 +19,7 @@ class SideDrawer extends ConsumerWidget {
   final VoidCallback? onSettingsTap;
   final VoidCallback? onAiManagementTap;
   final VoidCallback? onBackupTap;
+  final VoidCallback? onRecycleBinTap;
   final VoidCallback? onHelpTap;
   final VoidCallback? onLogoutTap;
 
@@ -27,6 +28,7 @@ class SideDrawer extends ConsumerWidget {
     this.onSettingsTap,
     this.onAiManagementTap,
     this.onBackupTap,
+    this.onRecycleBinTap,
     this.onHelpTap,
     this.onLogoutTap,
   });
@@ -443,6 +445,14 @@ class SideDrawer extends ConsumerWidget {
           textColor: textColor,
           secondaryTextColor: secondaryTextColor,
           onTap: onBackupTap,
+        ),
+        _buildMenuItem(
+          icon: Symbols.delete_outline,
+          title: '回收站',
+          isDark: isDark,
+          textColor: textColor,
+          secondaryTextColor: secondaryTextColor,
+          onTap: onRecycleBinTap,
         ),
         _buildMenuItem(
           icon: Symbols.contact_support,
