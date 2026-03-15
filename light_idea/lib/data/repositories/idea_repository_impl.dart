@@ -1,5 +1,6 @@
 import 'dart:developer' as developer;
 import 'package:isar/isar.dart';
+import '../../core/services/log_service.dart';
 import '../../domain/entities/idea.dart';
 import '../../domain/repositories/idea_repository.dart';
 import '../models/idea_model.dart';
@@ -11,50 +12,53 @@ class IdeaRepositoryImpl implements IdeaRepository {
 
   @override
   Future<IdeaEntity> save(IdeaEntity idea) async {
-    developer.log('save() 开始: idea.id=${idea.id}, content=${idea.content.substring(0, idea.content.length > 50 ? 50 : idea.content.length)}...', name: 'IdeaRepository');
+    final logContent = idea.content.substring(0, idea.content.length > 50 ? 50 : idea.content.length);
+    logService.i('IdeaRepository', 'save() 开始: idea.id=${idea.id}, content=$logContent...');
+    
     final model = IdeaModel.fromEntity(idea);
-    developer.log('fromEntity完成: model.id=${model.id}', name: 'IdeaRepository');
+    logService.d('IdeaRepository', 'fromEntity完成: model.id=${model.id}');
     
     final id = await _isar.writeTxn(() async {
       final result = await _isar.ideaModels.put(model);
-      developer.log('put()完成: result=$result', name: 'IdeaRepository');
+      logService.d('IdeaRepository', 'put()完成: result=$result');
       return result;
     });
     
-    developer.log('save()完成: 新id=$id', name: 'IdeaRepository');
+    logService.i('IdeaRepository', 'save()完成: 新id=$id');
     
     // 验证保存结果
     final saved = await _isar.ideaModels.get(id);
-    developer.log('验证保存: saved=${saved != null}, id=$id', name: 'IdeaRepository');
+    logService.d('IdeaRepository', '验证保存: saved=${saved != null}, id=$id');
     
     // 检查总数
     final count = await _isar.ideaModels.count();
-    developer.log('当前数据库总记录数: $count', name: 'IdeaRepository');
+    logService.i('IdeaRepository', '当前数据库总记录数: $count');
     
     return idea.copyWith(id: id);
   }
 
   @override
   Future<IdeaEntity?> getById(int id) async {
-    developer.log('getById() 开始: id=$id', name: 'IdeaRepository');
+    logService.d('IdeaRepository', 'getById() 开始: id=$id');
     final model = await _isar.ideaModels.get(id);
-    developer.log('getById() 结果: model=${model != null}', name: 'IdeaRepository');
+    logService.d('IdeaRepository', 'getById() 结果: model=${model != null}');
     return model?.toEntity();
   }
 
   @override
   Future<List<IdeaEntity>> getAll({bool includeDeleted = false}) async {
-    developer.log('getAll() 开始: includeDeleted=$includeDeleted', name: 'IdeaRepository');
+    logService.i('IdeaRepository', 'getAll() 开始: includeDeleted=$includeDeleted');
     
     final models = includeDeleted
         ? await _isar.ideaModels.where().sortByCreatedAtDesc().findAll()
         : await _isar.ideaModels.filter().isDeletedEqualTo(false).sortByCreatedAtDesc().findAll();
     
-    developer.log('getAll() 查询到 ${models.length} 条记录', name: 'IdeaRepository');
+    logService.i('IdeaRepository', 'getAll() 查询到 ${models.length} 条记录');
     
     // 打印每条记录的id
     for (final m in models) {
-      developer.log('  - id=${m.id}, content=${m.content.substring(0, m.content.length > 30 ? 30 : m.content.length)}, isDeleted=${m.isDeleted}', name: 'IdeaRepository');
+      final content = m.content.substring(0, m.content.length > 30 ? 30 : m.content.length);
+      logService.d('IdeaRepository', '  - id=${m.id}, content=$content, isDeleted=${m.isDeleted}');
     }
     
     return models.map((m) => m.toEntity()).toList();

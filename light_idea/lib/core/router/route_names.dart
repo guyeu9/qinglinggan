@@ -37,6 +37,9 @@ class RouteNames {
 
   /// 分类管理
   static const String categoryManagement = 'categoryManagement';
+
+  /// 系统日志
+  static const String systemLogs = 'systemLogs';
 }
 
 /// 路由路径常量定义
@@ -72,6 +75,9 @@ class RoutePaths {
 
   /// 分类管理
   static const String categoryManagement = '/category-management';
+
+  /// 系统日志
+  static const String systemLogs = '/system-logs';
 
   /// 构建灵感详情页路径
   static String ideaDetailPath(String id) => '/idea/$id';

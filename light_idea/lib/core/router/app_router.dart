@@ -6,6 +6,7 @@ import '../../presentation/pages/idea_detail/idea_detail_page.dart';
 import '../../presentation/pages/association/association_page.dart';
 import '../../presentation/pages/settings/settings_page.dart';
 import '../../presentation/pages/settings/category_management_page.dart';
+import '../../presentation/pages/settings/system_logs_page.dart';
 import '../../presentation/pages/data_management/data_management_page.dart';
 import '../../presentation/pages/ai_hub/ai_hub_page.dart';
 import '../../presentation/pages/ai_settings/ai_settings_page.dart';
@@ -58,6 +59,11 @@ final GoRouter appRouter = GoRouter(
           path: RoutePaths.categoryManagement,
           name: RouteNames.categoryManagement,
           builder: (context, state) => const CategoryManagementPage(),
+        ),
+        GoRoute(
+          path: RoutePaths.systemLogs,
+          name: RouteNames.systemLogs,
+          builder: (context, state) => const SystemLogsPage(),
         ),
       ],
     ),
@@ -113,8 +119,130 @@ class _HelpPage extends StatelessWidget {
         backgroundColor: isDark ? const Color(0xFF022c22) : const Color(0xFFF0FDF4),
         elevation: 0,
       ),
-      body: const Center(
-        child: Text('帮助中心 - 开发中'),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          // 系统日志入口
+          _buildMenuItem(
+            context,
+            icon: Icons.article_outlined,
+            title: '系统日志',
+            subtitle: '查看应用运行日志，用于排查问题',
+            onTap: () => context.pushNamed(RouteNames.systemLogs),
+            isDark: isDark,
+          ),
+          const SizedBox(height: 12),
+          // 使用指南
+          _buildMenuItem(
+            context,
+            icon: Icons.menu_book_outlined,
+            title: '使用指南',
+            subtitle: '了解如何使用轻灵感',
+            onTap: () {
+              // TODO: 跳转到使用指南
+            },
+            isDark: isDark,
+          ),
+          const SizedBox(height: 12),
+          // 常见问题
+          _buildMenuItem(
+            context,
+            icon: Icons.help_outline,
+            title: '常见问题',
+            subtitle: '查看常见问题解答',
+            onTap: () {
+              // TODO: 跳转到常见问题
+            },
+            isDark: isDark,
+          ),
+          const SizedBox(height: 12),
+          // 联系我们
+          _buildMenuItem(
+            context,
+            icon: Icons.mail_outline,
+            title: '联系我们',
+            subtitle: '遇到问题？联系我们获取帮助',
+            onTap: () {
+              // TODO: 跳转到联系我们
+            },
+            isDark: isDark,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMenuItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+    required bool isDark,
+  }) {
+    return Card(
+      elevation: 0,
+      color: isDark ? const Color(0xFF064E3B) : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isDark 
+              ? const Color(0xFF6EE7B7).withOpacity(0.2) 
+              : const Color(0xFF6EE7B7).withOpacity(0.3),
+        ),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6EE7B7).withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: const Color(0xFF065F46),
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : const Color(0xFF065F46),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark ? Colors.white70 : Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: isDark ? Colors.white38 : Colors.black38,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
