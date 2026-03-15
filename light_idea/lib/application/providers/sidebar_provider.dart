@@ -84,26 +84,53 @@ class SidebarNotifier extends StateNotifier<SidebarState> {
   }
 
   /// 运行AI分析
+  /// 
+  /// 为所有待分析（pending或failed状态）的笔记创建AI分析任务
+  /// 即使没有配置AI，数据也不会丢失，可以等配置AI后重新运行
   Future<void> runAnalysis() async {
+    state = state.copyWith(isLoading: true, error: null);
+    
     try {
       final taskQueue = _ref.read(aiTaskQueueProvider);
       final ideaRepo = _ref.read(ideaRepositoryProvider);
 
-      // 获取所有待分析的笔记
+      // 获取所有待分析的笔记（pending或failed状态）
       final ideas = await ideaRepo.getAll(includeDeleted: false);
       final pendingIdeas = ideas.where((idea) => 
         idea.aiStatus == AIStatus.pending || idea.aiStatus == AIStatus.failed
       ).toList();
 
+      if (pendingIdeas.isEmpty) {
+        state = state.copyWith(
+          isLoading: false,
+          error: '没有待分析的笔记',
+        );
+        return;
+      }
+
       // 为每个待分析的笔记创建任务
-      for (final idea in pendingIdeas.take(5)) {
-        await taskQueue.enqueue(idea.id);
+      int enqueuedCount = 0;
+      for (final idea in pendingIdeas) {
+        final result = await taskQueue.enqueue(idea.id);
+        if (result.wasEnqueued) {
+          enqueuedCount++;
+        }
       }
 
       // 重新加载统计
       await loadStats();
+      
+      state = state.copyWith(
+        isLoading: false,
+        error: enqueuedCount > 0 
+          ? '已提交 $enqueuedCount 条笔记进行分析' 
+          : '分析任务已在队列中，请稍后查看结果',
+      );
     } catch (e) {
-      state = state.copyWith(error: '运行分析失败: $e');
+      state = state.copyWith(
+        isLoading: false,
+        error: '运行分析失败: $e',
+      );
     }
   }
 

@@ -1,245 +1,165 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/material_symbols_icons.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/router/route_names.dart';
 import '../../../../core/router/app_router.dart';
+import '../../../../core/router/route_names.dart';
 import '../../../../data/database/isar_database.dart';
 import '../../../../config/ai_config.dart';
 import '../../../../application/providers/user_provider.dart';
 
 /// 设置详情页
 ///
-/// 根据原型图 6设置详情页 实现
-/// 包含：账户资料、内容管理、个性化、隐私通知、支持关于等区域
+/// 严格按照原型图实现:
+/// d:\trae\qinglinggan\前端原型图\6设置详情页\code.html
+///
+/// 结构:
+/// - 账户与个人资料: 个人资料
+/// - 内容管理: 标签分类管理
+/// - 个性化: 主题外观、字体设置
+/// - 隐私与通知: 通知管理、隐私与数据
+/// - 支持与关于: 帮助中心、关于
+/// - 退出登录按钮
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
-    final cardColor = isDark ? AppColors.cardDark : AppColors.cardLight;
-    final textPrimary = isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final textSecondary = isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final backgroundColor = isDark ? const Color(0xFF122017) : const Color(0xFFF0FDF4);
+    final cardColor = Colors.white;
+    final textColor = const Color(0xFF065F46);
+    final mutedTextColor = const Color(0xFF065F46).withValues(alpha: 0.5);
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
-        title: const Text('设置'),
-        centerTitle: true,
-        elevation: 0,
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppTheme.spacingMd),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 账户与个人资料区
-              _buildSectionTitle('账户与个人资料', textSecondary),
+              _buildHeader(context, textColor),
+              
+              const SizedBox(height: 16),
+              
+              _buildSectionTitle('账户与个人资料', textColor),
               _buildSettingsCard(
-                isDark: isDark,
                 cardColor: cardColor,
                 children: [
-                  _buildUserProfileTile(context, textPrimary, textSecondary, ref),
-                  _buildDivider(isDark),
-                  _buildSettingsTile(
-                    context: context,
-                    icon: Icons.person_outline,
-                    iconColor: AppColors.primary,
-                    title: '个人资料',
-                    subtitle: '编辑个人信息和头像',
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
-                    onTap: () => _showNotImplemented(context),
-                  ),
-                  _buildDivider(isDark),
-                  _buildSettingsTile(
-                    context: context,
-                    icon: Icons.sync_outlined,
-                    iconColor: AppColors.info,
-                    title: '账户同步',
-                    subtitle: '管理云端同步设置',
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
-                    onTap: () => _showNotImplemented(context),
-                  ),
+                  _buildProfileTile(context, textColor, mutedTextColor, ref),
                 ],
               ),
 
-              const SizedBox(height: AppTheme.spacingLg),
+              const SizedBox(height: 24),
 
-              // 内容管理区
-              _buildSectionTitle('内容管理', textSecondary),
+              _buildSectionTitle('内容管理', textColor),
               _buildSettingsCard(
-                isDark: isDark,
                 cardColor: cardColor,
                 children: [
-                  _buildSettingsTile(
+                  _buildMenuItem(
                     context: context,
-                    icon: Icons.label_outline,
-                    iconColor: AppColors.warning,
+                    icon: Symbols.label,
                     title: '标签分类管理',
-                    subtitle: '管理灵感标签和分类',
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
+                    textColor: textColor,
                     onTap: () => context.pushToCategoryManagement(),
                   ),
-                  _buildDivider(isDark),
-                  // 回收站入口 - 新增
-                  _buildSettingsTile(
-                    context: context,
-                    icon: Icons.delete_outline,
-                    iconColor: AppColors.error,
-                    title: '回收站',
-                    subtitle: '查看和恢复已删除的灵感',
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
-                    onTap: () => context.pushNamed(RouteNames.recycleBin),
-                    showBadge: true,
-                    badgeCount: 5,
-                  ),
                 ],
               ),
 
-              const SizedBox(height: AppTheme.spacingLg),
+              const SizedBox(height: 24),
 
-              // 个性化区
-              _buildSectionTitle('个性化', textSecondary),
+              _buildSectionTitle('个性化', mutedTextColor),
               _buildSettingsCard(
-                isDark: isDark,
                 cardColor: cardColor,
                 children: [
-                  _buildSettingsTile(
+                  _buildMenuItem(
                     context: context,
-                    icon: Icons.palette_outlined,
-                    iconColor: AppColors.primary,
+                    icon: Symbols.palette,
                     title: '主题外观',
-                    subtitle: isDark ? '当前：深色模式' : '当前：浅色模式',
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
-                    trailing: Switch(
-                      value: isDark,
-                      onChanged: (value) {
-                        // TODO: 切换主题
-                        _showNotImplemented(context);
-                      },
-                      activeThumbColor: AppColors.primary,
-                    ),
+                    subtitle: isDark ? '深色模式' : '浅色模式',
+                    textColor: textColor,
+                    mutedTextColor: mutedTextColor,
                     onTap: () => _showNotImplemented(context),
                   ),
-                  _buildDivider(isDark),
-                  _buildSettingsTile(
+                  _buildDivider(),
+                  _buildMenuItem(
                     context: context,
-                    icon: Icons.font_download_outlined,
-                    iconColor: AppColors.accentDark,
+                    icon: Symbols.text_fields,
                     title: '字体设置',
-                    subtitle: '调整字体大小和样式',
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
+                    textColor: textColor,
                     onTap: () => _showNotImplemented(context),
                   ),
                 ],
               ),
 
-              const SizedBox(height: AppTheme.spacingLg),
+              const SizedBox(height: 24),
 
-              // 隐私与通知区
-              _buildSectionTitle('隐私与通知', textSecondary),
+              _buildSectionTitle('隐私与通知', mutedTextColor),
               _buildSettingsCard(
-                isDark: isDark,
                 cardColor: cardColor,
                 children: [
-                  _buildSettingsTile(
+                  _buildMenuItem(
                     context: context,
-                    icon: Icons.notifications_outlined,
-                    iconColor: AppColors.info,
+                    icon: Symbols.notifications_active,
                     title: '通知管理',
-                    subtitle: '设置推送和提醒',
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
+                    textColor: textColor,
                     onTap: () => _showNotImplemented(context),
                   ),
-                  _buildDivider(isDark),
-                  _buildSettingsTile(
+                  _buildDivider(),
+                  _buildMenuItem(
                     context: context,
-                    icon: Icons.privacy_tip_outlined,
-                    iconColor: AppColors.success,
+                    icon: Symbols.visibility_off,
                     title: '隐私与数据',
-                    subtitle: '管理数据权限和隐私设置',
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
+                    textColor: textColor,
                     onTap: () => _showNotImplemented(context),
                   ),
                 ],
               ),
 
-              const SizedBox(height: AppTheme.spacingLg),
+              const SizedBox(height: 24),
 
-              // 支持与关于区
-              _buildSectionTitle('支持与关于', textSecondary),
+              _buildSectionTitle('支持与关于', mutedTextColor),
               _buildSettingsCard(
-                isDark: isDark,
                 cardColor: cardColor,
                 children: [
-                  _buildSettingsTile(
+                  _buildMenuItem(
                     context: context,
-                    icon: Icons.help_outline,
-                    iconColor: AppColors.primary,
+                    icon: Symbols.help,
                     title: '帮助中心',
-                    subtitle: '常见问题和使用指南',
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
+                    textColor: textColor,
                     onTap: () => context.pushNamed(RouteNames.help),
                   ),
-                  _buildDivider(isDark),
-                  _buildSettingsTile(
+                  _buildDivider(),
+                  _buildMenuItem(
                     context: context,
-                    icon: Icons.info_outline,
-                    iconColor: AppColors.textSecondaryLight,
-                    title: '关于',
-                    subtitle: '版本 1.0.0',
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
+                    icon: Symbols.info,
+                    title: '关于 Light Inspiration',
+                    subtitle: '版本 2.4.0',
+                    textColor: textColor,
+                    mutedTextColor: mutedTextColor,
                     onTap: () => _showAboutDialog(context),
                   ),
                 ],
               ),
 
-              const SizedBox(height: AppTheme.spacingXl),
+              const SizedBox(height: 40),
 
-              // 退出登录按钮
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => _showLogoutConfirm(context),
-                  icon: const Icon(Icons.logout, color: Colors.white),
-                  label: const Text(
-                    '退出登录',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.error,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingMd),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                    ),
-                    elevation: 0,
+              _buildLogoutButton(context),
+
+              const SizedBox(height: 24),
+
+              Center(
+                child: Text(
+                  'Designed for mindful users',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: textColor.withValues(alpha: 0.3),
                   ),
                 ),
               ),
 
-              const SizedBox(height: AppTheme.spacingLg),
+              const SizedBox(height: 48),
             ],
           ),
         ),
@@ -247,44 +167,67 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  /// 构建设置区域标题
-  Widget _buildSectionTitle(String title, Color textSecondary) {
-    return Padding(
-      padding: const EdgeInsets.only(
-        left: AppTheme.spacingSm,
-        bottom: AppTheme.spacingSm,
+  Widget _buildHeader(BuildContext context, Color textColor) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: Colors.white,
+      child: Row(
+        children: [
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => context.pop(),
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                child: Icon(Symbols.arrow_back, color: textColor, size: 24),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              '设置',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+                letterSpacing: -0.5,
+              ),
+            ),
+          ),
+          const SizedBox(width: 40),
+        ],
       ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, Color textColor) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 24, right: 24, bottom: 8, top: 24),
       child: Text(
         title,
         style: TextStyle(
           fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: textSecondary,
-          letterSpacing: 0.5,
+          fontWeight: FontWeight.bold,
+          color: textColor.withValues(alpha: 0.6),
+          letterSpacing: 1.5,
         ),
       ),
     );
   }
 
-  /// 构建设置卡片容器
   Widget _buildSettingsCard({
-    required bool isDark,
     required Color cardColor,
     required List<Widget> children,
   }) {
     return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.2)
-                : Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: children,
@@ -292,72 +235,73 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  /// 构建用户资料头部
-  Widget _buildUserProfileTile(
+  Widget _buildProfileTile(
     BuildContext context,
-    Color textPrimary,
-    Color textSecondary,
+    Color textColor,
+    Color mutedTextColor,
     WidgetRef ref,
   ) {
     final userState = ref.watch(userProvider);
-    
+
     return InkWell(
       onTap: () => _showUserNameDialog(context, ref),
-      borderRadius: const BorderRadius.vertical(
-        top: Radius.circular(AppTheme.radiusMedium),
-      ),
+      borderRadius: BorderRadius.circular(12),
       child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spacingMd),
+        padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            // 头像
             Container(
-              width: 56,
-              height: 56,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.primary, AppColors.primaryLight],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(AppTheme.radiusCircular),
+                color: const Color(0xFF6EE7B7).withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(
-                Icons.person,
-                color: Colors.white,
-                size: 32,
-              ),
+              child: Icon(Symbols.person, color: textColor, size: 24),
             ),
-            const SizedBox(width: AppTheme.spacingMd),
-            // 用户信息
+            const SizedBox(width: 16),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    userState.userName,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    userState.userEmail,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: textSecondary,
-                    ),
-                  ),
-                ],
+              child: Text(
+                '个人资料',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: textColor,
+                ),
               ),
             ),
-            // 箭头
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  userState.userName,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: textColor.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(width: 8),
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: textColor.withValues(alpha: 0.1),
+                ),
+              ),
+              child: ClipOval(
+                child: Icon(Symbols.person, color: textColor.withValues(alpha: 0.5), size: 20),
+              ),
+            ),
+            const SizedBox(width: 4),
             Icon(
-              Icons.chevron_right,
-              color: textSecondary,
-              size: 24,
+              Symbols.chevron_right,
+              color: textColor.withValues(alpha: 0.3),
+              size: 20,
             ),
           ],
         ),
@@ -365,98 +309,67 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  /// 构建设置项
-  Widget _buildSettingsTile({
+  Widget _buildMenuItem({
     required BuildContext context,
     required IconData icon,
-    required Color iconColor,
     required String title,
-    required String subtitle,
-    required Color textPrimary,
-    required Color textSecondary,
-    required VoidCallback onTap,
-    Widget? trailing,
-    bool showBadge = false,
-    int badgeCount = 0,
+    String? subtitle,
+    required Color textColor,
+    Color? mutedTextColor,
+    VoidCallback? onTap,
   }) {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppTheme.spacingMd,
-          vertical: AppTheme.spacingSm,
-        ),
+        padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            // 图标
             Container(
-              width: 36,
-              height: 36,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                color: const Color(0xFF6EE7B7).withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(
-                icon,
-                color: iconColor,
-                size: 20,
-              ),
+              child: Icon(icon, color: textColor, size: 24),
             ),
-            const SizedBox(width: AppTheme.spacingMd),
-            // 文字内容
+            const SizedBox(width: 16),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: textPrimary,
+              child: subtitle != null
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: textColor,
+                          ),
                         ),
-                      ),
-                      if (showBadge && badgeCount > 0) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.error,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            badgeCount.toString(),
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: mutedTextColor ?? textColor.withValues(alpha: 0.5),
                           ),
                         ),
                       ],
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: textSecondary,
+                    )
+                  : Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: textColor,
+                      ),
                     ),
-                  ),
-                ],
-              ),
             ),
-            // 尾部组件或箭头
-            trailing ?? Icon(
-              Icons.chevron_right,
-              color: textSecondary,
-              size: 24,
+            Icon(
+              Symbols.chevron_right,
+              color: textColor.withValues(alpha: 0.3),
+              size: 20,
             ),
           ],
         ),
@@ -464,19 +377,47 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  /// 构建分割线
-  Widget _buildDivider(bool isDark) {
+  Widget _buildDivider() {
     return Divider(
       height: 1,
-      indent: 60,
-      color: isDark ? AppColors.borderDark : AppColors.borderLight,
+      indent: 16,
+      endIndent: 16,
+      color: const Color(0xFF065F46).withValues(alpha: 0.05),
     );
   }
 
-  /// 显示用户名称编辑对话框
+  Widget _buildLogoutButton(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          onPressed: () => _showLogoutConfirm(context),
+          icon: Icon(Symbols.logout, color: Colors.red, size: 20),
+          label: const Text(
+            '退出登录',
+            style: TextStyle(
+              color: Colors.red,
+              fontWeight: FontWeight.w600,
+              fontSize: 16,
+            ),
+          ),
+          style: OutlinedButton.styleFrom(
+            backgroundColor: Colors.white,
+            side: const BorderSide(color: Color(0xFFFEE2E2)),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showUserNameDialog(BuildContext context, WidgetRef ref) {
     final controller = TextEditingController(text: ref.read(userProvider).userName);
-    
+
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
@@ -514,7 +455,6 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  /// 显示功能未实现提示
   void _showNotImplemented(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -524,7 +464,6 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  /// 显示关于对话框
   void _showAboutDialog(BuildContext context) {
     showDialog<void>(
       context: context,
@@ -539,7 +478,7 @@ class SettingsPage extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              '版本: 1.0.0',
+              '版本: 2.4.0',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
@@ -556,7 +495,6 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  /// 显示退出登录确认对话框
   void _showLogoutConfirm(BuildContext context) {
     showDialog<void>(
       context: context,
@@ -571,11 +509,11 @@ class SettingsPage extends ConsumerWidget {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
-              
+
               try {
                 await IsarDatabase.clear();
                 await AIConfig.clearAll();
-                
+
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('已退出登录，数据已清除')),
