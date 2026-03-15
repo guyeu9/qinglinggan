@@ -96,7 +96,10 @@ class HomeNotifier extends StateNotifier<HomeState> {
   }
 
   Future<void> loadIdeas() async {
-    developer.log('开始加载灵感列表...', name: 'HomeProvider');
+    developer.log('========== loadIdeas() 开始 ==========', name: 'HomeProvider');
+    developer.log('selectedCategoryIndex: ${state.selectedCategoryIndex}', name: 'HomeProvider');
+    developer.log('searchQuery: "${state.searchQuery}"', name: 'HomeProvider');
+    
     try {
       final ideaRepo = _ref.read(ideaRepositoryProvider);
       final analysisRepo = _ref.read(aiAnalysisRepositoryProvider);
@@ -130,46 +133,10 @@ class HomeNotifier extends StateNotifier<HomeState> {
       // 按创建时间倒序排序（最新的在前面）
       ideas.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       
-      // 加载每个灵感的标签
-      final Map<int, List<String>> ideaTagsMap = {};
-      for (final idea in ideas) {
-        // 首先检查Idea本身的tagIds
-        if (idea.tagIds.isNotEmpty) {
-          final tags = <String>[];
-          for (final tagId in idea.tagIds) {
-            final tag = await tagRepo.getById(tagId);
-            if (tag != null) {
-              tags.add(tag.name);
-            }
-          }
-          if (tags.isNotEmpty) {
-            ideaTagsMap[idea.id] = tags;
-            developer.log('Idea ${idea.id} 有标签: $tags');
-          }
-        }
-        
-        // 如果Idea本身没有标签，尝试从分析结果获取
-        if (!ideaTagsMap.containsKey(idea.id)) {
-          final analysis = await analysisRepo.getByIdeaId(idea.id);
-          if (analysis != null && analysis.tagResults.isNotEmpty) {
-            final tags = <String>[];
-            for (final tagId in analysis.tagResults) {
-              final tag = await tagRepo.getById(tagId);
-              if (tag != null) {
-                tags.add(tag.name);
-              }
-            }
-            if (tags.isNotEmpty) {
-              ideaTagsMap[idea.id] = tags;
-              developer.log('Idea ${idea.id} 从分析结果获取标签: $tags');
-            }
-          }
-        }
-      }
+      developer.log('排序后共 ${ideas.length} 条', name: 'HomeProvider');
+      developer.log('========== loadIdeas() 完成 ==========', name: 'HomeProvider');
       
-      developer.log('标签加载完成，共 ${ideaTagsMap.length} 条有标签', name: 'HomeProvider');
-      developer.log('排序完成，更新状态: ${ideas.length} 条', name: 'HomeProvider');
-      state = state.copyWith(ideas: ideas, ideaTags: ideaTagsMap);
+      state = state.copyWith(ideas: ideas, ideaTags: {});
     } catch (e, stackTrace) {
       developer.log('加载灵感失败: $e', name: 'HomeProvider', error: e, stackTrace: stackTrace);
       state = state.copyWith(error: '加载灵感失败: $e');
@@ -317,6 +284,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
 
   
   Future<int?> createEmptyIdea() async {
+    developer.log('createEmptyIdea() 开始', name: 'HomeProvider');
     try {
       final ideaRepo = _ref.read(ideaRepositoryProvider);
       
@@ -330,9 +298,18 @@ class HomeNotifier extends StateNotifier<HomeState> {
         imagePaths: const [],
       );
 
+      developer.log('正在保存空灵感...', name: 'HomeProvider');
       final savedIdea = await ideaRepo.save(idea);
+      developer.log('空灵感已保存: id=${savedIdea.id}', name: 'HomeProvider');
+      
+      // 刷新列表显示新创建的灵感
+      developer.log('刷新列表...', name: 'HomeProvider');
+      await loadIdeas();
+      developer.log('列表刷新完成，当前共 ${state.ideas.length} 条', name: 'HomeProvider');
+      
       return savedIdea.id;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      developer.log('创建灵感失败: $e', name: 'HomeProvider', error: e, stackTrace: stackTrace);
       state = state.copyWith(error: '创建灵感失败: $e');
       return null;
     }

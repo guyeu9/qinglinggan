@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
+import 'package:dio/dio.dart';
 
 /// AI模型管理页面
 ///
@@ -179,20 +180,153 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
       _isLoadingModels = true;
     });
 
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      final dio = Dio();
+      final baseUrl = _baseUrlController.text.trim();
+      final apiKey = _apiKeyController.text.trim();
 
-    setState(() {
-      _availableModels = [
-        'gpt-4o',
-        'gpt-4-turbo',
-        'gpt-3.5-turbo',
-        'claude-3-opus',
-        'claude-3-sonnet',
-        'deepseek-chat',
-        'deepseek-coder',
-      ];
-      _isLoadingModels = false;
-    });
+      // 构建获取模型列表的URL
+      String modelsUrl = baseUrl;
+      if (!baseUrl.endsWith('/')) {
+        modelsUrl = '$baseUrl/';
+      }
+      modelsUrl = '${modelsUrl}models';
+
+      final response = await dio.get(
+        modelsUrl,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $apiKey',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+        List<String> models = [];
+
+        if (data is Map && data['data'] is List) {
+          // OpenAI 格式
+          for (var model in data['data']) {
+            if (model is Map && model['id'] != null) {
+              models.add(model['id'].toString());
+            }
+          }
+        } else if (data is List) {
+          // 其他格式
+          for (var model in data) {
+            if (model is Map && model['id'] != null) {
+              models.add(model['id'].toString());
+            } else if (model is String) {
+              models.add(model);
+            }
+          }
+        }
+
+        if (models.isNotEmpty) {
+          models.sort();
+          setState(() {
+            _availableModels = models;
+            _isLoadingModels = false;
+          });
+
+          if (mounted) {
+            _showModelPicker();
+          }
+        } else {
+          setState(() {
+            _isLoadingModels = false;
+          });
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('未找到可用模型')),
+            );
+          }
+        }
+      } else {
+        setState(() {
+          _isLoadingModels = false;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('加载失败: HTTP ${response.statusCode}')),
+          );
+        }
+      }
+    } catch (e) {
+      setState(() {
+        _isLoadingModels = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('加载失败: $e')),
+        );
+      }
+    }
+  }
+
+  void _showModelPicker() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.5,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: const Color(0xFF065F46).withValues(alpha: 0.1)),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    '选择模型',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF065F46),
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(Symbols.close, color: const Color(0xFF065F46).withValues(alpha: 0.5)),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: _availableModels.length,
+                itemBuilder: (context, index) {
+                  final model = _availableModels[index];
+                  final isSelected = model == _modelNameController.text;
+                  return ListTile(
+                    title: Text(model),
+                    trailing: isSelected
+                        ? Icon(Symbols.check, color: const Color(0xFF6EE7B7))
+                        : null,
+                    selected: isSelected,
+                    selectedTileColor: const Color(0xFF6EE7B7).withValues(alpha: 0.1),
+                    onTap: () {
+                      setState(() {
+                        _modelNameController.text = model;
+                      });
+                      Navigator.pop(context);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _saveProvider() {
@@ -759,10 +893,6 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
         _buildPasswordField('API Key', _apiKeyController, 'sk-xxxxxxxxxxxxxxxx'),
         const SizedBox(height: 16),
         _buildModelField(textColor, mutedTextColor),
-        if (_availableModels.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          _buildModelDropdown(textColor),
-        ],
       ],
     );
   }
@@ -965,51 +1095,6 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
           style: TextStyle(
             fontSize: 12,
             color: const Color(0xFF9CA3AF),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildModelDropdown(Color textColor) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '选择模型',
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF374151),
-          ),
-        ),
-        const SizedBox(height: 6),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: const Color(0xFFE5E7EB)),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: null,
-              isExpanded: true,
-              hint: const Text('请选择模型'),
-              items: _availableModels.map((model) {
-                return DropdownMenuItem(
-                  value: model,
-                  child: Text(model),
-                );
-              }).toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() {
-                    _modelNameController.text = value;
-                  });
-                }
-              },
-            ),
           ),
         ),
       ],

@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/idea.dart';
 import '../../domain/entities/ai_analysis.dart';
@@ -60,6 +61,8 @@ class IdeaDetailNotifier extends StateNotifier<IdeaDetailState> {
   IdeaDetailNotifier(this._ref) : super(const IdeaDetailState());
 
   Future<void> loadIdea(int id) async {
+    developer.log('========== loadIdea() 开始 ==========', name: 'IdeaDetailProvider');
+    developer.log('加载灵感 id=$id', name: 'IdeaDetailProvider');
     state = state.copyWith(isLoading: true, error: null);
 
     try {
@@ -69,11 +72,17 @@ class IdeaDetailNotifier extends StateNotifier<IdeaDetailState> {
       final embeddingService = _ref.read(aiEmbeddingServiceProvider);
       final associationRepo = _ref.read(associationRepositoryProvider);
 
+      developer.log('正在查询灵感...', name: 'IdeaDetailProvider');
       final idea = await ideaRepo.getById(id);
+      developer.log('查询结果: idea=${idea != null}', name: 'IdeaDetailProvider');
+      
       if (idea == null) {
+        developer.log('灵感不存在: id=$id', name: 'IdeaDetailProvider');
         state = state.copyWith(isLoading: false, error: '灵感不存在');
         return;
       }
+      
+      developer.log('灵感内容: "${idea.content}", createdAt=${idea.createdAt}', name: 'IdeaDetailProvider');
 
       final analysis = await analysisRepo.getByIdeaId(id);
 
@@ -95,6 +104,9 @@ class IdeaDetailNotifier extends StateNotifier<IdeaDetailState> {
 
       final associations = await associationRepo.getByIdeaId(id);
 
+      developer.log('加载完成: idea.content="${idea.content}"', name: 'IdeaDetailProvider');
+      developer.log('========== loadIdea() 完成 ==========', name: 'IdeaDetailProvider');
+      
       state = state.copyWith(
         idea: idea,
         analysis: analysis,
@@ -103,7 +115,8 @@ class IdeaDetailNotifier extends StateNotifier<IdeaDetailState> {
         associations: associations,
         isLoading: false,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      developer.log('加载失败: $e', name: 'IdeaDetailProvider', error: e, stackTrace: stackTrace);
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
