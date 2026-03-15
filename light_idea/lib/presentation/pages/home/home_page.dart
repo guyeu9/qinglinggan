@@ -470,6 +470,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       return _buildErrorState(homeState.error!, isDark);
     }
 
+    // 如果列表为空，显示空状态
     if (homeState.ideas.isEmpty) {
       return _buildEmptyState(isDark);
     }
@@ -479,15 +480,8 @@ class _HomePageState extends ConsumerState<HomePage> {
       child: ListView.builder(
         controller: _scrollController,
         padding: const EdgeInsets.all(16).copyWith(bottom: 160),
-        itemCount: homeState.ideas.length + (homeState.isAnalyzing ? 1 : 0),
+        itemCount: homeState.ideas.length,
         itemBuilder: (context, index) {
-          if (index == homeState.ideas.length && homeState.isAnalyzing) {
-            return const Padding(
-              padding: EdgeInsets.only(bottom: 12),
-              child: _InspirationCardShimmer(),
-            );
-          }
-
           final idea = homeState.ideas[index];
           final category = homeState.categories.where((c) => c.id == idea.categoryId).firstOrNull;
 

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/idea.dart';
 import '../../domain/entities/ai_analysis.dart';
@@ -86,28 +87,41 @@ class HomeNotifier extends StateNotifier<HomeState> {
   }
 
   Future<void> loadIdeas() async {
+    developer.log('开始加载灵感列表...', name: 'HomeProvider');
     try {
       final ideaRepo = _ref.read(ideaRepositoryProvider);
       List<IdeaEntity> ideas;
 
       if (state.selectedCategoryIndex == 0) {
+        // 时间轴 - 获取所有未删除的灵感
+        developer.log('加载所有灵感 (时间轴)', name: 'HomeProvider');
         ideas = await ideaRepo.getAll(includeDeleted: false);
       } else if (state.selectedCategoryIndex <= state.categories.length) {
+        // 特定分类
         final category = state.categories[state.selectedCategoryIndex - 1];
+        developer.log('加载分类 ${category.name} 的灵感', name: 'HomeProvider');
         ideas = await ideaRepo.getByCategory(category.id);
       } else {
         ideas = [];
       }
 
+      developer.log('从数据库获取到 ${ideas.length} 条灵感', name: 'HomeProvider');
+
+      // 搜索过滤
       if (state.searchQuery.isNotEmpty) {
         ideas = ideas.where((idea) {
           return idea.content.toLowerCase().contains(state.searchQuery.toLowerCase());
         }).toList();
+        developer.log('搜索过滤后剩余 ${ideas.length} 条', name: 'HomeProvider');
       }
 
+      // 按创建时间倒序排序（最新的在前面）
       ideas.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      
+      developer.log('排序完成，更新状态: ${ideas.length} 条', name: 'HomeProvider');
       state = state.copyWith(ideas: ideas);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      developer.log('加载灵感失败: $e', name: 'HomeProvider', error: e, stackTrace: stackTrace);
       state = state.copyWith(error: '加载灵感失败: $e');
     }
   }
@@ -119,6 +133,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
     }
 
     state = state.copyWith(isSaving: true, clearError: true);
+    developer.log('开始保存灵感: content=$content', name: 'HomeProvider');
 
     try {
       final ideaRepo = _ref.read(ideaRepositoryProvider);
@@ -134,43 +149,58 @@ class HomeNotifier extends StateNotifier<HomeState> {
         imagePaths: imagePaths ?? const [],
       );
 
+      developer.log('正在保存到数据库...', name: 'HomeProvider');
       final savedIdea = await ideaRepo.save(idea);
+      developer.log('灵感已保存: id=${savedIdea.id}', name: 'HomeProvider');
 
+      // 更新状态，不显示分析中状态（后台静默分析）
       state = state.copyWith(
         isSaving: false,
         lastSavedIdeaId: savedIdea.id,
-        isAnalyzing: true,
+        clearLastAnalysis: true,
       );
 
+      // 立即加载列表，确保新数据被加载
+      developer.log('正在重新加载列表...', name: 'HomeProvider');
       await loadIdeas();
+      developer.log('列表加载完成，当前共 ${state.ideas.length} 条', name: 'HomeProvider');
 
+      // 提交AI分析任务（后台静默执行）
+      developer.log('提交AI分析任务（后台静默执行）', name: 'HomeProvider');
       unawaited(taskQueue.enqueue(savedIdea.id).then((result) {
+        developer.log('AI任务入队结果: wasSkipped=${result.wasSkipped}', name: 'HomeProvider');
         if (result.wasSkipped) {
           // 任务被跳过，可能已在队列中或已完成
         }
       }));
 
-      _pollAnalysisResult(savedIdea.id);
+      // 后台轮询分析结果，完成后自动刷新列表
+      _pollAnalysisResultSilent(savedIdea.id);
 
       return true;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      developer.log('保存失败: $e', name: 'HomeProvider', error: e, stackTrace: stackTrace);
       state = state.copyWith(isSaving: false, error: '保存失败: $e');
       return false;
     }
   }
 
-  void _pollAnalysisResult(int ideaId) {
+  /// 后台静默轮询AI分析结果（不显示加载状态）
+  void _pollAnalysisResultSilent(int ideaId) {
     _pollingTimer?.cancel();
+    developer.log('开始后台静默轮询AI分析结果: ideaId=$ideaId', name: 'HomeProvider');
 
     int attemptCount = 0;
-    const maxAttempts = 30;
+    const maxAttempts = 120; // 2分钟超时
+    bool hasResult = false;
 
-    _pollingTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+    _pollingTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
       attemptCount++;
 
+      // 超时处理
       if (attemptCount > maxAttempts) {
+        developer.log('后台轮询超时，停止轮询', name: 'HomeProvider');
         timer.cancel();
-        state = state.copyWith(isAnalyzing: false);
         return;
       }
 
@@ -178,18 +208,37 @@ class HomeNotifier extends StateNotifier<HomeState> {
         final analysisRepo = _ref.read(aiAnalysisRepositoryProvider);
         final analysis = await analysisRepo.getByIdeaId(ideaId);
 
-        if (analysis != null && analysis.status == AnalysisStatus.completed) {
-          timer.cancel();
-          state = state.copyWith(
-            lastAnalysis: analysis,
-            isAnalyzing: false,
-          );
+        if (analysis != null) {
+          // 分析完成
+          if (analysis.status == AnalysisStatus.completed) {
+            developer.log('后台分析已完成，自动刷新列表', name: 'HomeProvider');
+            hasResult = true;
+            timer.cancel();
+            if (mounted) {
+              // 静默刷新列表，显示更新后的标签
+              await loadIdeas();
+              developer.log('列表已自动刷新，显示最新标签', name: 'HomeProvider');
+            }
+            return;
+          }
+          // 分析失败
+          else if (analysis.status == AnalysisStatus.failed) {
+            developer.log('后台分析失败，停止轮询', name: 'HomeProvider');
+            timer.cancel();
+            return;
+          }
+          // 分析中，继续轮询（静默，不显示任何UI）
         }
-      } catch (e) {
+      } catch (e, stackTrace) {
+        developer.log('后台轮询出错: $e', name: 'HomeProvider', error: e, stackTrace: stackTrace);
         timer.cancel();
-        state = state.copyWith(isAnalyzing: false);
       }
     });
+  }
+
+  /// 前台轮询AI分析结果（带加载状态，保留用于需要显示加载场景）
+  void _pollAnalysisResult(int ideaId) {
+    _pollAnalysisResultSilent(ideaId);
   }
 
   void selectCategory(int index) {
