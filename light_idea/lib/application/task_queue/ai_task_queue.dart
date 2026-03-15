@@ -213,13 +213,18 @@ class AITaskQueue {
 
     await _ideaRepository.updateEmbedding(ideaId, embedding);
     
-    // 同时更新categoryId和tagIds到Idea表
-    final updatedIdea = idea.copyWith(
-      categoryId: categoryId,
-      tagIds: tagIds,
-    );
-    await _ideaRepository.update(updatedIdea);
-    _logger.info('更新Idea: categoryId=$categoryId, tagIds=$tagIds');
+    // 更新前重新获取最新数据，避免覆盖用户修改
+    final latestIdea = await _ideaRepository.getById(ideaId);
+    if (latestIdea != null) {
+      final updatedIdea = latestIdea.copyWith(
+        categoryId: categoryId,
+        tagIds: tagIds,
+      );
+      await _ideaRepository.update(updatedIdea);
+      _logger.info('更新Idea: categoryId=$categoryId, tagIds=$tagIds');
+    } else {
+      _logger.warning('无法更新Idea: 灵感不存在 ideaId=$ideaId');
+    }
 
     List<AssociationEntity> savedAssociations = [];
     List<IdeaEntity> relatedIdeas = [];
