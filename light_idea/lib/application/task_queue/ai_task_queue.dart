@@ -183,7 +183,7 @@ class AITaskQueue {
     
     // 更新任务状态为处理中
     await _taskRepository.updateStatus(task.id, TaskStatus.processing);
-    await _ideaRepository.updateAIStatus(task.ideaId, AIStatus.analyzing);
+    await _ideaRepository.updateAIStatus(task.ideaId, AIStatus.processing);
     logService.d('AITaskQueue', '任务状态已更新为processing');
 
     // 获取灵感内容
@@ -201,18 +201,16 @@ class AITaskQueue {
       case TaskType.basicAnalysis:
         await _processBasicAnalysis(task, idea);
         break;
-      case TaskType.deepAnalysis:
-        await _processDeepAnalysis(task, idea);
-        break;
       case TaskType.relationAnalysis:
         await _processRelationAnalysis(task, idea);
         break;
-      case TaskType.synthesis:
-        await _processSynthesis(task, idea);
+      case TaskType.fullAnalysis:
+        await _processBasicAnalysis(task, idea);
+        await _processRelationAnalysis(task, idea);
         break;
     }
     
-    logService.i('AITaskQueue', '========== _processTask() 完成 ==========' );
+    logService.i('AITaskQueue', '========== _processTask() 完成 ==========');
   }
 
   Future<void> _processBasicAnalysis(AITaskEntity task, IdeaEntity idea) async {
@@ -223,18 +221,18 @@ class AITaskQueue {
     logService.d('AITaskQueue', '步骤1: 调用AI理解服务...');
     final understandingResult = await _understandingService.analyze(idea.content);
     if (!understandingResult.isSuccess) {
-      logService.e('AITaskQueue', 'AI理解失败: ${understandingResult.error}');
-      throw understandingResult.error ?? Exception('AI理解失败');
+      logService.e('AITaskQueue', 'AI理解失败');
+      throw Exception('AI理解失败');
     }
     final understanding = understandingResult.dataOrNull!;
-    logService.i('AITaskQueue', 'AI理解完成: summary="${understanding.summary}", tags=${understanding.tags}, category="${understanding.category}"');
+    logService.i('AITaskQueue', 'AI理解完成: summary="${understanding.summary}", tags=${understanding.tags}');
 
     // 2. 生成嵌入向量
     logService.d('AITaskQueue', '步骤2: 生成嵌入向量...');
     final embeddingResult = await _embeddingService.generateEmbedding(idea.content);
     if (!embeddingResult.isSuccess) {
-      logService.e('AITaskQueue', '嵌入向量生成失败: ${embeddingResult.error}');
-      throw embeddingResult.error ?? Exception('嵌入向量生成失败');
+      logService.e('AITaskQueue', '嵌入向量生成失败');
+      throw Exception('嵌入向量生成失败');
     }
     final embedding = embeddingResult.dataOrNull!;
     logService.i('AITaskQueue', '嵌入向量生成完成: dimension=${embedding.length}');
@@ -244,37 +242,16 @@ class AITaskQueue {
     final analysis = AIAnalysisEntity(
       id: 0,
       ideaId: idea.id,
-      status: AnalysisStatus.processing,
       summary: understanding.summary,
-      tagResults: [],
-      categoryResult: understanding.category,
+      status: AnalysisStatus.processing,
       createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
     );
     final savedAnalysis = await _analysisRepository.save(analysis);
     logService.i('AITaskQueue', '分析结果已保存: analysisId=${savedAnalysis.id}');
 
-    // 4. 处理分类
-    logService.d('AITaskQueue', '步骤4: 处理分类...');
-    int? categoryId;
-    if (understanding.category.isNotEmpty) {
-      final existingCategory = await _categoryRepository.getByName(understanding.category);
-      if (existingCategory != null) {
-        categoryId = existingCategory.id;
-        logService.d('AITaskQueue', '使用现有分类: ${existingCategory.name} (id=$categoryId)');
-      } else {
-        final newCategory = CategoryEntity(
-          id: 0,
-          name: understanding.category,
-          createdAt: DateTime.now(),
-        );
-        final savedCategory = await _categoryRepository.save(newCategory);
-        categoryId = savedCategory.id;
-        logService.i('AITaskQueue', '创建新分类: ${savedCategory.name} (id=$categoryId)');
-      }
-    }
-
-    // 5. 处理标签
-    logService.d('AITaskQueue', '步骤5: 处理标签...');
+    // 4. 处理标签
+    logService.d('AITaskQueue', '步骤4: 处理标签...');
     final tagIds = <int>[];
     for (final tagName in understanding.tags) {
       final tag = await _tagRepository.saveIfNotExists(tagName);
@@ -283,35 +260,34 @@ class AITaskQueue {
     }
     logService.i('AITaskQueue', '标签处理完成: 共${tagIds.length}个标签');
 
-    // 6. 更新灵感
-    logService.d('AITaskQueue', '步骤6: 更新灵感...');
+    // 5. 更新灵感
+    logService.d('AITaskQueue', '步骤5: 更新灵感...');
     await _ideaRepository.updateEmbedding(idea.id, embedding);
     
     final latestIdea = await _ideaRepository.getById(idea.id);
     if (latestIdea != null) {
       final updatedIdea = latestIdea.copyWith(
-        categoryId: categoryId,
         tagIds: tagIds,
       );
       await _ideaRepository.update(updatedIdea);
-      logService.i('AITaskQueue', '灵感已更新: categoryId=$categoryId, tagIds=$tagIds');
+      logService.i('AITaskQueue', '灵感已更新: tagIds=$tagIds');
     } else {
       logService.w('AITaskQueue', '无法更新灵感: 灵感不存在 ideaId=${idea.id}');
     }
 
-    // 7. 查找关联
-    logService.d('AITaskQueue', '步骤7: 查找关联灵感...');
-    final searchResult = await _embeddingService.searchSimilar(
-      embedding,
-      topN: 5,
-      threshold: 0.3,
-    );
-    logService.i('AITaskQueue', '相似搜索完成: 找到${searchResult.dataOrNull?.length ?? 0}个候选');
-
-    // 8. 更新分析状态为完成
-    logService.d('AITaskQueue', '步骤8: 更新分析状态为完成...');
-    await _analysisRepository.updateStatus(savedAnalysis.id, AnalysisStatus.completed, tagResults: tagIds);
+    // 6. 更新分析状态为完成
+    logService.d('AITaskQueue', '步骤6: 更新分析状态为完成...');
+    await _analysisRepository.updateStatus(savedAnalysis.id, AnalysisStatus.completed);
     logService.i('AITaskQueue', '========== _processBasicAnalysis() 完成 ==========');
+  }
+
+  Future<void> _processRelationAnalysis(AITaskEntity task, IdeaEntity idea) async {
+    logService.i('AITaskQueue', '========== _processRelationAnalysis() 开始 ==========');
+    logService.i('AITaskQueue', '开始关联分析: ideaId=${idea.id}');
+    
+    // TODO: 实现关联分析逻辑
+    
+    logService.i('AITaskQueue', '========== _processRelationAnalysis() 完成 ==========');
   }
 
   Future<void> _runBasicAnalysis(int ideaId) async {
