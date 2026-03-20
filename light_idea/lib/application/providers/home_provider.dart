@@ -96,9 +96,9 @@ class HomeNotifier extends StateNotifier<HomeState> {
   }
 
   Future<void> loadIdeas() async {
-    developer.log('========== loadIdeas() 开始 ==========', name: 'HomeProvider');
-    developer.log('selectedCategoryIndex: ${state.selectedCategoryIndex}', name: 'HomeProvider');
-    developer.log('searchQuery: "${state.searchQuery}"', name: 'HomeProvider');
+    logService.i('HomeProvider', '========== loadIdeas() 开始 ==========');
+    logService.d('HomeProvider', 'selectedCategoryIndex: ${state.selectedCategoryIndex}');
+    logService.d('HomeProvider', 'searchQuery: "${state.searchQuery}"');
     
     try {
       final ideaRepo = _ref.read(ideaRepositoryProvider);
@@ -109,36 +109,36 @@ class HomeNotifier extends StateNotifier<HomeState> {
 
       if (state.selectedCategoryIndex == 0) {
         // 时间轴 - 获取所有未删除的灵感
-        developer.log('加载所有灵感 (时间轴)', name: 'HomeProvider');
+        logService.d('HomeProvider', '加载所有灵感 (时间轴)');
         ideas = await ideaRepo.getAll(includeDeleted: false);
       } else if (state.selectedCategoryIndex <= state.categories.length) {
         // 特定分类
         final category = state.categories[state.selectedCategoryIndex - 1];
-        developer.log('加载分类 ${category.name} 的灵感', name: 'HomeProvider');
+        logService.d('HomeProvider', '加载分类 ${category.name} 的灵感');
         ideas = await ideaRepo.getByCategory(category.id);
       } else {
         ideas = [];
       }
 
-      developer.log('从数据库获取到 ${ideas.length} 条灵感', name: 'HomeProvider');
+      logService.i('HomeProvider', '从数据库获取到 ${ideas.length} 条灵感');
 
       // 搜索过滤
       if (state.searchQuery.isNotEmpty) {
         ideas = ideas.where((idea) {
           return idea.content.toLowerCase().contains(state.searchQuery.toLowerCase());
         }).toList();
-        developer.log('搜索过滤后剩余 ${ideas.length} 条', name: 'HomeProvider');
+        logService.d('HomeProvider', '搜索过滤后剩余 ${ideas.length} 条');
       }
 
       // 按创建时间倒序排序（最新的在前面）
       ideas.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       
-      developer.log('排序后共 ${ideas.length} 条', name: 'HomeProvider');
-      developer.log('========== loadIdeas() 完成 ==========', name: 'HomeProvider');
+      logService.i('HomeProvider', '排序后共 ${ideas.length} 条');
+      logService.i('HomeProvider', '========== loadIdeas() 完成 ==========');
       
       state = state.copyWith(ideas: ideas, ideaTags: {});
     } catch (e, stackTrace) {
-      developer.log('加载灵感失败: $e', name: 'HomeProvider', error: e, stackTrace: stackTrace);
+      logService.e('HomeProvider', '加载灵感失败: $e', error: e, stackTrace: stackTrace);
       state = state.copyWith(error: '加载灵感失败: $e');
     }
   }
@@ -150,7 +150,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
     }
 
     state = state.copyWith(isSaving: true, clearError: true);
-    developer.log('开始保存灵感: content=$content', name: 'HomeProvider');
+    logService.i('HomeProvider', '开始保存灵感: content=$content');
 
     try {
       final ideaRepo = _ref.read(ideaRepositoryProvider);
@@ -166,9 +166,9 @@ class HomeNotifier extends StateNotifier<HomeState> {
         imagePaths: imagePaths ?? const [],
       );
 
-      developer.log('正在保存到数据库...', name: 'HomeProvider');
+      logService.d('HomeProvider', '正在保存到数据库...');
       final savedIdea = await ideaRepo.save(idea);
-      developer.log('灵感已保存: id=${savedIdea.id}', name: 'HomeProvider');
+      logService.i('HomeProvider', '灵感已保存: id=${savedIdea.id}');
 
       // 更新状态，不显示分析中状态（后台静默分析）
       state = state.copyWith(
@@ -178,14 +178,14 @@ class HomeNotifier extends StateNotifier<HomeState> {
       );
 
       // 立即加载列表，确保新数据被加载
-      developer.log('正在重新加载列表...', name: 'HomeProvider');
+      logService.d('HomeProvider', '正在重新加载列表...');
       await loadIdeas();
-      developer.log('列表加载完成，当前共 ${state.ideas.length} 条', name: 'HomeProvider');
+      logService.i('HomeProvider', '列表加载完成，当前共 ${state.ideas.length} 条');
 
       // 提交AI分析任务（后台静默执行）
-      developer.log('提交AI分析任务（后台静默执行）', name: 'HomeProvider');
+      logService.d('HomeProvider', '提交AI分析任务（后台静默执行）');
       unawaited(taskQueue.enqueue(savedIdea.id).then((result) {
-        developer.log('AI任务入队结果: wasSkipped=${result.wasSkipped}', name: 'HomeProvider');
+        logService.d('HomeProvider', 'AI任务入队结果: wasSkipped=${result.wasSkipped}');
         if (result.wasSkipped) {
           // 任务被跳过，可能已在队列中或已完成
         }
@@ -196,7 +196,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
 
       return true;
     } catch (e, stackTrace) {
-      developer.log('保存失败: $e', name: 'HomeProvider', error: e, stackTrace: stackTrace);
+      logService.e('HomeProvider', '保存失败: $e', error: e, stackTrace: stackTrace);
       state = state.copyWith(isSaving: false, error: '保存失败: $e');
       return false;
     }
@@ -208,7 +208,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
     // 取消该ideaId的旧轮询（如果存在）
     _pollingTimers[ideaId]?.cancel();
     
-    developer.log('开始后台静默轮询AI分析结果: ideaId=$ideaId, 当前轮询数=${_pollingTimers.length}', name: 'HomeProvider');
+    logService.d('HomeProvider', '开始后台静默轮询AI分析结果: ideaId=$ideaId, 当前轮询数=${_pollingTimers.length}');
 
     int attemptCount = 0;
     const maxAttempts = 120; // 2分钟超时
@@ -218,7 +218,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
 
       // 超时处理
       if (attemptCount > maxAttempts) {
-        developer.log('后台轮询超时，停止轮询: ideaId=$ideaId', name: 'HomeProvider');
+        logService.w('HomeProvider', '后台轮询超时，停止轮询: ideaId=$ideaId');
         timer.cancel();
         _pollingTimers.remove(ideaId);
         return;
@@ -231,28 +231,32 @@ class HomeNotifier extends StateNotifier<HomeState> {
         if (analysis != null) {
           // 分析完成
           if (analysis.status == AnalysisStatus.completed) {
-            developer.log('后台分析已完成，自动刷新列表: ideaId=$ideaId', name: 'HomeProvider');
+            logService.i('HomeProvider', '后台分析已完成，自动刷新列表: ideaId=$ideaId');
             timer.cancel();
             _pollingTimers.remove(ideaId);
-            if (mounted) {
-              // 静默刷新列表，显示更新后的标签
+            // 静默刷新列表，显示更新后的标签
+            // 使用 try-catch 防止组件销毁后调用异常
+            try {
               await loadIdeas();
-              developer.log('列表已自动刷新，显示最新标签', name: 'HomeProvider');
+              logService.i('HomeProvider', '列表已自动刷新，显示最新标签');
+            } catch (e) {
+              // 组件可能已销毁，忽略此错误
+              logService.d('HomeProvider', '刷新列表时组件可能已销毁: $e');
             }
             return;
           }
           // 分析失败
           else if (analysis.status == AnalysisStatus.failed) {
-            developer.log('后台分析失败，停止轮询: ideaId=$ideaId', name: 'HomeProvider');
+            logService.w('HomeProvider', '后台分析失败，停止轮询: ideaId=$ideaId');
             timer.cancel();
             _pollingTimers.remove(ideaId);
             return;
           }
           // 分析中，继续轮询（静默，不显示任何UI）
-          developer.log('轮询中: ideaId=$ideaId, attempt=$attemptCount, status=${analysis.status}', name: 'HomeProvider');
+          logService.d('HomeProvider', '轮询中: ideaId=$ideaId, attempt=$attemptCount, status=${analysis.status}');
         }
       } catch (e, stackTrace) {
-        developer.log('后台轮询出错: ideaId=$ideaId, error=$e', name: 'HomeProvider', error: e, stackTrace: stackTrace);
+        logService.e('HomeProvider', '后台轮询出错: ideaId=$ideaId, error=$e', error: e, stackTrace: stackTrace);
         timer.cancel();
         _pollingTimers.remove(ideaId);
       }
@@ -284,7 +288,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
 
   
   Future<int?> createEmptyIdea() async {
-    developer.log('createEmptyIdea() 开始', name: 'HomeProvider');
+    logService.d('HomeProvider', 'createEmptyIdea() 开始');
     try {
       final ideaRepo = _ref.read(ideaRepositoryProvider);
       
@@ -298,18 +302,18 @@ class HomeNotifier extends StateNotifier<HomeState> {
         imagePaths: const [],
       );
 
-      developer.log('正在保存空灵感...', name: 'HomeProvider');
+      logService.d('HomeProvider', '正在保存空灵感...');
       final savedIdea = await ideaRepo.save(idea);
-      developer.log('空灵感已保存: id=${savedIdea.id}', name: 'HomeProvider');
+      logService.i('HomeProvider', '空灵感已保存: id=${savedIdea.id}');
       
       // 刷新列表显示新创建的灵感
-      developer.log('刷新列表...', name: 'HomeProvider');
+      logService.d('HomeProvider', '刷新列表...');
       await loadIdeas();
-      developer.log('列表刷新完成，当前共 ${state.ideas.length} 条', name: 'HomeProvider');
+      logService.i('HomeProvider', '列表刷新完成，当前共 ${state.ideas.length} 条');
       
       return savedIdea.id;
     } catch (e, stackTrace) {
-      developer.log('创建灵感失败: $e', name: 'HomeProvider', error: e, stackTrace: stackTrace);
+      logService.e('HomeProvider', '创建灵感失败: $e', error: e, stackTrace: stackTrace);
       state = state.copyWith(error: '创建灵感失败: $e');
       return null;
     }
