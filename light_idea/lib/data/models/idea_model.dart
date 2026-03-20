@@ -50,8 +50,7 @@ class IdeaModel {
   }
 
   static IdeaModel fromEntity(IdeaEntity entity) {
-    return IdeaModel()
-      ..id = entity.id
+    final model = IdeaModel()
       ..content = entity.content
       ..categoryId = entity.categoryId
       ..createdAt = entity.createdAt
@@ -62,5 +61,12 @@ class IdeaModel {
       ..tagIds = entity.tagIds
       ..embedding = entity.embedding
       ..imagePaths = entity.imagePaths;
+    
+    // 只有当id > 0时才设置id，否则让Isar自动生成新ID
+    if (entity.id > 0) {
+      model.id = entity.id;
+    }
+    
+    return model;
   }
 }

@@ -187,8 +187,8 @@ class _HelpPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
           color: isDark 
-              ? const Color(0xFF6EE7B7).withOpacity(0.2) 
-              : const Color(0xFF6EE7B7).withOpacity(0.3),
+              ? const Color(0xFF6EE7B7).withValues(alpha: 0.2) 
+              : const Color(0xFF6EE7B7).withValues(alpha: 0.3),
         ),
       ),
       child: InkWell(
@@ -202,7 +202,7 @@ class _HelpPage extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF6EE7B7).withOpacity(0.15),
+                  color: const Color(0xFF6EE7B7).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(

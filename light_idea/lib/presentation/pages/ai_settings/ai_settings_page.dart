@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:dio/dio.dart';
+import '../../../core/utils/secure_string.dart';
 
 /// AI模型管理页面
 ///
@@ -61,25 +61,25 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
       _providers = [
         AIProvider(
           id: '1',
-          name: '免费grok',
+          name: '默认',
           type: 'OPENAI',
           apiType: 'openai-compatible',
-          baseUrl: 'https://api.x.ai/v1',
-          apiKey: 'sk-xxxxCGrV',
-          model: 'grok-4.20-beta',
-          isDefault: false,
+          baseUrl: 'https://api.zscc.in/v1',
+          apiKey: SecureString.decode('c2stcTBtcnV4cmM1QkhZMEZoWUFFTWk5cmZIZ3ZFVFd2dTlSZTVSRndRcFoxYThCZmFw'),
+          model: 'gemini-3-flash',
+          isDefault: true,
           serviceType: 'chat',
         ),
         AIProvider(
           id: '2',
-          name: '默认',
+          name: '默认Embedding',
           type: 'OPENAI',
           apiType: 'openai-compatible',
-          baseUrl: 'https://api.openai.com/v1',
-          apiKey: 'sk-xxxxp5oj',
-          model: 'gemini-3.1-flash-lite',
+          baseUrl: 'https://api.zscc.in/v1',
+          apiKey: SecureString.decode('c2stcTBtcnV4cmM1QkhZMEZoWUFFTWk5cmZIZ3ZFVFd2dTlSZTVSRndRcFoxYThCZmFw'),
+          model: 'Qwen/Qwen3-Embedding-8B',
           isDefault: true,
-          serviceType: 'chat',
+          serviceType: 'embedding',
         ),
       ];
     });
@@ -203,18 +203,20 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
 
       if (response.statusCode == 200 && response.data != null) {
         final data = response.data;
-        List<String> models = [];
+        final List<String> models = [];
 
         if (data is Map && data['data'] is List) {
           // OpenAI 格式
-          for (var model in data['data']) {
+          final List<dynamic> modelList = data['data'] as List<dynamic>;
+          for (final model in modelList) {
             if (model is Map && model['id'] != null) {
               models.add(model['id'].toString());
             }
           }
         } else if (data is List) {
           // 其他格式
-          for (var model in data) {
+          final List<dynamic> modelList = data as List<dynamic>;
+          for (final model in modelList) {
             if (model is Map && model['id'] != null) {
               models.add(model['id'].toString());
             } else if (model is String) {

@@ -76,7 +76,7 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
   }
 
   void _clearLogs() {
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('清空日志'),
@@ -128,13 +128,14 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
       backgroundColor: isDark ? const Color(0xFF064E3B) : Colors.grey[50],
       appBar: AppBar(
         backgroundColor: isDark ? const Color(0xFF064E3B) : Colors.white,
-        foregroundColor: isDark ? Colors.white : const Color(0xFF065F46),
+        foregroundColor: isDark ? Colors.white : Colors.black,
         elevation: 0,
-        title: const Text(
+        title: Text(
           '系统日志',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
+            color: isDark ? Colors.white : Colors.black,
           ),
         ),
         actions: [
@@ -146,7 +147,7 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
                 '自动滚动',
                 style: TextStyle(
                   fontSize: 12,
-                  color: isDark ? Colors.white70 : Colors.black54,
+                  color: isDark ? Colors.white70 : Colors.black87,
                 ),
               ),
               Switch(
@@ -156,20 +157,26 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
                     _autoScroll = value;
                   });
                 },
-                activeColor: const Color(0xFF6EE7B7),
+                activeThumbColor: const Color(0xFF6EE7B7),
               ),
             ],
           ),
           // 复制全部
           IconButton(
             onPressed: _copyAllLogs,
-            icon: const Icon(Symbols.content_copy),
+            icon: Icon(
+              Symbols.content_copy,
+              color: isDark ? Colors.white : Colors.black,
+            ),
             tooltip: '复制全部日志',
           ),
           // 清空日志
           IconButton(
             onPressed: _clearLogs,
-            icon: const Icon(Symbols.delete_forever),
+            icon: Icon(
+              Symbols.delete_forever,
+              color: isDark ? Colors.white : Colors.black,
+            ),
             tooltip: '清空日志',
           ),
         ],
@@ -186,16 +193,16 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
                 TextField(
                   controller: _searchController,
                   style: TextStyle(
-                    color: isDark ? Colors.white : Colors.black87,
+                    color: isDark ? Colors.white : Colors.black,
                   ),
                   decoration: InputDecoration(
                     hintText: '搜索日志...',
                     hintStyle: TextStyle(
-                      color: isDark ? Colors.white54 : Colors.black38,
+                      color: isDark ? Colors.white54 : Colors.black54,
                     ),
                     prefixIcon: Icon(
                       Symbols.search,
-                      color: isDark ? Colors.white54 : Colors.black38,
+                      color: isDark ? Colors.white54 : Colors.black,
                     ),
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
@@ -204,13 +211,13 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
                             },
                             icon: Icon(
                               Symbols.close,
-                              color: isDark ? Colors.white54 : Colors.black38,
+                              color: isDark ? Colors.white54 : Colors.black,
                             ),
                           )
                         : null,
                     filled: true,
                     fillColor: isDark
-                        ? Colors.white.withOpacity(0.1)
+                        ? Colors.white.withValues(alpha: 0.1)
                         : Colors.grey[100],
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -300,7 +307,7 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
 
   Widget _buildLevelFilterChip(LogLevel? level, String label, bool isDark) {
     final isSelected = _minLevel == level;
-    final color = level != null ? _getLevelColor(level) : Colors.grey;
+    final color = level != null ? _getLevelColor(level) : (isDark ? Colors.grey : Colors.black);
 
     return FilterChip(
       selected: isSelected,
@@ -310,9 +317,9 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
         });
       },
       backgroundColor: isDark
-          ? Colors.white.withOpacity(0.1)
+          ? Colors.white.withValues(alpha: 0.1)
           : Colors.grey[200],
-      selectedColor: color.withOpacity(0.2),
+      selectedColor: color.withValues(alpha: 0.2),
       checkmarkColor: color,
       label: Text(
         label,
@@ -320,7 +327,7 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
           fontSize: 12,
           color: isSelected
               ? color
-              : (isDark ? Colors.white70 : Colors.black87),
+              : (isDark ? Colors.white70 : Colors.black),
           fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
         ),
       ),
@@ -337,7 +344,7 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
         side: BorderSide(
-          color: levelColor.withOpacity(0.3),
+          color: levelColor.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -358,7 +365,7 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: levelColor.withOpacity(0.2),
+                      color: levelColor.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -375,7 +382,7 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
                     entry.formattedTime,
                     style: TextStyle(
                       fontSize: 11,
-                      color: isDark ? Colors.white54 : Colors.black54,
+                      color: isDark ? Colors.white54 : Colors.black,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -385,7 +392,7 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: isDark ? Colors.white70 : Colors.black54,
+                        color: isDark ? Colors.white70 : Colors.black,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -393,7 +400,7 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
                   Icon(
                     Symbols.content_copy,
                     size: 16,
-                    color: isDark ? Colors.white38 : Colors.black38,
+                    color: isDark ? Colors.white38 : Colors.black54,
                   ),
                 ],
               ),
@@ -403,7 +410,7 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
                 entry.message,
                 style: TextStyle(
                   fontSize: 13,
-                  color: isDark ? Colors.white : Colors.black87,
+                  color: isDark ? Colors.white : Colors.black,
                   height: 1.4,
                 ),
               ),
@@ -413,7 +420,7 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
+                    color: Colors.red.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(

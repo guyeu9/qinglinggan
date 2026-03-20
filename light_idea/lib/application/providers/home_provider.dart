@@ -4,7 +4,6 @@ import '../../core/services/log_service.dart';
 import '../../domain/entities/idea.dart';
 import '../../domain/entities/ai_analysis.dart';
 import '../../domain/entities/category.dart';
-import '../../domain/entities/tag.dart';
 import 'app_providers.dart';
 
 class HomeState {
@@ -102,8 +101,6 @@ class HomeNotifier extends StateNotifier<HomeState> {
     
     try {
       final ideaRepo = _ref.read(ideaRepositoryProvider);
-      final analysisRepo = _ref.read(aiAnalysisRepositoryProvider);
-      final tagRepo = _ref.read(tagRepositoryProvider);
       
       List<IdeaEntity> ideas;
 
@@ -261,11 +258,6 @@ class HomeNotifier extends StateNotifier<HomeState> {
         _pollingTimers.remove(ideaId);
       }
     });
-  }
-
-  /// 前台轮询AI分析结果（带加载状态，保留用于需要显示加载场景）
-  void _pollAnalysisResult(int ideaId) {
-    _pollAnalysisResultSilent(ideaId);
   }
 
   void selectCategory(int index) {

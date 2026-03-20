@@ -1,4 +1,3 @@
-import 'dart:developer' as developer;
 import 'package:isar/isar.dart';
 import '../../core/services/log_service.dart';
 import '../../domain/entities/idea.dart';

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
 import '../../config/ai_config.dart';
+import '../../core/services/log_service.dart';
 import 'api_models.dart';
 
 class OpenAIClient {
@@ -37,8 +38,11 @@ class OpenAIClient {
     double? temperature,
     int? maxTokens,
   }) async {
+    final actualModel = model ?? AIConfig.defaultChatModel;
+    logService.i('OpenAIClient', 'chatCompletion开始: model=$actualModel');
+    
     final request = ChatCompletionRequest(
-      model: model ?? AIConfig.defaultChatModel,
+      model: actualModel,
       messages: messages,
       temperature: temperature ?? AIConfig.defaultTemperature,
       maxTokens: maxTokens ?? AIConfig.defaultMaxTokens,
@@ -46,11 +50,15 @@ class OpenAIClient {
 
     return _executeWithRetry(() async {
       final headers = await _getHeaders();
+      logService.d('OpenAIClient', '发送请求: baseUrl=${_dio.options.baseUrl}');
+      
       final response = await _dio.post<Map<String, dynamic>>(
         '/chat/completions',
         data: request.toJson(),
         options: Options(headers: headers),
       );
+      
+      logService.i('OpenAIClient', 'chatCompletion响应成功: status=${response.statusCode}');
       return ChatCompletionResponse.fromJson(response.data!);
     });
   }
