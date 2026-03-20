@@ -221,8 +221,9 @@ class AITaskQueue {
     logService.d('AITaskQueue', '步骤1: 调用AI理解服务...');
     final understandingResult = await _understandingService.analyze(idea.content);
     if (!understandingResult.isSuccess) {
-      logService.e('AITaskQueue', 'AI理解失败');
-      throw Exception('AI理解失败');
+      final errorMsg = understandingResult.errorOrNull ?? '未知错误';
+      logService.e('AITaskQueue', 'AI理解失败: $errorMsg');
+      throw Exception('AI理解失败: $errorMsg');
     }
     final understanding = understandingResult.dataOrNull!;
     logService.i('AITaskQueue', 'AI理解完成: summary="${understanding.summary}", tags=${understanding.tags}');
@@ -231,8 +232,9 @@ class AITaskQueue {
     logService.d('AITaskQueue', '步骤2: 生成嵌入向量...');
     final embeddingResult = await _embeddingService.generateEmbedding(idea.content);
     if (!embeddingResult.isSuccess) {
-      logService.e('AITaskQueue', '嵌入向量生成失败');
-      throw Exception('嵌入向量生成失败');
+      final errorMsg = embeddingResult.errorOrNull ?? '未知错误';
+      logService.e('AITaskQueue', '嵌入向量生成失败: $errorMsg');
+      throw Exception('嵌入向量生成失败: $errorMsg');
     }
     final embedding = embeddingResult.dataOrNull!;
     logService.i('AITaskQueue', '嵌入向量生成完成: dimension=${embedding.length}');
@@ -285,9 +287,70 @@ class AITaskQueue {
     logService.i('AITaskQueue', '========== _processRelationAnalysis() 开始 ==========');
     logService.i('AITaskQueue', '开始关联分析: ideaId=${idea.id}');
     
-    // TODO: 实现关联分析逻辑
-    
-    logService.i('AITaskQueue', '========== _processRelationAnalysis() 完成 ==========');
+    try {
+      // 1. 获取灵感的嵌入向量
+      logService.d('AITaskQueue', '步骤1: 获取灵感的嵌入向量...');
+      if (idea.embedding == null || idea.embedding!.isEmpty) {
+        logService.w('AITaskQueue', '灵感没有嵌入向量，跳过关联分析');
+        return;
+      }
+      final embedding = idea.embedding!;
+      logService.i('AITaskQueue', '嵌入向量维度: ${embedding.length}');
+      
+      // 2. 搜索相似灵感
+      logService.d('AITaskQueue', '步骤2: 搜索相似灵感...');
+      final searchResult = await _embeddingService.searchSimilar(
+        embedding,
+        topN: 5,
+        threshold: 0.3,
+      );
+      
+      if (!searchResult.isSuccess) {
+        final errorMsg = searchResult.errorOrNull ?? '未知错误';
+        logService.e('AITaskQueue', '相似搜索失败: $errorMsg');
+        return;
+      }
+      
+      final candidates = searchResult.dataOrNull
+          ?.where((s) => s.idea.id != idea.id)
+          .map((s) => s.idea)
+          .toList() ?? [];
+      
+      logService.i('AITaskQueue', '找到${candidates.length}个候选灵感');
+      
+      if (candidates.isEmpty) {
+        logService.i('AITaskQueue', '没有候选灵感，跳过关联分析');
+        return;
+      }
+      
+      // 3. 判断关系
+      logService.d('AITaskQueue', '步骤3: 判断灵感关系...');
+      final relationResult = await _relationService.judgeRelations(
+        currentIdea: idea,
+        candidates: candidates,
+      );
+      
+      if (!relationResult.isSuccess) {
+        final errorMsg = relationResult.errorOrNull ?? '未知错误';
+        logService.e('AITaskQueue', '关系判断失败: $errorMsg');
+        return;
+      }
+      
+      final associations = relationResult.dataOrNull ?? [];
+      logService.i('AITaskQueue', '发现${associations.length}条关联关系');
+      
+      // 4. 保存关联关系
+      logService.d('AITaskQueue', '步骤4: 保存关联关系...');
+      for (final association in associations) {
+        await _associationRepository.save(association);
+        logService.d('AITaskQueue', '关联已保存: source=${association.sourceIdeaId}, target=${association.targetIdeaId}, type=${association.type}');
+      }
+      
+      logService.i('AITaskQueue', '========== _processRelationAnalysis() 完成 ==========');
+    } catch (e, stackTrace) {
+      logService.e('AITaskQueue', '关联分析异常: $e', error: e, stackTrace: stackTrace);
+      // 不抛出异常，避免影响基础分析结果
+    }
   }
 
   Future<void> _runBasicAnalysis(int ideaId) async {
