@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
+import '../../config/ai_config.dart';
 import '../../core/logger/app_logger.dart';
 import '../../data/api/openai_client.dart';
 import '../../data/database/isar_database.dart';
@@ -30,8 +31,9 @@ final loggerProvider = Provider<AppLogger>((ref) {
   return AppLogger.instance;
 });
 
-final openAIClientProvider = Provider<OpenAIClient>((ref) {
-  return OpenAIClient();
+final openAIClientProvider = FutureProvider<OpenAIClient>((ref) async {
+  final baseUrl = await AIConfig.getApiBaseUrl();
+  return OpenAIClient(baseUrl: baseUrl);
 });
 
 final isarProvider = Provider<Isar>((ref) {
@@ -64,14 +66,14 @@ final aiAnalysisRepositoryProvider = Provider<AIAnalysisRepository>((ref) {
 });
 
 final aiUnderstandingServiceProvider = Provider<AIUnderstandingService>((ref) {
-  final client = ref.watch(openAIClientProvider);
+  final client = ref.watch(openAIClientProvider).requireValue;
   final categoryRepo = ref.watch(categoryRepositoryProvider);
   final logger = ref.watch(loggerProvider);
   return AIUnderstandingService(client, categoryRepo, logger);
 });
 
 final aiEmbeddingServiceProvider = Provider<AIEmbeddingService>((ref) {
-  final client = ref.watch(openAIClientProvider);
+  final client = ref.watch(openAIClientProvider).requireValue;
   final ideaRepo = ref.watch(ideaRepositoryProvider);
   final logger = ref.watch(loggerProvider);
   return AIEmbeddingService(client, ideaRepo, logger);
@@ -84,14 +86,14 @@ final associationRepositoryProvider = Provider<AssociationRepository>((ref) {
 
 final aiRelationServiceProvider = Provider<AIRelationService>((ref) {
   return AIRelationService(
-    ref.watch(openAIClientProvider),
+    ref.watch(openAIClientProvider).requireValue,
     ref.watch(loggerProvider),
   );
 });
 
 final aiSynthesisServiceProvider = Provider<AISynthesisService>((ref) {
   return AISynthesisService(
-    ref.watch(openAIClientProvider),
+    ref.watch(openAIClientProvider).requireValue,
     ref.watch(loggerProvider),
   );
 });
@@ -152,7 +154,7 @@ final importServiceProvider = Provider<ImportService>((ref) {
 
 final aiChatServiceProvider = Provider<AIChatService>((ref) {
   return AIChatService(
-    ref.watch(openAIClientProvider),
+    ref.watch(openAIClientProvider).requireValue,
     ref.watch(ideaRepositoryProvider),
     ref.watch(aiEmbeddingServiceProvider),
     ref.watch(loggerProvider),

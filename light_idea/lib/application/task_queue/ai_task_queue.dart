@@ -79,10 +79,14 @@ class AITaskQueue {
         _associationRepository = associationRepository,
         _logger = logger;
 
-  Future<EnqueueResult> enqueue(int ideaId, {TaskType taskType = TaskType.basicAnalysis}) async {
+  Future<EnqueueResult> enqueue(
+    int ideaId, {
+    TaskType taskType = TaskType.basicAnalysis,
+    bool force = false,
+  }) async {
     logService.i('AITaskQueue', '========== enqueue() 开始 ==========');
-    logService.i('AITaskQueue', '入队AI任务: ideaId=$ideaId, type=$taskType');
-    _logger.info('入队AI任务: ideaId=$ideaId, type=$taskType');
+    logService.i('AITaskQueue', '入队AI任务: ideaId=$ideaId, type=$taskType, force=$force');
+    _logger.info('入队AI任务: ideaId=$ideaId, type=$taskType, force=$force');
 
     final activeTask = await _taskRepository.getActiveTaskByIdeaId(ideaId);
     if (activeTask != null) {
@@ -91,8 +95,10 @@ class AITaskQueue {
       return EnqueueResult.skipped('任务已在队列中', activeTask);
     }
 
+    final shouldApplyRecentCompletedGuard = !force && taskType == TaskType.basicAnalysis;
     final latestTask = await _taskRepository.getLatestTaskByIdeaId(ideaId);
-    if (latestTask != null &&
+    if (shouldApplyRecentCompletedGuard &&
+        latestTask != null &&
         latestTask.status == TaskStatus.completed &&
         latestTask.completedAt != null &&
         DateTime.now().difference(latestTask.completedAt!) < const Duration(hours: 24)) {
@@ -140,10 +146,7 @@ class AITaskQueue {
     logService.i('AITaskQueue', '任务ID: ${task.id}, ideaId: ${task.ideaId}, type: ${task.taskType}');
 
     try {
-      await _taskRepository.updateStatus(task.id, TaskStatus.processing);
-      await _ideaRepository.updateAIStatus(task.ideaId, AIStatus.processing);
-
-      await _runBasicAnalysis(task.ideaId).timeout(
+      await _processTask(task).timeout(
         const Duration(seconds: AppConstants.taskTimeoutSeconds),
         onTimeout: () {
           throw TimeoutException(
@@ -504,10 +507,19 @@ class AITaskQueue {
     final updatedTask = await _taskRepository.getById(task.id);
     if (updatedTask == null) return;
 
+    if (_isNonRetryableError(errorMessage)) {
+      await _taskRepository.updateStatus(updatedTask.id, TaskStatus.failed, errorMessage: errorMessage);
+      await _ideaRepository.updateAIStatus(task.ideaId, AIStatus.failed);
+      _logger.warning('AI任务不可重试，直接失败: taskId=${task.id}, error=$errorMessage');
+      return;
+    }
+
     if (updatedTask.retryCount < AppConstants.maxRetryCount) {
       await _taskRepository.updateStatus(updatedTask.id, TaskStatus.pending, errorMessage: errorMessage);
+      final delaySeconds = _nextRetryDelaySeconds(updatedTask.retryCount);
+      await Future<void>.delayed(Duration(seconds: delaySeconds));
       _queue.add(updatedTask.copyWith(status: TaskStatus.pending));
-      _logger.info('AI任务将重试: taskId=${task.id}, retryCount=${updatedTask.retryCount}');
+      _logger.info('AI任务将重试: taskId=${task.id}, retryCount=${updatedTask.retryCount}, delay=${delaySeconds}s');
     } else {
       await _taskRepository.updateStatus(updatedTask.id, TaskStatus.failed, errorMessage: errorMessage);
       await _ideaRepository.updateAIStatus(task.ideaId, AIStatus.failed);
@@ -535,5 +547,18 @@ class AITaskQueue {
   Future<void> clearCompletedTasks() async {
     await _taskRepository.deleteCompletedTasks();
     _logger.info('已清理完成的AI任务');
+  }
+
+  bool _isNonRetryableError(String message) {
+    final lower = message.toLowerCase();
+    return lower.contains('401') ||
+        lower.contains('403') ||
+        lower.contains('invalid api key') ||
+        lower.contains('unauthorized');
+  }
+
+  int _nextRetryDelaySeconds(int retryCount) {
+    final safeRetryCount = retryCount <= 0 ? 1 : retryCount;
+    return 2 * safeRetryCount;
   }
 }

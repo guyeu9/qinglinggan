@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/idea.dart';
 import '../../domain/entities/ai_analysis.dart';
+import '../../domain/entities/ai_task.dart';
 import '../../domain/entities/tag.dart';
 import '../../domain/entities/association.dart';
 import '../ai/ai_embedding_service.dart';
@@ -150,13 +151,33 @@ class IdeaDetailNotifier extends StateNotifier<IdeaDetailState> {
 
     try {
       final ideaRepo = _ref.read(ideaRepositoryProvider);
+      final analysisRepo = _ref.read(aiAnalysisRepositoryProvider);
+      final taskRepo = _ref.read(aiTaskRepositoryProvider);
+      final taskQueue = _ref.read(aiTaskQueueProvider);
       final updatedIdea = state.idea!.copyWith(
         content: content,
         updatedAt: DateTime.now(),
+        aiStatus: AIStatus.pending,
       );
       await ideaRepo.update(updatedIdea);
+      await ideaRepo.updateAIStatus(updatedIdea.id, AIStatus.pending);
+      await analysisRepo.deleteByIdeaId(updatedIdea.id);
+      await taskRepo.deleteByIdeaId(updatedIdea.id);
+      await taskQueue.enqueue(
+        updatedIdea.id,
+        taskType: TaskType.fullAnalysis,
+        force: true,
+      );
 
-      state = state.copyWith(idea: updatedIdea);
+      state = state.copyWith(
+        idea: updatedIdea,
+        analysis: null,
+        tags: const [],
+        relatedIdeas: const [],
+        associations: const [],
+        isAnalyzing: true,
+        error: null,
+      );
       return true;
     } catch (e) {
       state = state.copyWith(error: e.toString());

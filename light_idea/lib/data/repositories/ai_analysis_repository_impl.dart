@@ -23,8 +23,13 @@ class AIAnalysisRepositoryImpl implements AIAnalysisRepository {
 
   @override
   Future<AIAnalysisEntity?> getByIdeaId(int ideaId) async {
-    final model = await _isar.aIAnalysisModels.filter().ideaIdEqualTo(ideaId).findFirst();
-    return model?.toEntity();
+    final models = await _isar.aIAnalysisModels
+        .filter()
+        .ideaIdEqualTo(ideaId)
+        .sortByUpdatedAtDesc()
+        .thenByIdDesc()
+        .findAll();
+    return models.firstOrNull?.toEntity();
   }
 
   @override

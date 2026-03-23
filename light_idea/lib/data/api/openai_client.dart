@@ -10,13 +10,14 @@ class OpenAIClient {
   final int _retryDelaySeconds;
 
   OpenAIClient({
+    required String baseUrl,
     int maxRetryCount = AIConfig.maxRetryCount,
     int retryDelaySeconds = AIConfig.retryDelaySeconds,
     int timeoutSeconds = AIConfig.defaultTimeoutSeconds,
   })  : _maxRetryCount = maxRetryCount,
         _retryDelaySeconds = retryDelaySeconds,
         _dio = Dio(BaseOptions(
-          baseUrl: AIConfig.apiBaseUrl,
+          baseUrl: baseUrl,
           connectTimeout: Duration(seconds: timeoutSeconds),
           receiveTimeout: Duration(seconds: timeoutSeconds),
         ));
@@ -92,21 +93,19 @@ class OpenAIClient {
         return await action();
       } on DioException catch (e) {
         lastException = e;
+        final isTooManyRequests = e.response?.statusCode == 429;
+        final isTimeout = e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.receiveTimeout;
+        final isDnsOrConnectionError =
+            e.type == DioExceptionType.connectionError;
 
-        if (e.response?.statusCode == 429) {
+        if (isTooManyRequests || isTimeout || isDnsOrConnectionError) {
           retryCount++;
           if (retryCount < _maxRetryCount) {
-            final delay = _retryDelaySeconds * (1 << (retryCount - 1));
-            await Future<void>.delayed(Duration(seconds: delay));
-            continue;
-          }
-        }
-
-        if (e.type == DioExceptionType.connectionTimeout ||
-            e.type == DioExceptionType.receiveTimeout) {
-          retryCount++;
-          if (retryCount < _maxRetryCount) {
-            await Future<void>.delayed(Duration(seconds: _retryDelaySeconds));
+            final delaySeconds = isTooManyRequests
+                ? _retryDelaySeconds * (1 << (retryCount - 1))
+                : _retryDelaySeconds * retryCount;
+            await Future<void>.delayed(Duration(seconds: delaySeconds));
             continue;
           }
         }

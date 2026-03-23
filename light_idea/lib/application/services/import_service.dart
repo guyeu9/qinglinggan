@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:excel/excel.dart';
+import '../../domain/entities/ai_task.dart';
 import '../../domain/entities/idea.dart';
 import '../../domain/entities/category.dart';
 
@@ -288,7 +289,15 @@ class ImportService {
               successCount++;
               _logger.info('第 $rowNum 行: ID $existingId 已合并');
               if (triggerAIAnalysis) {
-                _aiTaskQueue.enqueue(mergedIdea.id);
+                final enqueueResult = await _aiTaskQueue.enqueue(
+                  mergedIdea.id,
+                  taskType: TaskType.fullAnalysis,
+                  force: true,
+                );
+                if (enqueueResult.wasSkipped) {
+                  skipCount++;
+                  errors.add('第 $rowNum 行: AI任务未入队 - ${enqueueResult.reason ?? '未知原因'}');
+                }
               }
               continue;
           }
@@ -338,7 +347,15 @@ class ImportService {
 
         // 触发 AI 分析
         if (triggerAIAnalysis) {
-          _aiTaskQueue.enqueue(savedIdea.id);
+          final enqueueResult = await _aiTaskQueue.enqueue(
+            savedIdea.id,
+            taskType: TaskType.fullAnalysis,
+            force: true,
+          );
+          if (enqueueResult.wasSkipped) {
+            skipCount++;
+            errors.add('第 $rowNum 行: AI任务未入队 - ${enqueueResult.reason ?? '未知原因'}');
+          }
         }
       } catch (e) {
         errors.add('第 $rowNum 行: 处理失败 - $e');

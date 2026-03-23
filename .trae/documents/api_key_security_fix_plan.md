@@ -5,7 +5,6 @@
 **文件**: `lib/presentation/pages/ai_settings/ai_settings_page.dart`
 
 **第67行和第78行**存在硬编码的明文API密钥：
-
 ```dart
 apiKey: 'sk-q0mruxrc5BHY0FhYAEMi9rfHgvETWvu9Rf5RFwQpZ1a8Bfap',
 ```
@@ -44,42 +43,34 @@ class SecureString {
 
 Base64编码后: `c2stcTBtcnV4cmM1QkhZMEZoWUFFTWk5cmZIZ3ZFVFd2dTlSZTVSRndRcFoxYThCZmFw`
 
-#### 步骤3: 修改 ai\_settings\_page.dart
+#### 步骤3: 修改 ai_settings_page.dart
 
 **修改前**:
-
 ```dart
 apiKey: 'sk-q0mruxrc5BHY0FhYAEMi9rfHgvETWvu9Rf5RFwQpZ1a8Bfap',
 ```
 
 **修改后**:
-
 ```dart
 apiKey: SecureString.decode('c2stcTBtcnV4cmM1QkhZMEZoWUFFTWk5cmZIZ3ZFVFd2dTlSZTVSRndRcFoxYThCZmFw'),
 ```
 
 ### 修改文件清单
 
-| 文件                                                         | 变更类型 | 说明       |
-| ---------------------------------------------------------- | ---- | -------- |
-| `lib/core/utils/secure_string.dart`                        | 新建   | 简单加密工具类  |
-| `lib/presentation/pages/ai_settings/ai_settings_page.dart` | 修改   | 使用加密后的密钥 |
+| 文件 | 变更类型 | 说明 |
+|------|----------|------|
+| `lib/core/utils/secure_string.dart` | 新建 | 简单加密工具类 |
+| `lib/presentation/pages/ai_settings/ai_settings_page.dart` | 修改 | 使用加密后的密钥 |
 
 ### 验证测试
 
-* [ ] 源代码中无明文API密钥
-
-* [ ] 应用运行时能正确解密并使用密钥
-
-* [ ] AI功能正常工作
+- [ ] 源代码中无明文API密钥
+- [ ] 应用运行时能正确解密并使用密钥
+- [ ] AI功能正常工作
 
 ## 总结
 
 此修复将：
-
-* ✅ 源代码中不再显示明文API密钥
-
-* ✅ 保持默认配置不变
-
-* ✅ 实现简单，改动最小
-
+- ✅ 源代码中不再显示明文API密钥
+- ✅ 保持默认配置不变
+- ✅ 实现简单，改动最小

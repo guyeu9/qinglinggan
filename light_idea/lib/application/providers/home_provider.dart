@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../config/ai_config.dart';
 import '../../core/services/log_service.dart';
 import '../../domain/entities/idea.dart';
 import '../../domain/entities/ai_analysis.dart';
@@ -180,16 +181,21 @@ class HomeNotifier extends StateNotifier<HomeState> {
       logService.i('HomeProvider', '列表加载完成，当前共 ${state.ideas.length} 条');
 
       // 提交AI分析任务（后台静默执行）
-      logService.d('HomeProvider', '提交AI分析任务（后台静默执行）');
-      unawaited(taskQueue.enqueue(savedIdea.id).then((result) {
-        logService.d('HomeProvider', 'AI任务入队结果: wasSkipped=${result.wasSkipped}');
-        if (result.wasSkipped) {
-          // 任务被跳过，可能已在队列中或已完成
-        }
-      }));
+      final enableAI = await AIConfig.getEnableAI();
+      if (enableAI) {
+        logService.d('HomeProvider', '提交AI分析任务（后台静默执行）');
+        unawaited(taskQueue.enqueue(savedIdea.id).then((result) {
+          logService.d('HomeProvider', 'AI任务入队结果: wasSkipped=${result.wasSkipped}');
+          if (result.wasSkipped) {
+            // 任务被跳过，可能已在队列中或已完成
+          }
+        }));
 
-      // 后台轮询分析结果，完成后自动刷新列表
-      _pollAnalysisResultSilent(savedIdea.id);
+        // 后台轮询分析结果，完成后自动刷新列表
+        _pollAnalysisResultSilent(savedIdea.id);
+      } else {
+        logService.i('HomeProvider', 'AI功能已禁用，跳过AI任务入队: ideaId=${savedIdea.id}');
+      }
 
       return true;
     } catch (e, stackTrace) {
