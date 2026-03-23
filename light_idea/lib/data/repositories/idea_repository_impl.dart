@@ -13,26 +13,26 @@ class IdeaRepositoryImpl implements IdeaRepository {
   Future<IdeaEntity> save(IdeaEntity idea) async {
     final logContent = idea.content.substring(0, idea.content.length > 50 ? 50 : idea.content.length);
     logService.i('IdeaRepository', 'save() 开始: idea.id=${idea.id}, content=$logContent...');
-    
+
     final model = IdeaModel.fromEntity(idea);
     logService.d('IdeaRepository', 'fromEntity完成: model.id=${model.id}');
-    
+
     final id = await _isar.writeTxn(() async {
       final result = await _isar.ideaModels.put(model);
       logService.d('IdeaRepository', 'put()完成: result=$result');
       return result;
     });
-    
+
     logService.i('IdeaRepository', 'save()完成: 新id=$id');
-    
+
     // 验证保存结果
     final saved = await _isar.ideaModels.get(id);
     logService.d('IdeaRepository', '验证保存: saved=${saved != null}, id=$id');
-    
+
     // 检查总数
     final count = await _isar.ideaModels.count();
     logService.i('IdeaRepository', '当前数据库总记录数: $count');
-    
+
     return idea.copyWith(id: id);
   }
 
@@ -47,19 +47,19 @@ class IdeaRepositoryImpl implements IdeaRepository {
   @override
   Future<List<IdeaEntity>> getAll({bool includeDeleted = false}) async {
     logService.i('IdeaRepository', 'getAll() 开始: includeDeleted=$includeDeleted');
-    
+
     final models = includeDeleted
         ? await _isar.ideaModels.where().sortByCreatedAtDesc().findAll()
         : await _isar.ideaModels.filter().isDeletedEqualTo(false).sortByCreatedAtDesc().findAll();
-    
+
     logService.i('IdeaRepository', 'getAll() 查询到 ${models.length} 条记录');
-    
+
     // 打印每条记录的id
     for (final m in models) {
       final content = m.content.substring(0, m.content.length > 30 ? 30 : m.content.length);
       logService.d('IdeaRepository', '  - id=${m.id}, content=$content, isDeleted=${m.isDeleted}');
     }
-    
+
     return models.map((m) => m.toEntity()).toList();
   }
 
@@ -96,7 +96,7 @@ class IdeaRepositoryImpl implements IdeaRepository {
 
   @override
   Future<void> update(IdeaEntity idea) async {
-    final model = IdeaModel.fromEntity(idea)..updatedAt = DateTime.now();
+    final model = IdeaModel.fromEntity(idea);
     await _isar.writeTxn(() => _isar.ideaModels.put(model));
   }
 
@@ -106,7 +106,6 @@ class IdeaRepositoryImpl implements IdeaRepository {
       final model = await _isar.ideaModels.get(id);
       if (model != null) {
         model.aiStatus = status;
-        model.updatedAt = DateTime.now();
         await _isar.ideaModels.put(model);
       }
     });
@@ -118,7 +117,6 @@ class IdeaRepositoryImpl implements IdeaRepository {
       final model = await _isar.ideaModels.get(id);
       if (model != null) {
         model.embedding = embedding;
-        model.updatedAt = DateTime.now();
         await _isar.ideaModels.put(model);
       }
     });

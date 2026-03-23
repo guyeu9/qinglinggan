@@ -52,24 +52,34 @@ const AIAnalysisModelSchema = CollectionSchema(
       name: r'mergedIdea',
       type: IsarType.string,
     ),
-    r'status': PropertySchema(
+    r'sourceContentHash': PropertySchema(
       id: 7,
+      name: r'sourceContentHash',
+      type: IsarType.string,
+    ),
+    r'sourceIdeaUpdatedAt': PropertySchema(
+      id: 8,
+      name: r'sourceIdeaUpdatedAt',
+      type: IsarType.dateTime,
+    ),
+    r'status': PropertySchema(
+      id: 9,
       name: r'status',
       type: IsarType.string,
       enumMap: _AIAnalysisModelstatusEnumValueMap,
     ),
     r'summary': PropertySchema(
-      id: 8,
+      id: 10,
       name: r'summary',
       type: IsarType.string,
     ),
     r'tagResults': PropertySchema(
-      id: 9,
+      id: 11,
       name: r'tagResults',
       type: IsarType.longList,
     ),
     r'updatedAt': PropertySchema(
-      id: 10,
+      id: 12,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -103,6 +113,32 @@ const AIAnalysisModelSchema = CollectionSchema(
           name: r'status',
           type: IndexType.hash,
           caseSensitive: true,
+        )
+      ],
+    ),
+    r'sourceContentHash': IndexSchema(
+      id: 3729935585692468245,
+      name: r'sourceContentHash',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'sourceContentHash',
+          type: IndexType.hash,
+          caseSensitive: true,
+        )
+      ],
+    ),
+    r'sourceIdeaUpdatedAt': IndexSchema(
+      id: 791707511637409157,
+      name: r'sourceIdeaUpdatedAt',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'sourceIdeaUpdatedAt',
+          type: IndexType.value,
+          caseSensitive: false,
         )
       ],
     )
@@ -142,6 +178,7 @@ int _aIAnalysisModelEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
+  bytesCount += 3 + object.sourceContentHash.length * 3;
   bytesCount += 3 + object.status.name.length * 3;
   bytesCount += 3 + object.summary.length * 3;
   bytesCount += 3 + object.tagResults.length * 8;
@@ -161,10 +198,12 @@ void _aIAnalysisModelSerialize(
   writer.writeStringList(offsets[4], object.differences);
   writer.writeLong(offsets[5], object.ideaId);
   writer.writeString(offsets[6], object.mergedIdea);
-  writer.writeString(offsets[7], object.status.name);
-  writer.writeString(offsets[8], object.summary);
-  writer.writeLongList(offsets[9], object.tagResults);
-  writer.writeDateTime(offsets[10], object.updatedAt);
+  writer.writeString(offsets[7], object.sourceContentHash);
+  writer.writeDateTime(offsets[8], object.sourceIdeaUpdatedAt);
+  writer.writeString(offsets[9], object.status.name);
+  writer.writeString(offsets[10], object.summary);
+  writer.writeLongList(offsets[11], object.tagResults);
+  writer.writeDateTime(offsets[12], object.updatedAt);
 }
 
 AIAnalysisModel _aIAnalysisModelDeserialize(
@@ -182,12 +221,14 @@ AIAnalysisModel _aIAnalysisModelDeserialize(
   object.id = id;
   object.ideaId = reader.readLong(offsets[5]);
   object.mergedIdea = reader.readStringOrNull(offsets[6]);
+  object.sourceContentHash = reader.readString(offsets[7]);
+  object.sourceIdeaUpdatedAt = reader.readDateTime(offsets[8]);
   object.status =
-      _AIAnalysisModelstatusValueEnumMap[reader.readStringOrNull(offsets[7])] ??
+      _AIAnalysisModelstatusValueEnumMap[reader.readStringOrNull(offsets[9])] ??
           AnalysisStatus.pending;
-  object.summary = reader.readString(offsets[8]);
-  object.tagResults = reader.readLongList(offsets[9]) ?? [];
-  object.updatedAt = reader.readDateTime(offsets[10]);
+  object.summary = reader.readString(offsets[10]);
+  object.tagResults = reader.readLongList(offsets[11]) ?? [];
+  object.updatedAt = reader.readDateTime(offsets[12]);
   return object;
 }
 
@@ -213,14 +254,18 @@ P _aIAnalysisModelDeserializeProp<P>(
     case 6:
       return (reader.readStringOrNull(offset)) as P;
     case 7:
+      return (reader.readString(offset)) as P;
+    case 8:
+      return (reader.readDateTime(offset)) as P;
+    case 9:
       return (_AIAnalysisModelstatusValueEnumMap[
               reader.readStringOrNull(offset)] ??
           AnalysisStatus.pending) as P;
-    case 8:
-      return (reader.readString(offset)) as P;
-    case 9:
-      return (reader.readLongList(offset) ?? []) as P;
     case 10:
+      return (reader.readString(offset)) as P;
+    case 11:
+      return (reader.readLongList(offset) ?? []) as P;
+    case 12:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -265,6 +310,15 @@ extension AIAnalysisModelQueryWhereSort
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
         const IndexWhereClause.any(indexName: r'ideaId'),
+      );
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterWhere>
+      anySourceIdeaUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'sourceIdeaUpdatedAt'),
       );
     });
   }
@@ -475,6 +529,144 @@ extension AIAnalysisModelQueryWhere
               includeUpper: false,
             ));
       }
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterWhereClause>
+      sourceContentHashEqualTo(String sourceContentHash) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'sourceContentHash',
+        value: [sourceContentHash],
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterWhereClause>
+      sourceContentHashNotEqualTo(String sourceContentHash) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'sourceContentHash',
+              lower: [],
+              upper: [sourceContentHash],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'sourceContentHash',
+              lower: [sourceContentHash],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'sourceContentHash',
+              lower: [sourceContentHash],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'sourceContentHash',
+              lower: [],
+              upper: [sourceContentHash],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterWhereClause>
+      sourceIdeaUpdatedAtEqualTo(DateTime sourceIdeaUpdatedAt) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'sourceIdeaUpdatedAt',
+        value: [sourceIdeaUpdatedAt],
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterWhereClause>
+      sourceIdeaUpdatedAtNotEqualTo(DateTime sourceIdeaUpdatedAt) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'sourceIdeaUpdatedAt',
+              lower: [],
+              upper: [sourceIdeaUpdatedAt],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'sourceIdeaUpdatedAt',
+              lower: [sourceIdeaUpdatedAt],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'sourceIdeaUpdatedAt',
+              lower: [sourceIdeaUpdatedAt],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'sourceIdeaUpdatedAt',
+              lower: [],
+              upper: [sourceIdeaUpdatedAt],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterWhereClause>
+      sourceIdeaUpdatedAtGreaterThan(
+    DateTime sourceIdeaUpdatedAt, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'sourceIdeaUpdatedAt',
+        lower: [sourceIdeaUpdatedAt],
+        includeLower: include,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterWhereClause>
+      sourceIdeaUpdatedAtLessThan(
+    DateTime sourceIdeaUpdatedAt, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'sourceIdeaUpdatedAt',
+        lower: [],
+        upper: [sourceIdeaUpdatedAt],
+        includeUpper: include,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterWhereClause>
+      sourceIdeaUpdatedAtBetween(
+    DateTime lowerSourceIdeaUpdatedAt,
+    DateTime upperSourceIdeaUpdatedAt, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'sourceIdeaUpdatedAt',
+        lower: [lowerSourceIdeaUpdatedAt],
+        includeLower: includeLower,
+        upper: [upperSourceIdeaUpdatedAt],
+        includeUpper: includeUpper,
+      ));
     });
   }
 }
@@ -1464,6 +1656,198 @@ extension AIAnalysisModelQueryFilter
   }
 
   QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      sourceContentHashEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'sourceContentHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      sourceContentHashGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'sourceContentHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      sourceContentHashLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'sourceContentHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      sourceContentHashBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'sourceContentHash',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      sourceContentHashStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'sourceContentHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      sourceContentHashEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'sourceContentHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      sourceContentHashContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'sourceContentHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      sourceContentHashMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'sourceContentHash',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      sourceContentHashIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'sourceContentHash',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      sourceContentHashIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'sourceContentHash',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      sourceIdeaUpdatedAtEqualTo(DateTime value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'sourceIdeaUpdatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      sourceIdeaUpdatedAtGreaterThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'sourceIdeaUpdatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      sourceIdeaUpdatedAtLessThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'sourceIdeaUpdatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
+      sourceIdeaUpdatedAtBetween(
+    DateTime lower,
+    DateTime upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'sourceIdeaUpdatedAt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterFilterCondition>
       statusEqualTo(
     AnalysisStatus value, {
     bool caseSensitive = true,
@@ -2013,6 +2397,34 @@ extension AIAnalysisModelQuerySortBy
     });
   }
 
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterSortBy>
+      sortBySourceContentHash() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sourceContentHash', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterSortBy>
+      sortBySourceContentHashDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sourceContentHash', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterSortBy>
+      sortBySourceIdeaUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sourceIdeaUpdatedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterSortBy>
+      sortBySourceIdeaUpdatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sourceIdeaUpdatedAt', Sort.desc);
+    });
+  }
+
   QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterSortBy> sortByStatus() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'status', Sort.asc);
@@ -2136,6 +2548,34 @@ extension AIAnalysisModelQuerySortThenBy
     });
   }
 
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterSortBy>
+      thenBySourceContentHash() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sourceContentHash', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterSortBy>
+      thenBySourceContentHashDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sourceContentHash', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterSortBy>
+      thenBySourceIdeaUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sourceIdeaUpdatedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterSortBy>
+      thenBySourceIdeaUpdatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sourceIdeaUpdatedAt', Sort.desc);
+    });
+  }
+
   QueryBuilder<AIAnalysisModel, AIAnalysisModel, QAfterSortBy> thenByStatus() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'status', Sort.asc);
@@ -2227,6 +2667,21 @@ extension AIAnalysisModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QDistinct>
+      distinctBySourceContentHash({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'sourceContentHash',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, AIAnalysisModel, QDistinct>
+      distinctBySourceIdeaUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'sourceIdeaUpdatedAt');
+    });
+  }
+
   QueryBuilder<AIAnalysisModel, AIAnalysisModel, QDistinct> distinctByStatus(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -2308,6 +2763,20 @@ extension AIAnalysisModelQueryProperty
       mergedIdeaProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'mergedIdea');
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, String, QQueryOperations>
+      sourceContentHashProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'sourceContentHash');
+    });
+  }
+
+  QueryBuilder<AIAnalysisModel, DateTime, QQueryOperations>
+      sourceIdeaUpdatedAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'sourceIdeaUpdatedAt');
     });
   }
 

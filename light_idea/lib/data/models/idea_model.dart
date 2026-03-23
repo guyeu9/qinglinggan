@@ -11,6 +11,9 @@ class IdeaModel {
   late String content;
 
   @Index()
+  late String contentHash;
+
+  @Index()
   int? categoryId;
 
   @Index()
@@ -37,6 +40,7 @@ class IdeaModel {
     return IdeaEntity(
       id: id,
       content: content,
+      contentHash: contentHash,
       categoryId: categoryId,
       createdAt: createdAt,
       updatedAt: updatedAt,
@@ -52,6 +56,7 @@ class IdeaModel {
   static IdeaModel fromEntity(IdeaEntity entity) {
     final model = IdeaModel()
       ..content = entity.content
+      ..contentHash = entity.contentHash
       ..categoryId = entity.categoryId
       ..createdAt = entity.createdAt
       ..updatedAt = entity.updatedAt
@@ -61,12 +66,12 @@ class IdeaModel {
       ..tagIds = entity.tagIds
       ..embedding = entity.embedding
       ..imagePaths = entity.imagePaths;
-    
+
     // 只有当id > 0时才设置id，否则让Isar自动生成新ID
     if (entity.id > 0) {
       model.id = entity.id;
     }
-    
+
     return model;
   }
 }

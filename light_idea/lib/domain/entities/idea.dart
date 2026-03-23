@@ -3,6 +3,7 @@ enum AIStatus { pending, processing, completed, failed }
 class IdeaEntity {
   final int id;
   final String content;
+  final String contentHash;
   final int? categoryId;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -13,9 +14,10 @@ class IdeaEntity {
   final List<double>? embedding;
   final List<String> imagePaths;
 
-  const IdeaEntity({
+  IdeaEntity({
     required this.id,
     required this.content,
+    String? contentHash,
     this.categoryId,
     required this.createdAt,
     required this.updatedAt,
@@ -25,11 +27,17 @@ class IdeaEntity {
     this.tagIds = const [],
     this.embedding,
     this.imagePaths = const [],
-  });
+  }) : contentHash = contentHash ?? computeContentHash(content);
+
+  static String computeContentHash(String content) {
+    final normalized = content.trim();
+    return normalized.hashCode.toUnsigned(32).toRadixString(16).padLeft(8, '0');
+  }
 
   IdeaEntity copyWith({
     int? id,
     String? content,
+    String? contentHash,
     int? categoryId,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -40,9 +48,12 @@ class IdeaEntity {
     List<double>? embedding,
     List<String>? imagePaths,
   }) {
+    final nextContent = content ?? this.content;
     return IdeaEntity(
       id: id ?? this.id,
-      content: content ?? this.content,
+      content: nextContent,
+      contentHash: contentHash ??
+          (content != null ? computeContentHash(nextContent) : this.contentHash),
       categoryId: categoryId ?? this.categoryId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -55,20 +66,25 @@ class IdeaEntity {
     );
   }
 
+  bool hasSameContent(String otherContent) {
+    return contentHash == computeContentHash(otherContent);
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is IdeaEntity &&
           runtimeType == other.runtimeType &&
           id == other.id &&
-          content == other.content;
+          content == other.content &&
+          contentHash == other.contentHash;
 
   @override
-  int get hashCode => id.hashCode ^ content.hashCode;
+  int get hashCode => id.hashCode ^ content.hashCode ^ contentHash.hashCode;
 
   @override
   String toString() {
     return 'IdeaEntity(id: $id, content: ${content.length > 50 ? '${content.substring(0, 50)}...' : content}, '
-        'categoryId: $categoryId, isDeleted: $isDeleted, aiStatus: $aiStatus)';
+        'contentHash: $contentHash, categoryId: $categoryId, isDeleted: $isDeleted, aiStatus: $aiStatus)';
   }
 }

@@ -26,6 +26,12 @@ class AIAnalysisModel {
 
   DateTime updatedAt = DateTime.now();
 
+  @Index()
+  late String sourceContentHash;
+
+  @Index()
+  late DateTime sourceIdeaUpdatedAt;
+
   List<String> commonPoints = [];
 
   List<String> differences = [];
@@ -43,6 +49,8 @@ class AIAnalysisModel {
       status: status,
       createdAt: createdAt,
       updatedAt: updatedAt,
+      sourceContentHash: sourceContentHash,
+      sourceIdeaUpdatedAt: sourceIdeaUpdatedAt,
       commonPoints: commonPoints,
       differences: differences,
       mergedIdea: mergedIdea,
@@ -60,6 +68,8 @@ class AIAnalysisModel {
       ..status = entity.status
       ..createdAt = entity.createdAt
       ..updatedAt = entity.updatedAt
+      ..sourceContentHash = entity.sourceContentHash
+      ..sourceIdeaUpdatedAt = entity.sourceIdeaUpdatedAt
       ..commonPoints = entity.commonPoints
       ..differences = entity.differences
       ..mergedIdea = entity.mergedIdea;

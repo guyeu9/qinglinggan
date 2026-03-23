@@ -33,38 +33,43 @@ const IdeaModelSchema = CollectionSchema(
       name: r'content',
       type: IsarType.string,
     ),
-    r'createdAt': PropertySchema(
+    r'contentHash': PropertySchema(
       id: 3,
+      name: r'contentHash',
+      type: IsarType.string,
+    ),
+    r'createdAt': PropertySchema(
+      id: 4,
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
     r'deletedAt': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'deletedAt',
       type: IsarType.dateTime,
     ),
     r'embedding': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'embedding',
       type: IsarType.doubleList,
     ),
     r'imagePaths': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'imagePaths',
       type: IsarType.stringList,
     ),
     r'isDeleted': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'isDeleted',
       type: IsarType.bool,
     ),
     r'tagIds': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'tagIds',
       type: IsarType.longList,
     ),
     r'updatedAt': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -84,6 +89,19 @@ const IdeaModelSchema = CollectionSchema(
         IndexPropertySchema(
           name: r'content',
           type: IndexType.value,
+          caseSensitive: true,
+        )
+      ],
+    ),
+    r'contentHash': IndexSchema(
+      id: -8004451629925743238,
+      name: r'contentHash',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'contentHash',
+          type: IndexType.hash,
           caseSensitive: true,
         )
       ],
@@ -157,6 +175,7 @@ int _ideaModelEstimateSize(
   var bytesCount = offsets.last;
   bytesCount += 3 + object.aiStatus.name.length * 3;
   bytesCount += 3 + object.content.length * 3;
+  bytesCount += 3 + object.contentHash.length * 3;
   {
     final value = object.embedding;
     if (value != null) {
@@ -183,13 +202,14 @@ void _ideaModelSerialize(
   writer.writeString(offsets[0], object.aiStatus.name);
   writer.writeLong(offsets[1], object.categoryId);
   writer.writeString(offsets[2], object.content);
-  writer.writeDateTime(offsets[3], object.createdAt);
-  writer.writeDateTime(offsets[4], object.deletedAt);
-  writer.writeDoubleList(offsets[5], object.embedding);
-  writer.writeStringList(offsets[6], object.imagePaths);
-  writer.writeBool(offsets[7], object.isDeleted);
-  writer.writeLongList(offsets[8], object.tagIds);
-  writer.writeDateTime(offsets[9], object.updatedAt);
+  writer.writeString(offsets[3], object.contentHash);
+  writer.writeDateTime(offsets[4], object.createdAt);
+  writer.writeDateTime(offsets[5], object.deletedAt);
+  writer.writeDoubleList(offsets[6], object.embedding);
+  writer.writeStringList(offsets[7], object.imagePaths);
+  writer.writeBool(offsets[8], object.isDeleted);
+  writer.writeLongList(offsets[9], object.tagIds);
+  writer.writeDateTime(offsets[10], object.updatedAt);
 }
 
 IdeaModel _ideaModelDeserialize(
@@ -204,14 +224,15 @@ IdeaModel _ideaModelDeserialize(
           AIStatus.pending;
   object.categoryId = reader.readLongOrNull(offsets[1]);
   object.content = reader.readString(offsets[2]);
-  object.createdAt = reader.readDateTime(offsets[3]);
-  object.deletedAt = reader.readDateTimeOrNull(offsets[4]);
-  object.embedding = reader.readDoubleList(offsets[5]);
+  object.contentHash = reader.readString(offsets[3]);
+  object.createdAt = reader.readDateTime(offsets[4]);
+  object.deletedAt = reader.readDateTimeOrNull(offsets[5]);
+  object.embedding = reader.readDoubleList(offsets[6]);
   object.id = id;
-  object.imagePaths = reader.readStringList(offsets[6]) ?? [];
-  object.isDeleted = reader.readBool(offsets[7]);
-  object.tagIds = reader.readLongList(offsets[8]) ?? [];
-  object.updatedAt = reader.readDateTime(offsets[9]);
+  object.imagePaths = reader.readStringList(offsets[7]) ?? [];
+  object.isDeleted = reader.readBool(offsets[8]);
+  object.tagIds = reader.readLongList(offsets[9]) ?? [];
+  object.updatedAt = reader.readDateTime(offsets[10]);
   return object;
 }
 
@@ -230,18 +251,20 @@ P _ideaModelDeserializeProp<P>(
     case 2:
       return (reader.readString(offset)) as P;
     case 3:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 4:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 5:
-      return (reader.readDoubleList(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 6:
-      return (reader.readStringList(offset) ?? []) as P;
+      return (reader.readDoubleList(offset)) as P;
     case 7:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringList(offset) ?? []) as P;
     case 8:
-      return (reader.readLongList(offset) ?? []) as P;
+      return (reader.readBool(offset)) as P;
     case 9:
+      return (reader.readLongList(offset) ?? []) as P;
+    case 10:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -512,6 +535,51 @@ extension IdeaModelQueryWhere
             .addWhereClause(IndexWhereClause.lessThan(
               indexName: r'content',
               upper: [''],
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterWhereClause> contentHashEqualTo(
+      String contentHash) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'contentHash',
+        value: [contentHash],
+      ));
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterWhereClause> contentHashNotEqualTo(
+      String contentHash) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'contentHash',
+              lower: [],
+              upper: [contentHash],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'contentHash',
+              lower: [contentHash],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'contentHash',
+              lower: [contentHash],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'contentHash',
+              lower: [],
+              upper: [contentHash],
+              includeUpper: false,
             ));
       }
     });
@@ -1138,6 +1206,140 @@ extension IdeaModelQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'content',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition> contentHashEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'contentHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition>
+      contentHashGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'contentHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition> contentHashLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'contentHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition> contentHashBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'contentHash',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition>
+      contentHashStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'contentHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition> contentHashEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'contentHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition> contentHashContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'contentHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition> contentHashMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'contentHash',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition>
+      contentHashIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'contentHash',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterFilterCondition>
+      contentHashIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'contentHash',
         value: '',
       ));
     });
@@ -1967,6 +2169,18 @@ extension IdeaModelQuerySortBy on QueryBuilder<IdeaModel, IdeaModel, QSortBy> {
     });
   }
 
+  QueryBuilder<IdeaModel, IdeaModel, QAfterSortBy> sortByContentHash() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'contentHash', Sort.asc);
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterSortBy> sortByContentHashDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'contentHash', Sort.desc);
+    });
+  }
+
   QueryBuilder<IdeaModel, IdeaModel, QAfterSortBy> sortByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.asc);
@@ -2054,6 +2268,18 @@ extension IdeaModelQuerySortThenBy
     });
   }
 
+  QueryBuilder<IdeaModel, IdeaModel, QAfterSortBy> thenByContentHash() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'contentHash', Sort.asc);
+    });
+  }
+
+  QueryBuilder<IdeaModel, IdeaModel, QAfterSortBy> thenByContentHashDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'contentHash', Sort.desc);
+    });
+  }
+
   QueryBuilder<IdeaModel, IdeaModel, QAfterSortBy> thenByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.asc);
@@ -2137,6 +2363,13 @@ extension IdeaModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<IdeaModel, IdeaModel, QDistinct> distinctByContentHash(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'contentHash', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<IdeaModel, IdeaModel, QDistinct> distinctByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'createdAt');
@@ -2203,6 +2436,12 @@ extension IdeaModelQueryProperty
   QueryBuilder<IdeaModel, String, QQueryOperations> contentProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'content');
+    });
+  }
+
+  QueryBuilder<IdeaModel, String, QQueryOperations> contentHashProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'contentHash');
     });
   }
 

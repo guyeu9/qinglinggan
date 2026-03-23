@@ -10,6 +10,8 @@ class AIAnalysisEntity {
   final AnalysisStatus status;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String sourceContentHash;
+  final DateTime sourceIdeaUpdatedAt;
   final List<String> commonPoints;
   final List<String> differences;
   final String? mergedIdea;
@@ -24,6 +26,8 @@ class AIAnalysisEntity {
     this.status = AnalysisStatus.pending,
     required this.createdAt,
     required this.updatedAt,
+    required this.sourceContentHash,
+    required this.sourceIdeaUpdatedAt,
     this.commonPoints = const [],
     this.differences = const [],
     this.mergedIdea,
@@ -39,6 +43,8 @@ class AIAnalysisEntity {
     AnalysisStatus? status,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? sourceContentHash,
+    DateTime? sourceIdeaUpdatedAt,
     List<String>? commonPoints,
     List<String>? differences,
     String? mergedIdea,
@@ -53,10 +59,20 @@ class AIAnalysisEntity {
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      sourceContentHash: sourceContentHash ?? this.sourceContentHash,
+      sourceIdeaUpdatedAt: sourceIdeaUpdatedAt ?? this.sourceIdeaUpdatedAt,
       commonPoints: commonPoints ?? this.commonPoints,
       differences: differences ?? this.differences,
       mergedIdea: mergedIdea ?? this.mergedIdea,
     );
+  }
+
+  bool matchesIdeaSnapshot({
+    required String contentHash,
+    required DateTime updatedAt,
+  }) {
+    return sourceContentHash == contentHash &&
+        sourceIdeaUpdatedAt.isAtSameMomentAs(updatedAt);
   }
 
   @override
@@ -71,6 +87,6 @@ class AIAnalysisEntity {
 
   @override
   String toString() {
-    return 'AIAnalysisEntity(id: $id, ideaId: $ideaId, status: $status)';
+    return 'AIAnalysisEntity(id: $id, ideaId: $ideaId, status: $status, sourceContentHash: $sourceContentHash)';
   }
 }

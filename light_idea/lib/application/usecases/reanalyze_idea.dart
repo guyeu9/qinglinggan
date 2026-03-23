@@ -21,6 +21,7 @@ class ReanalyzeIdeaUseCase {
       final result = await _taskQueue.enqueue(
         ideaId,
         taskType: TaskType.fullAnalysis,
+        force: true,
       );
 
       if (result.wasEnqueued) {

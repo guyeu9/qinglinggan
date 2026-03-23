@@ -76,16 +76,23 @@ class IdeaDetailNotifier extends StateNotifier<IdeaDetailState> {
       developer.log('正在查询灵感...', name: 'IdeaDetailProvider');
       final idea = await ideaRepo.getById(id);
       developer.log('查询结果: idea=${idea != null}', name: 'IdeaDetailProvider');
-      
+
       if (idea == null) {
         developer.log('灵感不存在: id=$id', name: 'IdeaDetailProvider');
         state = state.copyWith(isLoading: false, error: '灵感不存在');
         return;
       }
-      
+
       developer.log('灵感内容: "${idea.content}", createdAt=${idea.createdAt}', name: 'IdeaDetailProvider');
 
-      final analysis = await analysisRepo.getByIdeaId(id);
+      final loadedAnalysis = await analysisRepo.getByIdeaId(id);
+      final analysis = loadedAnalysis != null &&
+              loadedAnalysis.matchesIdeaSnapshot(
+                contentHash: idea.contentHash,
+                updatedAt: idea.updatedAt,
+              )
+          ? loadedAnalysis
+          : null;
 
       final tags = <TagEntity>[];
       if (analysis != null && analysis.tagResults.isNotEmpty) {
@@ -107,7 +114,7 @@ class IdeaDetailNotifier extends StateNotifier<IdeaDetailState> {
 
       developer.log('加载完成: idea.content="${idea.content}"', name: 'IdeaDetailProvider');
       developer.log('========== loadIdea() 完成 ==========', name: 'IdeaDetailProvider');
-      
+
       state = state.copyWith(
         idea: idea,
         analysis: analysis,
@@ -150,12 +157,24 @@ class IdeaDetailNotifier extends StateNotifier<IdeaDetailState> {
     if (state.idea == null) return false;
 
     try {
+      final trimmedContent = content.trim();
       final ideaRepo = _ref.read(ideaRepositoryProvider);
+
+      if (state.idea!.hasSameContent(trimmedContent)) {
+        final unchangedIdea = state.idea!.copyWith(content: trimmedContent);
+        await ideaRepo.update(unchangedIdea);
+        state = state.copyWith(
+          idea: unchangedIdea,
+          error: null,
+        );
+        return true;
+      }
+
       final analysisRepo = _ref.read(aiAnalysisRepositoryProvider);
       final taskRepo = _ref.read(aiTaskRepositoryProvider);
       final taskQueue = _ref.read(aiTaskQueueProvider);
       final updatedIdea = state.idea!.copyWith(
-        content: content,
+        content: trimmedContent,
         updatedAt: DateTime.now(),
         aiStatus: AIStatus.pending,
       );
@@ -193,12 +212,12 @@ class IdeaDetailNotifier extends StateNotifier<IdeaDetailState> {
       final associationRepo = _ref.read(associationRepositoryProvider);
       final analysisRepo = _ref.read(aiAnalysisRepositoryProvider);
       final taskRepo = _ref.read(aiTaskRepositoryProvider);
-      
+
       await associationRepo.deleteByIdeaId(state.idea!.id);
       await analysisRepo.deleteByIdeaId(state.idea!.id);
       await taskRepo.deleteByIdeaId(state.idea!.id);
       await ideaRepo.softDelete(state.idea!.id);
-      
+
       return true;
     } catch (e) {
       state = state.copyWith(error: e.toString());
@@ -236,7 +255,6 @@ class IdeaDetailNotifier extends StateNotifier<IdeaDetailState> {
       );
       await ideaRepo.update(updatedIdea);
 
-      // 重新加载标签
       final tagRepo = _ref.read(tagRepositoryProvider);
       final tags = <TagEntity>[];
       for (final tagId in tagIds) {
@@ -251,13 +269,9 @@ class IdeaDetailNotifier extends StateNotifier<IdeaDetailState> {
       return false;
     }
   }
-
-  void clearError() {
-    state = state.copyWith(error: null);
-  }
 }
 
 final ideaDetailProvider =
-    StateNotifierProvider.autoDispose<IdeaDetailNotifier, IdeaDetailState>((ref) {
+    StateNotifierProvider<IdeaDetailNotifier, IdeaDetailState>((ref) {
   return IdeaDetailNotifier(ref);
 });
