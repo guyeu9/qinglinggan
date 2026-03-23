@@ -87,6 +87,48 @@ void main() {
       expect(ideaRepository.updatedStatusCalls, contains('${original.id}:${AIStatus.pending.name}'));
     });
 
+    test('TaskType.fullAnalysis 应串行完成基础分析与关联分析', () async {
+      final original = _buildIdea(content: 'full analysis');
+      ideaRepository.idea = original;
+      relationService.relations = [
+        AssociationEntity(
+          id: 1,
+          sourceIdeaId: original.id,
+          targetIdeaId: 2,
+          type: RelationType.similar,
+          reason: '主题接近',
+          confidence: 0.95,
+          createdAt: DateTime(2024, 1, 1),
+        ),
+      ];
+      embeddingService.searchResult = [
+        SimilarIdea(
+          idea: _buildIdea(id: 2, content: 'candidate', embedding: <double>[0.3, 0.4]),
+          similarity: 0.91,
+        ),
+      ];
+
+      final result = await queue.enqueue(
+        original.id,
+        taskType: TaskType.fullAnalysis,
+        force: true,
+      );
+      expect(result.wasEnqueued, isTrue);
+
+      await _waitUntil(() => taskRepository.completedStatuses.contains(TaskStatus.completed));
+
+      expect(analysisRepository.savedAnalyses, hasLength(1));
+      expect(analysisRepository.updatedAnalyses, hasLength(1));
+      expect(analysisRepository.updatedAnalyses.single.tagResults, [1]);
+      expect(associationRepository.savedAssociations, hasLength(1));
+      expect(associationRepository.savedAssociations.single.targetIdeaId, 2);
+      expect(ideaRepository.idea?.embedding, <double>[0.1, 0.2, 0.3]);
+      expect(ideaRepository.idea?.tagIds, [1]);
+      expect(ideaRepository.idea?.aiStatus, AIStatus.completed);
+      expect(taskRepository.statusHistory, containsAllInOrder([TaskStatus.processing, TaskStatus.completed]));
+      expect(taskRepository.tasks.single.taskType, TaskType.fullAnalysis);
+    });
+
     test('关联分析在保存前快照失配时应丢弃关联写入', () async {
       final original = _buildIdea(
         content: 'idea',
@@ -137,6 +179,41 @@ void main() {
 
       expect(associationRepository.savedAssociations, isEmpty);
     });
+
+    test('可重试失败应回退任务为 pending 且不将 AIStatus 置为 failed', () async {
+      final original = _buildIdea(content: 'retry path');
+      ideaRepository.idea = original;
+      understandingService.analyzeHandler = (_) async => Result.error('temporary error');
+
+      final result = await queue.enqueue(original.id);
+      expect(result.wasEnqueued, isTrue);
+
+      await _waitUntil(() => taskRepository.statusHistory.contains(TaskStatus.pending));
+
+      expect(taskRepository.retryCounts[result.task!.id], 1);
+      expect(taskRepository.statusHistory, containsAllInOrder([TaskStatus.processing, TaskStatus.pending]));
+      expect(taskRepository.errorMessages[result.task!.id], 'Exception: AI理解失败: temporary error');
+      expect(ideaRepository.updatedStatusCalls, isNot(contains('${original.id}:${AIStatus.failed.name}')));
+      expect(ideaRepository.idea?.aiStatus, AIStatus.processing);
+    });
+
+    test('超过最大重试次数后应将任务与 AIStatus 标记为 failed', () async {
+      final original = _buildIdea(content: 'final failure');
+      ideaRepository.idea = original;
+      understandingService.analyzeHandler = (_) async => Result.error('temporary error');
+      taskRepository.initialRetryCount = 2;
+
+      final result = await queue.enqueue(original.id);
+      expect(result.wasEnqueued, isTrue);
+
+      await _waitUntil(() => taskRepository.statusHistory.contains(TaskStatus.failed));
+
+      expect(taskRepository.retryCounts[result.task!.id], 3);
+      expect(taskRepository.statusHistory, containsAllInOrder([TaskStatus.processing, TaskStatus.failed]));
+      expect(taskRepository.errorMessages[result.task!.id], 'Exception: AI理解失败: temporary error');
+      expect(ideaRepository.updatedStatusCalls, contains('${original.id}:${AIStatus.failed.name}'));
+      expect(ideaRepository.idea?.aiStatus, AIStatus.failed);
+    });
   });
 }
 
@@ -174,8 +251,13 @@ class _FakeUnderstandingService extends AIUnderstandingService {
           _FakeLogger(),
         );
 
+  Future<Result<AIAnalysisResult>> Function(String text)? analyzeHandler;
+
   @override
   Future<Result<AIAnalysisResult>> analyze(String text) async {
+    if (analyzeHandler != null) {
+      return analyzeHandler!(text);
+    }
     return Result.success(
       const AIAnalysisResult(
         categoryName: '分类',
@@ -260,11 +342,19 @@ class _FakeSynthesisService extends AISynthesisService {
 class _FakeTaskRepository implements AITaskRepository {
   final List<AITaskEntity> tasks = [];
   final List<TaskStatus> completedStatuses = [];
+  final List<TaskStatus> statusHistory = [];
+  final Map<int, String?> errorMessages = {};
+  final Map<int, int> retryCounts = {};
+  int initialRetryCount = 0;
 
   @override
   Future<AITaskEntity> save(AITaskEntity task) async {
-    final saved = task.copyWith(id: tasks.length + 1);
+    final saved = task.copyWith(
+      id: tasks.length + 1,
+      retryCount: initialRetryCount,
+    );
     tasks.add(saved);
+    retryCounts[saved.id] = saved.retryCount;
     return saved;
   }
 
@@ -285,22 +375,40 @@ class _FakeTaskRepository implements AITaskRepository {
   Future<List<AITaskEntity>> getProcessingTasks() async => [];
 
   @override
-  Future<void> update(AITaskEntity task) async {}
-
-  @override
-  Future<void> updateStatus(int id, TaskStatus status, {String? errorMessage}) async {
-    completedStatuses.add(status);
-    final index = tasks.indexWhere((task) => task.id == id);
+  Future<void> update(AITaskEntity task) async {
+    final index = tasks.indexWhere((item) => item.id == task.id);
     if (index >= 0) {
-      tasks[index] = tasks[index].copyWith(
-        status: status,
-        completedAt: status == TaskStatus.completed ? DateTime.now() : tasks[index].completedAt,
-      );
+      tasks[index] = task;
+      retryCounts[task.id] = task.retryCount;
     }
   }
 
   @override
-  Future<void> incrementRetryCount(int id) async {}
+  Future<void> updateStatus(int id, TaskStatus status, {String? errorMessage}) async {
+    completedStatuses.add(status);
+    statusHistory.add(status);
+    final index = tasks.indexWhere((task) => task.id == id);
+    if (index >= 0) {
+      final current = tasks[index];
+      tasks[index] = current.copyWith(
+        status: status,
+        errorMessage: errorMessage ?? current.errorMessage,
+        completedAt: status == TaskStatus.completed ? DateTime.now() : current.completedAt,
+      );
+      errorMessages[id] = tasks[index].errorMessage;
+      retryCounts[id] = tasks[index].retryCount;
+    }
+  }
+
+  @override
+  Future<void> incrementRetryCount(int id) async {
+    final index = tasks.indexWhere((task) => task.id == id);
+    if (index >= 0) {
+      final updated = tasks[index].copyWith(retryCount: tasks[index].retryCount + 1);
+      tasks[index] = updated;
+      retryCounts[id] = updated.retryCount;
+    }
+  }
 
   @override
   Future<void> delete(int id) async {}
@@ -390,6 +498,7 @@ class _FakeIdeaRepository implements IdeaRepository {
 
 class _FakeAnalysisRepository implements AIAnalysisRepository {
   final List<AIAnalysisEntity> savedAnalyses = [];
+  final List<AIAnalysisEntity> updatedAnalyses = [];
 
   @override
   Future<AIAnalysisEntity> save(AIAnalysisEntity analysis) async {
@@ -407,7 +516,9 @@ class _FakeAnalysisRepository implements AIAnalysisRepository {
   Future<List<AIAnalysisEntity>> getAll() async => savedAnalyses;
 
   @override
-  Future<void> update(AIAnalysisEntity analysis) async {}
+  Future<void> update(AIAnalysisEntity analysis) async {
+    updatedAnalyses.add(analysis);
+  }
 
   @override
   Future<void> updateStatus(int id, AnalysisStatus status) async {}

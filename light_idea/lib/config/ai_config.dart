@@ -1,10 +1,11 @@
+import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AIConfig {
   AIConfig._();
 
-  static const String defaultChatModel = 'gpt-4o-mini';
-  static const String defaultEmbeddingModel = 'text-embedding-3-small';
+  static const String defaultChatModel = 'gemini-3-flash';
+  static const String defaultEmbeddingModel = 'Qwen/Qwen3-Embedding-8B';
   
   static const int embeddingDimension = 1536;
   
@@ -15,7 +16,7 @@ class AIConfig {
   static const int maxRetryCount = 3;
   static const int retryDelaySeconds = 2;
   
-  static const String apiBaseUrl = 'https://api.openai.com/v1';
+  static const String apiBaseUrl = 'https://api.zscc.in/v1';
 
   static const _storage = FlutterSecureStorage(
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
@@ -31,6 +32,7 @@ class AIConfig {
   static const _embeddingDimensionKey = 'embedding_dimension';
   static const _enableAIKey = 'enable_ai';
   static const _apiBaseUrlKey = 'api_base_url';
+  static const _providersKey = 'ai_providers';
 
   static String? _cachedApiKey;
   static bool _initialized = false;
@@ -94,7 +96,7 @@ class AIConfig {
 
   static Future<String> getEmbeddingBaseUrl() async {
     final url = await _storage.read(key: _embeddingBaseUrlKey);
-    return url ?? 'https://api.openai.com/v1/embeddings';
+    return url ?? apiBaseUrl;
   }
 
   static Future<void> setEmbeddingDimension(int dimension) async {
@@ -122,6 +124,27 @@ class AIConfig {
   static Future<String> getApiBaseUrl() async {
     final url = await _storage.read(key: _apiBaseUrlKey);
     return url ?? apiBaseUrl;
+  }
+
+  static Future<void> saveProviders(List<Map<String, dynamic>> providers) async {
+    await _storage.write(key: _providersKey, value: jsonEncode(providers));
+  }
+
+  static Future<List<Map<String, dynamic>>?> getProviders() async {
+    final value = await _storage.read(key: _providersKey);
+    if (value == null || value.isEmpty) {
+      return null;
+    }
+
+    final decoded = jsonDecode(value);
+    if (decoded is! List) {
+      return null;
+    }
+
+    return decoded
+        .whereType<Map>()
+        .map((item) => item.map((key, value) => MapEntry(key.toString(), value)))
+        .toList();
   }
 
   static Future<void> clearAll() async {

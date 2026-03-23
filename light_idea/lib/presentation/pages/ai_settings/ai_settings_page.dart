@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:dio/dio.dart';
+import '../../../config/ai_config.dart';
 import '../../../core/utils/secure_string.dart';
 
 /// AI模型管理页面
@@ -47,6 +48,54 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
     _loadProviders();
   }
 
+  List<AIProvider> _buildDefaultProviders() {
+    return [
+      AIProvider(
+        id: '1',
+        name: '默认',
+        type: 'OPENAI',
+        apiType: 'openai-compatible',
+        baseUrl: 'https://api.zscc.in/v1',
+        apiKey: SecureString.decode('c2stcTBtcnV4cmM1QkhZMEZoWUFFTWk5cmZIZ3ZFVFd2dTlSZTVSRndRcFoxYThCZmFw'),
+        model: 'gemini-3-flash',
+        isDefault: true,
+        serviceType: 'chat',
+      ),
+      AIProvider(
+        id: '2',
+        name: '默认Embedding',
+        type: 'OPENAI',
+        apiType: 'openai-compatible',
+        baseUrl: 'https://api.zscc.in/v1',
+        apiKey: SecureString.decode('c2stcTBtcnV4cmM1QkhZMEZoWUFFTWk5cmZIZ3ZFVFd2dTlSZTVSRndRcFoxYThCZmFw'),
+        model: 'Qwen/Qwen3-Embedding-8B',
+        isDefault: true,
+        serviceType: 'embedding',
+      ),
+    ];
+  }
+
+  Future<void> _persistProviders() async {
+    await AIConfig.saveProviders(
+      _providers.map((provider) => provider.toJson()).toList(),
+    );
+  }
+
+  Future<void> _syncDefaultProvidersToConfig() async {
+    final defaultChatProvider = _providers.where((p) => p.serviceType == 'chat' && p.isDefault).firstOrNull;
+    if (defaultChatProvider != null) {
+      await AIConfig.setApiBaseUrl(defaultChatProvider.baseUrl);
+      await AIConfig.setApiKey(defaultChatProvider.apiKey);
+      await AIConfig.setChatModel(defaultChatProvider.model);
+    }
+
+    final defaultEmbeddingProvider = _providers.where((p) => p.serviceType == 'embedding' && p.isDefault).firstOrNull;
+    if (defaultEmbeddingProvider != null) {
+      await AIConfig.setEmbeddingBaseUrl(defaultEmbeddingProvider.baseUrl);
+      await AIConfig.setEmbeddingApiKey(defaultEmbeddingProvider.apiKey);
+    }
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -56,33 +105,20 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
     super.dispose();
   }
 
-  void _loadProviders() {
+  Future<void> _loadProviders() async {
+    final storedProviders = await AIConfig.getProviders();
+    final providers = storedProviders == null || storedProviders.isEmpty
+        ? _buildDefaultProviders()
+        : storedProviders.map(AIProvider.fromJson).toList();
+
+    if (!mounted) return;
+
     setState(() {
-      _providers = [
-        AIProvider(
-          id: '1',
-          name: '默认',
-          type: 'OPENAI',
-          apiType: 'openai-compatible',
-          baseUrl: 'https://api.zscc.in/v1',
-          apiKey: SecureString.decode('c2stcTBtcnV4cmM1QkhZMEZoWUFFTWk5cmZIZ3ZFVFd2dTlSZTVSRndRcFoxYThCZmFw'),
-          model: 'gemini-3-flash',
-          isDefault: true,
-          serviceType: 'chat',
-        ),
-        AIProvider(
-          id: '2',
-          name: '默认Embedding',
-          type: 'OPENAI',
-          apiType: 'openai-compatible',
-          baseUrl: 'https://api.zscc.in/v1',
-          apiKey: SecureString.decode('c2stcTBtcnV4cmM1QkhZMEZoWUFFTWk5cmZIZ3ZFVFd2dTlSZTVSRndRcFoxYThCZmFw'),
-          model: 'Qwen/Qwen3-Embedding-8B',
-          isDefault: true,
-          serviceType: 'embedding',
-        ),
-      ];
+      _providers = providers;
     });
+
+    await _persistProviders();
+    await _syncDefaultProvidersToConfig();
   }
 
   List<AIProvider> get _filteredProviders {
@@ -383,6 +419,8 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
       });
     }
 
+    _persistProviders();
+    _syncDefaultProvidersToConfig();
     _closeModal();
   }
 
@@ -394,6 +432,8 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
         }
       }
     });
+    _persistProviders();
+    _syncDefaultProvidersToConfig();
   }
 
   void _showDeleteConfirmation(String id) {
@@ -415,6 +455,8 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
       setState(() {
         _providers.removeWhere((p) => p.id == _deleteTargetId);
       });
+      _persistProviders();
+      _syncDefaultProvidersToConfig();
     }
     _closeDeleteModal();
   }
@@ -1237,6 +1279,34 @@ class AIProvider {
     required this.isDefault,
     required this.serviceType,
   });
+
+  factory AIProvider.fromJson(Map<String, dynamic> json) {
+    return AIProvider(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      type: json['type']?.toString() ?? 'OPENAI',
+      apiType: json['apiType']?.toString() ?? 'openai-compatible',
+      baseUrl: json['baseUrl']?.toString() ?? '',
+      apiKey: json['apiKey']?.toString() ?? '',
+      model: json['model']?.toString() ?? '',
+      isDefault: json['isDefault'] == true,
+      serviceType: json['serviceType']?.toString() ?? 'chat',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'type': type,
+      'apiType': apiType,
+      'baseUrl': baseUrl,
+      'apiKey': apiKey,
+      'model': model,
+      'isDefault': isDefault,
+      'serviceType': serviceType,
+    };
+  }
 
   AIProvider copyWith({
     String? id,

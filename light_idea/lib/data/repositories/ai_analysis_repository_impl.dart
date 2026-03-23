@@ -27,7 +27,6 @@ class AIAnalysisRepositoryImpl implements AIAnalysisRepository {
         .filter()
         .ideaIdEqualTo(ideaId)
         .sortByUpdatedAtDesc()
-        .thenByIdDesc()
         .findAll();
     return models.firstOrNull?.toEntity();
   }
