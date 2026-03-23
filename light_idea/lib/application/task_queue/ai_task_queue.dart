@@ -209,6 +209,11 @@ class AITaskQueue {
         break;
       case TaskType.fullAnalysis:
         await _processBasicAnalysis(task, idea);
+        final latestTask = await _taskRepository.getById(task.id);
+        if (latestTask?.status == TaskStatus.failed) {
+          logService.w('AITaskQueue', '完整分析中止: 基础分析失败，跳过关联分析 taskId=${task.id}');
+          break;
+        }
         await _processRelationAnalysis(task, idea);
         break;
     }
