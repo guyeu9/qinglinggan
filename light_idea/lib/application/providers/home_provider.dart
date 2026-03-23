@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../config/ai_config.dart';
 import '../../core/services/log_service.dart';
@@ -65,6 +66,7 @@ class HomeState {
 class HomeNotifier extends StateNotifier<HomeState> {
   final Ref _ref;
   final Map<int, Timer> _pollingTimers = {};  // 改为Map存储，支持多个并发轮询
+  final Set<int> _pollingIdeaIds = HashSet<int>();
 
   HomeNotifier(this._ref) : super(const HomeState()) {
     _initialize();
@@ -184,15 +186,15 @@ class HomeNotifier extends StateNotifier<HomeState> {
       final enableAI = await AIConfig.getEnableAI();
       if (enableAI) {
         logService.d('HomeProvider', '提交AI分析任务（后台静默执行）');
-        unawaited(taskQueue.enqueue(savedIdea.id).then((result) {
-          logService.d('HomeProvider', 'AI任务入队结果: wasSkipped=${result.wasSkipped}');
-          if (result.wasSkipped) {
-            // 任务被跳过，可能已在队列中或已完成
-          }
-        }));
+        final enqueueResult = await taskQueue.enqueue(savedIdea.id);
+        logService.d('HomeProvider', 'AI任务入队结果: wasSkipped=${enqueueResult.wasSkipped}');
 
-        // 后台轮询分析结果，完成后自动刷新列表
-        _pollAnalysisResultSilent(savedIdea.id);
+        if (enqueueResult.wasEnqueued) {
+          // 后台轮询分析结果，完成后自动刷新列表
+          _pollAnalysisResultSilent(savedIdea.id);
+        } else {
+          logService.i('HomeProvider', 'AI任务未入队，跳过轮询: ideaId=${savedIdea.id}, reason=${enqueueResult.reason}');
+        }
       } else {
         logService.i('HomeProvider', 'AI功能已禁用，跳过AI任务入队: ideaId=${savedIdea.id}');
       }
@@ -208,9 +210,15 @@ class HomeNotifier extends StateNotifier<HomeState> {
   /// 后台静默轮询AI分析结果（不显示加载状态）
   /// 支持多个并发轮询，每个灵感有独立的轮询Timer
   void _pollAnalysisResultSilent(int ideaId) {
+    if (_pollingIdeaIds.contains(ideaId)) {
+      logService.d('HomeProvider', '轮询已存在，跳过重复启动: ideaId=$ideaId');
+      return;
+    }
+
     // 取消该ideaId的旧轮询（如果存在）
     _pollingTimers[ideaId]?.cancel();
-    
+    _pollingIdeaIds.add(ideaId);
+
     logService.d('HomeProvider', '开始后台静默轮询AI分析结果: ideaId=$ideaId, 当前轮询数=${_pollingTimers.length}');
 
     int attemptCount = 0;
@@ -224,6 +232,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
         logService.w('HomeProvider', '后台轮询超时，停止轮询: ideaId=$ideaId');
         timer.cancel();
         _pollingTimers.remove(ideaId);
+        _pollingIdeaIds.remove(ideaId);
         return;
       }
 
@@ -237,6 +246,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
             logService.i('HomeProvider', '后台分析已完成，自动刷新列表: ideaId=$ideaId');
             timer.cancel();
             _pollingTimers.remove(ideaId);
+            _pollingIdeaIds.remove(ideaId);
             // 静默刷新列表，显示更新后的标签
             // 使用 try-catch 防止组件销毁后调用异常
             try {
@@ -253,6 +263,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
             logService.w('HomeProvider', '后台分析失败，停止轮询: ideaId=$ideaId');
             timer.cancel();
             _pollingTimers.remove(ideaId);
+            _pollingIdeaIds.remove(ideaId);
             return;
           }
           // 分析中，继续轮询（静默，不显示任何UI）
@@ -262,6 +273,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
         logService.e('HomeProvider', '后台轮询出错: ideaId=$ideaId, error=$e', error: e, stackTrace: stackTrace);
         timer.cancel();
         _pollingTimers.remove(ideaId);
+        _pollingIdeaIds.remove(ideaId);
       }
     });
   }

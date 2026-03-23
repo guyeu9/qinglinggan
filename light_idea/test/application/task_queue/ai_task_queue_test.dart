@@ -129,6 +129,43 @@ void main() {
       expect(taskRepository.tasks.single.taskType, TaskType.fullAnalysis);
     });
 
+    test('TaskType.fullAnalysis 在基础分析失败且不可重试时不应继续执行关联分析', () async {
+      final original = _buildIdea(content: 'unauthorized analysis');
+      ideaRepository.idea = original;
+      understandingService.analyzeHandler = (_) async => Result.error('401 unauthorized');
+      relationService.relations = [
+        AssociationEntity(
+          id: 1,
+          sourceIdeaId: original.id,
+          targetIdeaId: 2,
+          type: RelationType.similar,
+          reason: '不应被保存',
+          confidence: 0.9,
+          createdAt: DateTime(2024, 1, 1),
+        ),
+      ];
+      embeddingService.searchResult = [
+        SimilarIdea(
+          idea: _buildIdea(id: 2, content: 'candidate', embedding: <double>[0.3, 0.4]),
+          similarity: 0.91,
+        ),
+      ];
+
+      final result = await queue.enqueue(
+        original.id,
+        taskType: TaskType.fullAnalysis,
+        force: true,
+      );
+      expect(result.wasEnqueued, isTrue);
+
+      await _waitUntil(() => taskRepository.statusHistory.contains(TaskStatus.failed));
+
+      expect(associationRepository.savedAssociations, isEmpty);
+      expect(analysisRepository.savedAnalyses, isEmpty);
+      expect(taskRepository.statusHistory, containsAllInOrder([TaskStatus.processing, TaskStatus.failed]));
+      expect(ideaRepository.updatedStatusCalls, contains('${original.id}:${AIStatus.failed.name}'));
+    });
+
     test('关联分析在保存前快照失配时应丢弃关联写入', () async {
       final original = _buildIdea(
         content: 'idea',

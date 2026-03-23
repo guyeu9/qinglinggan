@@ -39,7 +39,7 @@ class OpenAIClient {
     double? temperature,
     int? maxTokens,
   }) async {
-    final actualModel = model ?? AIConfig.defaultChatModel;
+    final actualModel = model ?? await AIConfig.getChatModel();
     logService.i('OpenAIClient', 'chatCompletion开始: model=$actualModel');
     
     final request = ChatCompletionRequest(
@@ -68,8 +68,9 @@ class OpenAIClient {
     String input, {
     String? model,
   }) async {
+    final embeddingModel = model ?? AIConfig.defaultEmbeddingModel;
     final request = EmbeddingRequest(
-      model: model ?? AIConfig.defaultEmbeddingModel,
+      model: embeddingModel,
       input: input,
     );
 

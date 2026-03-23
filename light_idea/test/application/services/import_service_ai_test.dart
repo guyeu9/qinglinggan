@@ -77,6 +77,22 @@ void main() {
       expect(taskQueue.calls.single.taskType, TaskType.fullAnalysis);
       expect(taskQueue.calls.single.force, isTrue);
     });
+
+    test('AI 任务跳过时应记录错误并累加 skipCount', () async {
+      taskQueue.enqueueResult = EnqueueResult.skipped('任务已在队列中');
+
+      final result = await service.importFromJson(
+        '[{"content":"skip idea"}]',
+        triggerAIAnalysis: true,
+      );
+
+      expect(result.isSuccess, isTrue);
+      final importResult = result.dataOrNull!;
+      expect(importResult.successCount, 1);
+      expect(importResult.skipCount, 1);
+      expect(importResult.errorCount, 0);
+      expect(importResult.errors.single, contains('AI任务未入队'));
+    });
   });
 }
 
@@ -109,6 +125,7 @@ class _FakeTaskQueue extends AITaskQueue {
         );
 
   final List<_EnqueueCall> calls = [];
+  EnqueueResult? enqueueResult;
 
   @override
   Future<EnqueueResult> enqueue(
@@ -117,15 +134,16 @@ class _FakeTaskQueue extends AITaskQueue {
     bool force = false,
   }) async {
     calls.add(_EnqueueCall(ideaId: ideaId, taskType: taskType, force: force));
-    return EnqueueResult.enqueued(
-      AITaskEntity(
-        id: calls.length,
-        ideaId: ideaId,
-        taskType: taskType,
-        status: TaskStatus.pending,
-        createdAt: DateTime(2024, 1, 1),
-      ),
-    );
+    return enqueueResult ??
+        EnqueueResult.enqueued(
+          AITaskEntity(
+            id: calls.length,
+            ideaId: ideaId,
+            taskType: taskType,
+            status: TaskStatus.pending,
+            createdAt: DateTime(2024, 1, 1),
+          ),
+        );
   }
 }
 

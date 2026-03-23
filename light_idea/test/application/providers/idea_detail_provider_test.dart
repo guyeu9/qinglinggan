@@ -50,7 +50,7 @@ void main() {
           aiTaskRepositoryProvider.overrideWithValue(taskRepository),
           associationRepositoryProvider.overrideWithValue(associationRepository),
           tagRepositoryProvider.overrideWithValue(tagRepository),
-          aiEmbeddingServiceProvider.overrideWithValue(embeddingService),
+          aiEmbeddingServiceProvider.overrideWith((ref) async => embeddingService),
           aiTaskQueueProvider.overrideWithValue(taskQueue),
           categoryRepositoryProvider.overrideWithValue(_FakeCategoryRepository()),
           loggerProvider.overrideWithValue(_FakeLogger()),

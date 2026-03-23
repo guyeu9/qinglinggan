@@ -70,7 +70,7 @@ class IdeaDetailNotifier extends StateNotifier<IdeaDetailState> {
       final ideaRepo = _ref.read(ideaRepositoryProvider);
       final analysisRepo = _ref.read(aiAnalysisRepositoryProvider);
       final tagRepo = _ref.read(tagRepositoryProvider);
-      final embeddingService = _ref.read(aiEmbeddingServiceProvider);
+      final embeddingService = await _ref.read(aiEmbeddingServiceProvider.future);
       final associationRepo = _ref.read(associationRepositoryProvider);
 
       developer.log('正在查询灵感...', name: 'IdeaDetailProvider');

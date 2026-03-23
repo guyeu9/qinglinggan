@@ -72,8 +72,9 @@ final aiUnderstandingServiceProvider = Provider<AIUnderstandingService>((ref) {
   return AIUnderstandingService(client, categoryRepo, logger);
 });
 
-final aiEmbeddingServiceProvider = Provider<AIEmbeddingService>((ref) {
-  final client = ref.watch(openAIClientProvider).requireValue;
+final aiEmbeddingServiceProvider = FutureProvider<AIEmbeddingService>((ref) async {
+  final baseUrl = await AIConfig.getEmbeddingBaseUrl();
+  final client = OpenAIClient(baseUrl: baseUrl);
   final ideaRepo = ref.watch(ideaRepositoryProvider);
   final logger = ref.watch(loggerProvider);
   return AIEmbeddingService(client, ideaRepo, logger);
@@ -101,7 +102,7 @@ final aiSynthesisServiceProvider = Provider<AISynthesisService>((ref) {
 final aiTaskQueueProvider = Provider<AITaskQueue>((ref) {
   return AITaskQueue(
     understandingService: ref.watch(aiUnderstandingServiceProvider),
-    embeddingService: ref.watch(aiEmbeddingServiceProvider),
+    embeddingService: ref.watch(aiEmbeddingServiceProvider).requireValue,
     relationService: ref.watch(aiRelationServiceProvider),
     synthesisService: ref.watch(aiSynthesisServiceProvider),
     taskRepository: ref.watch(aiTaskRepositoryProvider),
@@ -156,7 +157,7 @@ final aiChatServiceProvider = Provider<AIChatService>((ref) {
   return AIChatService(
     ref.watch(openAIClientProvider).requireValue,
     ref.watch(ideaRepositoryProvider),
-    ref.watch(aiEmbeddingServiceProvider),
+    ref.watch(aiEmbeddingServiceProvider).requireValue,
     ref.watch(loggerProvider),
   );
 });
