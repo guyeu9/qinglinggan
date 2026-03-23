@@ -136,7 +136,11 @@ class IdeaDetailNotifier extends StateNotifier<IdeaDetailState> {
 
     try {
       final taskQueue = _ref.read(aiTaskQueueProvider);
-      final result = await taskQueue.enqueue(state.idea!.id);
+      final result = await taskQueue.enqueue(
+        state.idea!.id,
+        taskType: TaskType.fullAnalysis,
+        force: true,
+      );
 
       if (result.wasSkipped) {
         state = state.copyWith(
